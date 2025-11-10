@@ -1,2 +1,0 @@
-innovationEarthProjects.com
-www.innovationEarthProjects.com
