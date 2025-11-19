@@ -1,474 +1,599 @@
-<Docktype HTML!>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Innovation Earth Projects - Exploring New Horizons</title>
+    <meta name="description" content="Join Innovation Earth Projects in creating innovative solutions through hands-on projects and collaborative learning.">
+    
+    <!-- External Resources -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Header -->
-    <header>
+    <!-- Page Loader -->
+    <div id="pageLoader" class="page-loader">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <h3>Innovation Earth Projects</h3>
+            <p>Loading creative possibilities...</p>
+        </div>
+    </div>
+
+    <!-- Header Section -->
+    <header class="header">
         <div class="container">
             <div class="header-content">
+                <!-- Logo -->
                 <div class="logo">
-                    <i class="fas fa-plane"></i>
+                    <i class="fas fa-plane" aria-hidden="true"></i>
                     <h1>Innovation <span>Earth</span> Projects</h1>
                 </div>
-                <nav>
-                    <ul id="main-nav">
-                        <li><a href="#home" class="active"><i class="fas fa-home"></i> Home</a></li>
-                        <li><a href="#projects"><i class="fas fa-project-diagram"></i> Projects</a></li>
-                        <li><a href="#join"><i class="fas fa-users"></i> Join Us</a></li>
-                        <li><a href="#competitions"><i class="fas fa-trophy"></i> Competitions</a></li>
-                        <li><a href="#about"><i class="fas fa-info-circle"></i> About</a></li>
-                        <li><a href="#contact"><i class="fas fa-envelope"></i> Contact</a></li>
+                
+                <!-- Navigation -->
+                <nav class="navigation" aria-label="Main navigation">
+                    <ul class="nav-list" id="main-nav">
+                        <li class="nav-item"><a href="#home" class="nav-link active"><i class="fas fa-home" aria-hidden="true"></i> Home</a></li>
+                        <li class="nav-item"><a href="#projects" class="nav-link"><i class="fas fa-project-diagram" aria-hidden="true"></i> Projects</a></li>
+                        <li class="nav-item"><a href="#join" class="nav-link"><i class="fas fa-users" aria-hidden="true"></i> Join Us</a></li>
+                        <li class="nav-item"><a href="#competitions" class="nav-link"><i class="fas fa-trophy" aria-hidden="true"></i> Competitions</a></li>
+                        <li class="nav-item"><a href="#about" class="nav-link"><i class="fas fa-info-circle" aria-hidden="true"></i> About</a></li>
+                        <li class="nav-item"><a href="#contact" class="nav-link"><i class="fas fa-envelope" aria-hidden="true"></i> Contact</a></li>
                     </ul>
-                    <div class="mobile-menu" id="mobile-menu">
-                        <i class="fas fa-bars"></i>
-                    </div>
+                    
+                    <!-- Mobile Menu Toggle -->
+                    <button class="mobile-menu-toggle" id="mobile-menu" aria-label="Toggle mobile menu" aria-expanded="false">
+                        <i class="fas fa-bars" aria-hidden="true"></i>
+                    </button>
                 </nav>
             </div>
         </div>
     </header>
 
-    <!-- Home Section -->
-    <section id="home" class="section active">
-        <!-- Rotating Banner -->
-        <div class="banner-container">
-            <div class="banner-slide active" style="background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1521737711867-e3b97375f902?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');">
-                <div class="banner-content">
-                    <h2>Exploring New Horizons</h2>
-                    <p>Join us in creating innovative projects that make a difference in our world</p>
-                    <a href="#join" class="btn">Get Involved</a>
-                </div>
-            </div>
-            <div class="banner-slide" style="background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1558655146-9f40138edfeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');">
-                <div class="banner-content">
-                    <h2>Hands-On Learning</h2>
-                    <p>Gain practical experience while working on meaningful projects with our community</p>
-                    <a href="#projects" class="btn">View Projects</a>
-                </div>
-            </div>
-            <div class="banner-slide" style="background-image: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url('https://images.unsplash.com/photo-1518709268801-4f5f8c46a28e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80');">
-                <div class="banner-content">
-                    <h2>Build the Future</h2>
-                    <p>Collaborate with innovators and creators to develop solutions for tomorrow's challenges</p>
-                    <a href="#about" class="btn">Learn More</a>
-                </div>
-            </div>
-            <div class="banner-dots">
-                <div class="dot active" data-slide="0"></div>
-                <div class="dot" data-slide="1"></div>
-                <div class="dot" data-slide="2"></div>
-            </div>
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Home Section -->
+        <section id="home" class="section active" aria-labelledby="home-heading">
+<!-- Banner Slider -->
+<div class="banner-container">
+    <div class="banner-slide active" role="img" aria-label="Team collaboration in innovation lab">
+        <div class="banner-content">
+            <h2 id="home-heading">Building the Future Together</h2>
+            <p>Join our new community of innovators creating meaningful projects and developing real-world skills</p>
         </div>
-
-        <!-- Quick Links -->
-        <div class="container">
-            <div class="section-title">
-                <h2>Get Started</h2>
-                <p>Quick access to our main sections</p>
-            </div>
-            <div class="quick-links">
-                <a href="#projects" class="quick-link">
-                    <i class="fas fa-project-diagram"></i>
-                    <h3>Projects</h3>
-                    <p>Explore our innovative initiatives</p>
-                </a>
-                <a href="#join" class="quick-link">
-                    <i class="fas fa-users"></i>
-                    <h3>Join Us</h3>
-                    <p>Find your role in our community</p>
-                </a>
-                <a href="#competitions" class="quick-link">
-                    <i class="fas fa-trophy"></i>
-                    <h3>Competitions</h3>
-                    <p>Test your skills in our challenges</p>
-                </a>
-                <a href="#about" class="quick-link">
-                    <i class="fas fa-info-circle"></i>
-                    <h3>About</h3>
-                    <p>Learn about our mission</p>
-                </a>
-            </div>
+    </div>
+    
+    <div class="banner-slide" role="img" aria-label="Students working on hands-on project">
+        <div class="banner-content">
+            <h2>Hands-On Learning</h2>
+            <p>Gain practical experience while building projects that matter with our growing community</p>
         </div>
-    </section>
-
-    <!-- Projects Section -->
-    <section id="projects" class="section">
-        <div class="container">
-            <div class="section-title">
-                <h2>Our Projects</h2>
-                <p>Explore our innovative initiatives across different development stages</p>
-            </div>
-
-            <!-- Horizontal Category Selector -->
-            <div class="category-selector">
-                <button class="category-btn active" data-category="concepts">
-                    <i class="fas fa-lightbulb"></i> Project Concepts
-                </button>
-                <button class="category-btn" data-category="development">
-                    <i class="fas fa-tools"></i> Under Development
-                </button>
-                <button class="category-btn" data-category="completed">
-                    <i class="fas fa-check-circle"></i> Completed Projects
-                </button>
-                <button class="category-btn" data-category="upcoming">
-                    <i class="fas fa-calendar-alt"></i> Upcoming Initiatives
-                </button>
-            </div>
-
-            <!-- Project Concepts -->
-            <div id="concepts" class="project-category active">
-                <h3>Project Concepts</h3>
-                <p>These are ideas in the early brainstorming phase. Help us develop them!</p>
-                <div class="projects-grid">
-                    <div class="project-card">
-                        <div class="project-image">
-                            <img src="https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Urban Garden">
-                        </div>
-                        <div class="project-content">
-                            <h3>Vertical Urban Farming</h3>
-                            <p>Concept for sustainable food production in urban environments using vertical space.</p>
-                            <a href="#contact" class="btn">Contribute Ideas</a>
-                        </div>
-                    </div>
-                    <div class="project-card">
-                        <div class="project-image">
-                            <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="STEM Education">
-                        </div>
-                        <div class="project-content">
-                            <h3>STEM Mobile Labs</h3>
-                            <p>Mobile laboratories to bring hands-on science education to underserved communities.</p>
-                            <a href="#contact" class="btn">Contribute Ideas</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Under Development -->
-            <div id="development" class="project-category">
-                <h3>Currently Under Development</h3>
-                <p>Active projects that need contributors and resources</p>
-                <div class="projects-grid">
-                    <div class="project-card">
-                        <div class="project-image">
-                            <img src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Community Solar">
-                        </div>
-                        <div class="project-content">
-                            <h3>Community Solar Initiative</h3>
-                            <p>Developing affordable solar solutions for local communities. Currently in prototype phase.</p>
-                            <a href="#join" class="btn">Join Development</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Completed Projects -->
-            <div id="completed" class="project-category">
-                <h3>Completed Projects</h3>
-                <p>Successfully launched initiatives making an impact</p>
-                <div class="projects-grid">
-                    <div class="project-card">
-                        <div class="project-image">
-                            <img src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Coding Workshop">
-                        </div>
-                        <div class="project-content">
-                            <h3>Youth Coding Workshops</h3>
-                            <p>Completed series of coding workshops reaching 500+ students in local schools.</p>
-                            <a href="#" class="btn">View Results</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Upcoming Initiatives -->
-            <div id="upcoming" class="project-category">
-                <h3>Upcoming Initiatives</h3>
-                <p>Projects planned for the near future</p>
-                <div class="projects-grid">
-                    <div class="project-card">
-                        <div class="project-image">
-                            <img src="https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Upcoming Project">
-                        </div>
-                        <div class="project-content">
-                            <h3>Community Tech Hub</h3>
-                            <p>Planning a technology hub to provide resources and training for local communities.</p>
-                            <a href="#contact" class="btn">Express Interest</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    </div>
+    
+    <div class="banner-slide" role="img" aria-label="Innovative technology development">
+        <div class="banner-content">
+            <h2>Shape Your Journey</h2>
+            <p>Collaborate with fellow creators to develop solutions and build your experience from the ground up</p>
         </div>
-    </section>
-
-    <!-- Join Us Section -->
-    <section id="join" class="section" style="background-color: #f5f5f5;">
-        <div class="container">
-            <div class="section-title">
-                <h2>Join Our Community</h2>
-                <p>Find your perfect role in our innovation ecosystem</p>
-            </div>
-
-            <!-- Horizontal Category Selector -->
-            <div class="category-selector">
-                <button class="category-btn active" data-category="volunteer">
-                    <i class="fas fa-hands-helping"></i> Volunteer Program
-                </button>
-                <button class="category-btn" data-category="coding">
-                    <i class="fas fa-code"></i> Coding & Tech
-                </button>
-                <button class="category-btn" data-category="business">
-                    <i class="fas fa-chart-line"></i> Business & Marketing
-                </button>
-                <button class="category-btn" data-category="design">
-                    <i class="fas fa-paint-brush"></i> Design & Creativity
-                </button>
-                <button class="category-btn" data-category="research">
-                    <i class="fas fa-flask"></i> Research & Development
-                </button>
-            </div>
-
-            <!-- Volunteer Program -->
-            <div id="volunteer" class="project-category active">
-                <h3>Volunteer Program</h3>
-                <p>Make a difference through hands-on contribution</p>
-                <div class="role-options">
-                    <div class="role-card">
-                        <div class="role-icon">
-                            <i class="fas fa-hands-helping"></i>
-                        </div>
-                        <h4>Event Volunteer</h4>
-                        <p>Help organize and run our community events and workshops</p>
-                        <a href="#contact" class="btn">Sign Up</a>
-                    </div>
-                    <div class="role-card">
-                        <div class="role-icon">
-                            <i class="fas fa-chalkboard-teacher"></i>
-                        </div>
-                        <h4>Mentor</h4>
-                        <p>Guide and support new members in their project journeys</p>
-                        <a href="#contact" class="btn">Sign Up</a>
-                    </div>
+    </div>
+    
+    <!-- Banner Controls -->
+    <div class="banner-controls">
+        <button class="banner-prev" aria-label="Previous slide">‹</button>
+        <button class="banner-next" aria-label="Next slide">›</button>
+    </div>
+    
+    <!-- Banner Dots -->
+    <div class="banner-dots" role="tablist">
+        <button class="dot active" data-slide="0" role="tab" aria-label="Slide 1" aria-selected="true"></button>
+        <button class="dot" data-slide="1" role="tab" aria-label="Slide 2"></button>
+        <button class="dot" data-slide="2" role="tab" aria-label="Slide 3"></button>
+    </div>
+</div>                
+                <!-- Banner Controls -->
+                <div class="banner-controls">
+                    <button class="banner-prev" aria-label="Previous slide">‹</button>
+                    <button class="banner-next" aria-label="Next slide">›</button>
+                </div>
+                
+                <!-- Banner Dots -->
+                <div class="banner-dots" role="tablist">
+                    <button class="dot active" data-slide="0" role="tab" aria-label="Slide 1" aria-selected="true"></button>
+                    <button class="dot" data-slide="1" role="tab" aria-label="Slide 2"></button>
+                    <button class="dot" data-slide="2" role="tab" aria-label="Slide 3"></button>
                 </div>
             </div>
 
-            <!-- Coding & Tech -->
-            <div id="coding" class="project-category">
-                <h3>Coding & Technology</h3>
-                <p>For developers, engineers, and tech enthusiasts</p>
-                <div class="role-options">
-                    <div class="role-card">
-                        <div class="role-icon">
-                            <i class="fas fa-code"></i>
-                        </div>
-                        <h4>Software Developer</h4>
-                        <p>Build applications and tools for our projects</p>
-                        <a href="#contact" class="btn">Join Team</a>
-                    </div>
-                    <div class="role-card">
-                        <div class="role-icon">
-                            <i class="fas fa-robot"></i>
-                        </div>
-                        <h4>AI/ML Specialist</h4>
-                        <p>Work on cutting-edge artificial intelligence projects</p>
-                        <a href="#contact" class="btn">Join Team</a>
-                    </div>
+            <!-- Quick Links -->
+            <div class="container">
+                <div class="section-header">
+                    <h2>Get Started</h2>
+                    <p>Begin your innovation journey with us</p>
                 </div>
-            </div>
-
-            <!-- Business & Marketing -->
-            <div id="business" class="project-category">
-                <h3>Business & Marketing</h3>
-                <p>Help us grow and sustain our initiatives</p>
-                <div class="role-options">
-                    <div class="role-card">
-                        <div class="role-icon">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <h4>Marketing Specialist</h4>
-                        <p>Promote our projects and reach wider audiences</p>
-                        <a href="#contact" class="btn">Join Team</a>
-                    </div>
-                    <div class="role-card">
-                        <div class="role-icon">
-                            <i class="fas fa-handshake"></i>
-                        </div>
-                        <h4>Partnership Manager</h4>
-                        <p>Build relationships with organizations and sponsors</p>
-                        <a href="#contact" class="btn">Join Team</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Competitions Section -->
-    <section id="competitions" class="section">
-        <div class="container">
-            <div class="section-title">
-                <h2>Innovation Competitions</h2>
-                <p>Test your skills and creativity in our challenge series</p>
-            </div>
-
-            <!-- Horizontal Category Selector -->
-            <div class="category-selector">
-                <button class="category-btn active" data-category="technology">
-                    <i class="fas fa-microchip"></i> Technology & Engineering
-                </button>
-                <button class="category-btn" data-category="sustainability">
-                    <i class="fas fa-leaf"></i> Sustainability & Environment
-                </button>
-                <button class="category-btn" data-category="business-plan">
-                    <i class="fas fa-briefcase"></i> Business & Entrepreneurship
-                </button>
-                <button class="category-btn" data-category="creative-arts">
-                    <i class="fas fa-palette"></i> Creative Arts & Design
-                </button>
-                <button class="category-btn" data-category="science">
-                    <i class="fas fa-atom"></i> Science & Research
-                </button>
-            </div>
-
-            <!-- Technology & Engineering -->
-            <div id="technology" class="project-category active">
-                <h3>Technology & Engineering Competitions</h3>
-                <div class="no-competitions">
-                    <i class="fas fa-calendar-times"></i>
-                    <p>Currently no active competitions in this category. Check back soon for new challenges!</p>
-                </div>
-            </div>
-
-            <!-- Sustainability & Environment -->
-            <div id="sustainability" class="project-category">
-                <h3>Sustainability & Environment Competitions</h3>
-                <div class="no-competitions">
-                    <i class="fas fa-calendar-times"></i>
-                    <p>Currently no active competitions in this category. Check back soon for new challenges!</p>
-                </div>
-            </div>
-
-            <!-- Business & Entrepreneurship -->
-            <div id="business-plan" class="project-category">
-                <h3>Business & Entrepreneurship Competitions</h3>
-                <div class="no-competitions">
-                    <i class="fas fa-calendar-times"></i>
-                    <p>Currently no active competitions in this category. Check back soon for new challenges!</p>
-                </div>
-            </div>
-
-            <!-- Creative Arts & Design -->
-            <div id="creative-arts" class="project-category">
-                <h3>Creative Arts & Design Competitions</h3>
-                <div class="no-competitions">
-                    <i class="fas fa-calendar-times"></i>
-                    <p>Currently no active competitions in this category. Check back soon for new challenges!</p>
-                </div>
-            </div>
-
-            <!-- Science & Research -->
-            <div id="science" class="project-category">
-                <h3>Science & Research Competitions</h3>
-                <div class="no-competitions">
-                    <i class="fas fa-calendar-times"></i>
-                    <p>Currently no active competitions in this category. Check back soon for new challenges!</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- About Section -->
-    <section id="about" class="section" style="background-color: #f5f5f5;">
-        <div class="container">
-            <div class="section-title">
-                <h2>About Us</h2>
-                <p>Learn about our mission, vision, and the team behind Innovation Earth Projects</p>
-            </div>
-            <div class="about-content">
-                <div class="about-text">
-                    <h3>Our Story</h3>
-                    <p>Innovation Earth Projects was founded by a group of passionate students who believed in learning by doing.</p>
+                
+                <div class="quick-links-grid">
+                    <article class="quick-link-card">
+                        <i class="fas fa-project-diagram" aria-hidden="true"></i>
+                        <h3>Project Ideas</h3>
+                        <p>Explore our first project concepts</p>
+                        <a href="#projects" class="btn btn-secondary">Explore</a>
+                    </article>
                     
-                    <h3>Our Mission</h3>
-                    <p>To help students develop interests and their collage applications though projects, compiititons, leadership oppertunities, and more.</p>
+                    <article class="quick-link-card">
+                        <i class="fas fa-users" aria-hidden="true"></i>
+                        <h3>Join Our Team</h3>
+                        <p>Help build our foundation</p>
+                        <a href="#join" class="btn btn-secondary">Join</a>
+                    </article>
                     
-                    <h3>Our Values</h3>
-                    <ul>
-                        <li>Cooperation is key</li>
-                        <li>Action over theory</li>
-                        <li>Community impact</li>
-                        <li>Continuous learning</li>
+                    <article class="quick-link-card">
+                        <i class="fas fa-trophy" aria-hidden="true"></i>
+                        <h3>Future Competitions</h3>
+                        <p>Coming soon - be the first to know</p>
+                        <a href="#competitions" class="btn btn-secondary">Learn More</a>
+                    </article>
+                    
+                    <article class="quick-link-card">
+                        <i class="fas fa-info-circle" aria-hidden="true"></i>
+                        <h3>Our Mission</h3>
+                        <p>Learn about what drives us</p>
+                        <a href="#about" class="btn btn-secondary">Learn More</a>
+                    </article>
+                </div>
+            </div>
+
+            <!-- Featured Initiatives Section -->
+            <section class="initiatives-section" aria-labelledby="initiatives-heading">
+                <div class="container">
+                    <div class="section-header">
+                        <h2 id="initiatives-heading">Our First Initiatives</h2>
+                        <p>Help us launch these exciting new programs and projects</p>
+                    </div>
+                    
+                    <div class="initiatives-grid">
+                        <article class="initiative-card animate-on-scroll" data-animation="fade-up">
+                            <div class="initiative-icon">
+                                <i class="fas fa-seedling" aria-hidden="true"></i>
+                            </div>
+                            <h3>Sustainability Projects</h3>
+                            <p>Environmental initiatives focused on creating sustainable solutions for our community</p>
+                            <div class="initiative-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 20%"></div>
+                                </div>
+                                <span>Planning stage - join to help launch</span>
+                            </div>
+                        </article>
+                        
+                        <article class="initiative-card animate-on-scroll" data-animation="fade-up" data-delay="200">
+                            <div class="initiative-icon">
+                                <i class="fas fa-robot" aria-hidden="true"></i>
+                            </div>
+                            <h3>Tech Innovation Hub</h3>
+                            <p>Cutting-edge technology projects exploring AI, robotics, and digital transformation</p>
+                            <div class="initiative-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 15%"></div>
+                                </div>
+                                <span>Forming our first teams now</span>
+                            </div>
+                        </article>
+                        
+                        <article class="initiative-card animate-on-scroll" data-animation="fade-up" data-delay="400">
+                            <div class="initiative-icon">
+                                <i class="fas fa-graduation-cap" aria-hidden="true"></i>
+                            </div>
+                            <h3>Learning Programs</h3>
+                            <p>Skill-building workshops and collaborative learning sessions for our members</p>
+                            <div class="initiative-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 10%"></div>
+                                </div>
+                                <span>Planning our first workshops</span>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Impact Stats Section -->
+            <section class="stats-section" aria-labelledby="stats-heading">
+                <div class="container">
+                    <div class="section-header">
+                        <h2 id="stats-heading">Our Journey Begins</h2>
+                        <p>Help us grow from the very start</p>
+                    </div>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-item animate-on-scroll" data-animation="zoom-in">
+                            <div class="stat-number" data-count="0">0</div>
+                            <div class="stat-label">Projects Completed</div>
+                        </div>
+                        
+                        <div class="stat-item animate-on-scroll" data-animation="zoom-in" data-delay="200">
+                            <div class="stat-number" data-count="3">3</div>
+                            <div class="stat-label">Active Members</div>
+                        </div>
+                        
+                        <div class="stat-item animate-on-scroll" data-animation="zoom-in" data-delay="400">
+                            <div class="stat-number" data-count="1">1</div>
+                            <div class="stat-label">New Organization</div>
+                        </div>
+                        
+                        <div class="stat-item animate-on-scroll" data-animation="zoom-in" data-delay="600">
+                            <div class="stat-number" data-count="∞">∞</div>
+                            <div class="stat-label">Opportunities Ahead</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Upcoming Events Section -->
+            <section class="events-section" aria-labelledby="events-heading">
+                <div class="container">
+                    <div class="section-header">
+                        <h2 id="events-heading">Coming Soon</h2>
+                        <p>Help us plan our first events and gatherings</p>
+                    </div>
+                    
+                    <div class="events-timeline">
+                        <article class="event-item animate-on-scroll" data-animation="slide-right">
+                            <div class="event-date">
+                                <span class="event-month">SOON</span>
+                                <span class="event-day">?</span>
+                            </div>
+                            <div class="event-content">
+                                <h3>Founding Member Meetup</h3>
+                                <p>Join our first virtual gathering to help shape the future of Innovation Earth Projects</p>
+                                <div class="event-details">
+                                    <span><i class="fas fa-map-marker-alt"></i> Virtual Event</span>
+                                    <span><i class="fas fa-clock"></i> Date TBD</span>
+                                </div>
+                                <a href="#contact" class="btn btn-secondary">Express Interest</a>
+                            </div>
+                        </article>
+                        
+                        <article class="event-item animate-on-scroll" data-animation="slide-left">
+                            <div class="event-date">
+                                <span class="event-month">SOON</span>
+                                <span class="event-day">?</span>
+                            </div>
+                            <div class="event-content">
+                                <h3>Project Planning Session</h3>
+                                <p>Collaborative workshop to brainstorm and plan our first community projects</p>
+                                <div class="event-details">
+                                    <span><i class="fas fa-map-marker-alt"></i> Virtual Event</span>
+                                    <span><i class="fas fa-clock"></i> Date TBD</span>
+                                </div>
+                                <a href="#projects" class="btn btn-secondary">Share Ideas</a>
+                            </div>
+                        </article>
+                        
+                        <article class="event-item animate-on-scroll" data-animation="slide-right">
+                            <div class="event-date">
+                                <span class="event-month">FUTURE</span>
+                                <span class="event-day">!</span>
+                            </div>
+                            <div class="event-content">
+                                <h3>First Project Showcase</h3>
+                                <p>Exhibition of our first completed projects - help us make this happen!</p>
+                                <div class="event-details">
+                                    <span><i class="fas fa-map-marker-alt"></i> Location TBD</span>
+                                    <span><i class="fas fa-clock"></i> When we're ready</span>
+                                </div>
+                                <a href="#join" class="btn btn-secondary">Help Build This</a>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Call to Action Section -->
+            <section class="cta-section" aria-labelledby="cta-heading">
+                <div class="container">
+                    <div class="cta-content animate-on-scroll" data-animation="fade-in">
+                        <h2 id="cta-heading">Be a Founding Member</h2>
+                        <p>Join from the very beginning and help build something amazing with us</p>
+                        <div class="cta-buttons">
+                            <a href="#join" class="btn btn-primary">Help Us Grow</a>
+                            <a href="#contact" class="btn btn-secondary">Share Your Ideas</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </section>
+
+        <!-- Projects Section -->
+        <section id="projects" class="section" aria-labelledby="projects-heading">
+            <div class="container">
+                <div class="section-header">
+                    <h2 id="projects-heading">Project Ideas</h2>
+                    <p>Help us bring these first project concepts to life</p>
+                </div>
+
+                <!-- Category Navigation -->
+                <nav class="category-nav" aria-label="Project categories">
+                    <ul class="category-list" role="tablist">
+                        <li role="presentation">
+                            <button class="category-tab active" data-category="concepts" role="tab" aria-selected="true">
+                                <i class="fas fa-lightbulb" aria-hidden="true"></i> Project Concepts
+                            </button>
+                        </li>
+                        <li role="presentation">
+                            <button class="category-tab" data-category="development" role="tab">
+                                <i class="fas fa-tools" aria-hidden="true"></i> Planning Stage
+                            </button>
+                        </li>
+                        <li role="presentation">
+                            <button class="category-tab" data-category="upcoming" role="tab">
+                                <i class="fas fa-calendar-alt" aria-hidden="true"></i> Future Ideas
+                            </button>
+                        </li>
                     </ul>
-                </div>
-                <div class="about-image">
-                    <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Our Team">
-                </div>
-            </div>
-        </div>
-    </section>
+                </nav>
 
-    <!-- Contact Section -->
-    <section id="contact" class="section">
-        <div class="container">
-            <div class="section-title">
-                <h2>Contact Us</h2>
-                <p>Get in touch with our team</p>
-            </div>
-            <div class="contact-content">
-                <div class="contact-info">
-                    <h3>Get In Touch</h3>
-                    <p><i class="fas fa-envelope"></i> InnovationEarthProjects@gmail.com</p>
-                    <p><i class="fas fa-map-marker-alt"></i> Based in Utah, USA</p>
-                    <p><i class="fas fa-clock"></i> Available Mon-Fri: 10AM-2PM</p>
+                <!-- Project Categories -->
+                <div class="projects-content">
+                    <div id="concepts" class="project-category active" role="tabpanel">
+                        <div class="empty-state">
+                            <i class="fas fa-lightbulb" aria-hidden="true"></i>
+                            <h3>Share Your Project Ideas</h3>
+                            <p>We're just getting started! What projects would you like to work on? Share your ideas and help us build our first initiatives.</p>
+                            <a href="#contact" class="btn btn-primary">Suggest a Project</a>
+                        </div>
+                    </div>
+                    
+                    <div id="development" class="project-category" role="tabpanel" hidden>
+                        <div class="empty-state">
+                            <i class="fas fa-tools" aria-hidden="true"></i>
+                            <h3>Project Planning Phase</h3>
+                            <p>Our first projects are in the planning stage. Join us to help turn ideas into action.</p>
+                            <a href="#join" class="btn btn-primary">Join Planning Team</a>
+                        </div>
+                    </div>
+                    
+                    <div id="upcoming" class="project-category" role="tabpanel" hidden>
+                        <div class="empty-state">
+                            <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+                            <h3>Future Initiatives</h3>
+                            <p>We're dreaming big! What should we tackle next? Your ideas will shape our future projects.</p>
+                            <a href="#contact" class="btn btn-primary">Share Your Vision</a>
+                        </div>
+                    </div>
                 </div>
-                <form class="contact-form">
-                    <input type="text" placeholder="Your Name" required>
-                    <input type="email" placeholder="Your Email" required>
-                    <select required>
-                        <option value="">Select Subject</option>
-                        <option value="projects">Project Inquiry</option>
-                        <option value="join">Join Our Community</option>
-                        <option value="competitions">Competition Information</option>
-                        <option value="partnership">Partnership Opportunity</option>
-                        <option value="other">Other</option>
-                    </select>
-                    <textarea placeholder="Your Message" rows="5" required></textarea>
-                    <button type="submit" class="btn">Send Message</button>
-                </form>
             </div>
-        </div>
-    </section>
+        </section>
+
+        <!-- Join Us Section -->
+        <section id="join" class="section section-alt" aria-labelledby="join-heading">
+            <div class="container">
+                <div class="section-header">
+                    <h2 id="join-heading">Help Build Our Foundation</h2>
+                    <p>Join as a founding member and help shape our organization from the start</p>
+                </div>
+
+                <!-- Role Categories -->
+                <nav class="category-nav" aria-label="Role categories">
+                    <ul class="category-list" role="tablist">
+                        <li role="presentation">
+                            <button class="category-tab active" data-category="volunteer" role="tab" aria-selected="true">
+                                <i class="fas fa-hands-helping" aria-hidden="true"></i> 
+                            </button>
+                        </li>
+                        <li role="presentation">
+                            <button class="category-tab" data-category="coding" role="tab">
+                                <i class="fas fa-code" aria-hidden="true"></i> Tech & Development
+                            </button>
+                        </li>
+                        <li role="presentation">
+                            <button class="category-tab" data-category="business" role="tab">
+                                <i class="fas fa-chart-line" aria-hidden="true"></i> Planning & Strategy
+                            </button>
+                        </li>
+                        <li role="presentation">
+                            <button class="category-tab" data-category="design" role="tab">
+                                <i class="fas fa-paint-brush" aria-hidden="true"></i> Creative Roles
+                            </button>
+                        </li>
+                    </ul>
+                </nav>
+
+                <!-- Role Content -->
+                <div class="roles-content">
+                    <div id="volunteer" class="role-category active" role="tabpanel">
+                        <h3>Founding Members Needed</h3>
+                        <p>Help us build Innovation Earth Projects from the ground up</p>
+                        <div class="roles-grid">
+                            <article class="role-card">
+                                <h4>Project Coordinators</h4>
+                                <p>Help plan and organize our first projects</p>
+                                <span class="role-tag">Urgently Needed</span>
+                            </article>
+                            <article class="role-card">
+                                <h4>Community Builders</h4>
+                                <p>Help grow our member base and engagement</p>
+                                <span class="role-tag">Founding Role</span>
+                            </article>
+                            <article class="role-card">
+                                <h4>Event Planners</h4>
+                                <p>Help organize our first virtual and in-person events</p>
+                                <span class="role-tag">New Opportunity</span>
+                            </article>
+                        </div>
+                    </div>
+                    
+                    <!-- Other role categories would follow similar structure -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Competitions Section -->
+        <section id="competitions" class="section" aria-labelledby="competitions-heading">
+            <div class="container">
+                <div class="section-header">
+                    <h2 id="competitions-heading">Future Competitions</h2>
+                    <p>Help us design our first innovation challenges</p>
+                </div>
+
+                <div class="competitions-content">
+                    <div class="empty-state">
+                        <i class="fas fa-trophy" aria-hidden="true"></i>
+                        <h3>Our First Competition is Coming</h3>
+                        <p>We're planning our first innovation challenge! Want to help design it or have ideas for what we should compete in?</p>
+                        <div class="cta-buttons">
+                            <a href="#contact" class="btn btn-primary">Help Plan Competitions</a>
+                            <a href="#join" class="btn btn-secondary">Join Competition Team</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="section section-alt" aria-labelledby="about-heading">
+            <div class="container">
+                <div class="section-header">
+                    <h2 id="about-heading">Our Story Begins</h2>
+                    <p>Learn about our mission and help write our next chapters</p>
+                </div>
+                
+                <div class="about-content">
+                    <div class="about-text">
+                        <article>
+                            <h3>Our Beginning</h3>
+                            <p>Innovation Earth Projects was founded by students who believe that the best learning happens through doing. We're building a community where ideas become action.</p>
+                        </article>
+                        
+                        <article>
+                            <h3>Our Mission</h3>
+                            <p>To help students develop interests and strengthen their experience through hands-on projects, leadership opportunities, and collaborative learning.</p>
+                        </article>
+                        
+                        <article>
+                            <h3>Our Values</h3>
+                            <ul class="values-list">
+                                <li>Cooperation is key</li>
+                                <li>Action over theory</li>
+                                <li>Community impact</li>
+                                <li>Continuous learning</li>
+                                <li>Building from the ground up</li>
+                            </ul>
+                        </article>
+                    </div>
+                    
+                    <div class="about-image">
+                        <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" 
+                             alt="Our team collaborating on innovative projects" loading="lazy">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="section" aria-labelledby="contact-heading">
+            <div class="container">
+                <div class="section-header">
+                    <h2 id="contact-heading">Help Us Grow</h2>
+                    <p>Your ideas and participation will shape our organization</p>
+                </div>
+                
+                <div class="contact-content">
+                    <div class="contact-info">
+                        <h3>Get Involved From the Start</h3>
+                        <address>
+                            <p><i class="fas fa-envelope" aria-hidden="true"></i> InnovationEarthProjects@gmail.com</p>
+                            <p><i class="fas fa-map-marker-alt" aria-hidden="true"></i> Based in Utah, USA</p>
+                            <p><i class="fas fa-clock" aria-hidden="true"></i> Building something new - join us!</p>
+                        </address>
+                    </div>
+                    
+                    <form class="contact-form" aria-labelledby="contact-form-heading">
+                        <h3 id="contact-form-heading">Help Shape Our Future</h3>
+                        <div class="form-group">
+                            <label for="name">Your Name</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Your Email</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="subject">How can you help?</label>
+                            <select id="subject" name="subject" required>
+                                <option value="">Select Interest</option>
+                                <option value="projects">I have project ideas</option>
+                                <option value="join">I want to be a founding member</option>
+                                <option value="competitions">I can help plan competitions</option>
+                                <option value="leadership">I have leadership experience</option>
+                                <option value="other">Other ways I can contribute</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="message">Your ideas and how you'd like to help</label>
+                            <textarea id="message" name="message" rows="5" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Join Our Foundation</button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </main>
 
     <!-- Footer -->
-    <footer>
+    <footer class="footer" role="contentinfo">
         <div class="container">
             <div class="footer-content">
-                <div class="footer-column">
+                <div class="footer-section">
                     <h3>Innovation Earth Projects</h3>
-                    <p>Empowering people to create innovative solutions through hands-on projects and collaborative learning.</p>
+                    <p>Building a community of innovators from the ground up. Join us in creating meaningful projects and developing real-world skills.</p>
                 </div>
-                <div class="footer-column">
+                
+                <div class="footer-section">
                     <h3>Quick Links</h3>
-                    <a href="#home">Home</a>
-                    <a href="#projects">Projects</a>
-                    <a href="#join">Join Us</a>
-                    <a href="#competitions">Competitions</a>
+                    <nav aria-label="Footer navigation">
+                        <ul>
+                            <li><a href="#home">Home</a></li>
+                            <li><a href="#projects">Project Ideas</a></li>
+                            <li><a href="#join">Join Us</a></li>
+                            <li><a href="#about">Our Story</a></li>
+                        </ul>
+                    </nav>
                 </div>
-                <div class="footer-column">
-                    <h3>Contact Us</h3>
-                    <p><i class="fas fa-envelope"></i> InnovationEarthProjects@gmail.com</p>
-                    <p><i class="fas fa-map-marker-alt"></i> Based in Utah, USA</p>
-                    <a href="#contact" class="btn">Contact Form</a>
+                
+                <div class="footer-section">
+                    <h3>Join Our Beginning</h3>
+                    <address>
+                        <p><i class="fas fa-envelope" aria-hidden="true"></i> InnovationEarthProjects@gmail.com</p>
+                        <p><i class="fas fa-map-marker-alt" aria-hidden="true"></i> Based in Utah, USA</p>
+                    </address>
+                    <a href="#contact" class="btn btn-secondary">Be a Founder</a>
                 </div>
             </div>
-            <div class="copyright">
-                <p>&copy; 2025 Innovation Earth Projects. All rights reserved.</p>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 Innovation Earth Projects. Building our future together.</p>
             </div>
         </div>
     </footer>
 
+    <!-- JavaScript -->
     <script src="script.js"></script>
+  <!-- JavaScript -->
+    <script src="script.js"></script>
+    
+    <!-- Fix for section navigation -->
+    <script>
+    // Simple fix to ensure all sections are accessible
+    document.addEventListener('DOMContentLoaded', function() {
+        // Make all sections visible for navigation
+        document.querySelectorAll('.section').forEach(section => {
+            section.style.display = 'block';
+            section.style.minHeight = '100vh';
+        });
+        
+        // Show home section by default
+        document.querySelector('#home').classList.add('active');
+    });
+    </script>
 </body>
 </html>
