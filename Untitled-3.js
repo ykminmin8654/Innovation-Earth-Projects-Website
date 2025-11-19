@@ -1,14 +1,6 @@
 // ===== MAIN SCRIPT FOR INNOVATION EARTH PROJECTS =====
 // Complete version with all original functionality and navigation fixes
 
-// Page Loader
-window.addEventListener('load', function() {
-    const pageLoader = document.getElementById('pageLoader');
-    setTimeout(() => {
-        pageLoader.classList.add('hidden');
-    }, 1000);
-});
-
 // Main initialization when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing Innovation Earth Projects...');
@@ -1439,34 +1431,6 @@ function addToCalendar(title, date, time, location) {
     // Simple calendar integration
     alert(`Adding to calendar:\n\nEvent: ${title}\nDate: ${date}\nTime: ${time}\nLocation: ${location}\n\nThis would open your calendar app.`);
 }
-
-// ===== PAGE LOADER - FIXED VERSION =====
-// This is the most important fix for your loading issue
-window.addEventListener('load', function() {
-    console.log('✅ Page fully loaded');
-    
-    const pageLoader = document.getElementById('pageLoader');
-    if (pageLoader) {
-        // Add fade-out animation
-        pageLoader.style.opacity = '0';
-        pageLoader.style.transition = 'opacity 0.5s ease';
-        
-        // Remove from DOM after animation
-        setTimeout(() => {
-            pageLoader.style.display = 'none';
-            console.log('✅ Page loader hidden successfully');
-        }, 500);
-    }
-});
-
-// Fallback: Always hide loader after 3 seconds maximum
-setTimeout(function() {
-    const loader = document.getElementById('pageLoader');
-    if (loader && loader.style.display !== 'none') {
-        loader.style.display = 'none';
-        console.log('✅ Page loader hidden (fallback)');
-    }
-}, 3000);
 
 // ===== INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', function() {
