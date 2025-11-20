@@ -5,6 +5,12 @@
     box-sizing: border-box;
 }
 
+/* TEST - Add to top of style.css */
+body {
+    background-color: red !important;
+    border: 5px solid blue !important;
+}
+
 :root {
     /* Color Palette */
     --teal: #008080;
