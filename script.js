@@ -350,30 +350,6 @@ function initializeCategoryTabs() {
         });
     });
 
-    // Competition category tabs
-    const competitionTabs = document.querySelectorAll('.category-tab[data-category]');
-    competitionTabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            const category = this.getAttribute('data-category');
-            
-            // Update active tab
-            competitionTabs.forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Show selected category, hide others
-            document.querySelectorAll('.competition-category').forEach(cat => {
-                cat.classList.remove('active');
-            });
-            
-            const targetCategory = document.getElementById(category);
-            if (targetCategory) {
-                targetCategory.classList.add('active');
-                populateCompetitionCategory(category);
-            }
-        });
-    });
-}
-
 // ===== PROJECT CATEGORY POPULATION =====
 function populateProjectCategory(category) {
     const categoryContainer = document.getElementById(category);
@@ -630,83 +606,6 @@ function populateCompetitionCategory(category) {
         console.warn(`Competition category container with ID '${category}' not found`);
         return;
     }
-    
-    // Clear any existing content
-    categoryContainer.innerHTML = '';
-    
-    const sampleCompetitions = getSampleCompetitions(category);
-    
-    if (sampleCompetitions.length === 0) {
-        // Show "no competitions" message for ALL empty categories
-        const noCompetitions = document.createElement('div');
-        noCompetitions.className = 'no-content-message';
-        noCompetitions.innerHTML = `
-            <i class="fas fa-calendar-times"></i>
-            <h3>No Active Competitions</h3>
-            <p>Currently no active competitions in the <strong>${getCategoryDisplayName(category)}</strong> category.</p>
-            <p>Check back soon for new challenges and opportunities!</p>
-            <button class="btn btn-secondary" style="margin-top: 1rem;">
-                <i class="fas fa-bell"></i> Notify Me When Available
-            </button>
-        `;
-        categoryContainer.appendChild(noCompetitions);
-        
-        // Add click event to notify button
-        noCompetitions.querySelector('.btn').addEventListener('click', function() {
-            alert(`We'll notify you when new ${getCategoryDisplayName(category)} competitions are available!`);
-        });
-    } else {
-        // Create grid and add competition cards
-        const competitionGrid = document.createElement('div');
-        competitionGrid.className = 'competition-grid';
-        
-        sampleCompetitions.forEach(competition => {
-            const competitionCard = createCompetitionCard(competition);
-            competitionGrid.appendChild(competitionCard);
-        });
-        
-        categoryContainer.appendChild(competitionGrid);
-    }
-}
-
-function getSampleCompetitions(category) {
-    // Return empty array for ALL categories (no active competitions)
-    return [];
-}
-
-function createCompetitionCard(competition) {
-    const card = document.createElement('div');
-    card.className = 'competition-card animate-on-scroll';
-    card.innerHTML = `
-        <div class="competition-content">
-            <h3>${competition.title}</h3>
-            <p>${competition.description}</p>
-            <div class="competition-details">
-                <div class="competition-detail">
-                    <i class="fas fa-clock"></i>
-                    <span>Deadline: ${competition.deadline}</span>
-                </div>
-                <div class="competition-detail">
-                    <i class="fas fa-trophy"></i>
-                    <span>Prize: ${competition.prize}</span>
-                </div>
-                <div class="competition-detail">
-                    <i class="fas fa-users"></i>
-                    <span>${competition.participants} participants</span>
-                </div>
-            </div>
-            <button class="btn btn-primary" style="margin-top: 1rem;">
-                <i class="fas fa-arrow-right"></i> Learn More
-            </button>
-        </div>
-    `;
-    
-    card.querySelector('.btn').addEventListener('click', function() {
-        alert(`Competition: ${competition.title}\n\n${competition.description}\n\nDeadline: ${competition.deadline}\nPrize: ${competition.prize}`);
-    });
-    
-    return card;
-}
 
 // ===== HELPER FUNCTIONS =====
 function getCategoryDisplayName(category) {
