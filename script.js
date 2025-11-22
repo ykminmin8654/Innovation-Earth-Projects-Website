@@ -349,6 +349,7 @@ function initializeCategoryTabs() {
             }
         });
     });
+}
 
 // ===== PROJECT CATEGORY POPULATION =====
 function populateProjectCategory(category) {
@@ -606,6 +607,7 @@ function populateCompetitionCategory(category) {
         console.warn(`Competition category container with ID '${category}' not found`);
         return;
     }
+}
 
 // ===== HELPER FUNCTIONS =====
 function getCategoryDisplayName(category) {
@@ -1349,6 +1351,4 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 100);
 });
-
-console.log('✅ Innovation Earth Projects JavaScript loaded successfully!');
 // ===== Push 2 =====
