@@ -3,12 +3,12 @@
 
 // Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyCgV39r2JAR68jXqt2tSLMoW_2vKtJEFV0",
-    authDomain: "innovation-earth-projects.firebaseapp.com",
-    projectId: "innovation-earth-projects",
-    storageBucket: "innovation-earth-projects.firebasestorage.app",
-    messagingSenderId: "1061525102040",
-    appId: "1:1061525102040:web:737c648bc2a548e90ce6ad"
+    apiKey: "your-api-key",
+    authDomain: "your-project.firebaseapp.com",
+    projectId: "your-project-id",
+    storageBucket: "your-project.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "your-app-id"
 };
 
 // Initialize Firebase
@@ -403,27 +403,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     observer.observe(document.getElementById('projects'), { attributes: true });
 });
-
-// ===== DELETE PROJECT FUNCTION =====
-async function deleteProject(projectId) {
-    if (confirm('Are you sure you want to delete this project?')) {
-        try {
-            if (db) {
-                await db.collection("projects").doc(projectId).delete();
-            } else {
-                // Fallback to local storage
-                let projects = JSON.parse(localStorage.getItem('projects') || '[]');
-                projects = projects.filter(p => p.id !== projectId);
-                localStorage.setItem('projects', JSON.stringify(projects));
-            }
-            alert('Project deleted successfully!');
-            loadProjects(); // Reload the projects
-        } catch (error) {
-            console.error('Error deleting project:', error);
-            alert('Error deleting project');
-        }
-    }
-}
 
 // ===== QUICK LINK CARD NAVIGATION =====
 function initializeQuickLinkCards() {
