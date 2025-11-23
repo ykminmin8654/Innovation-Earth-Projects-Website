@@ -8,7 +8,7 @@ const firebaseConfig = {
     projectId: "innovation-earth-projects",
     storageBucket: "innovation-earth-projects.firebasestorage.app",
     messagingSenderId: "1061525102040",
-    appId: "1:1061525102040:web:737c648bc2a548e90ce6ad"，
+    appId: "1:1061525102040:web:737c648bc2a548e90ce6ad",
     measurementId: "G-GBZCTX7LBL"
 };
 
