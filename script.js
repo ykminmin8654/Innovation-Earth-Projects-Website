@@ -1,14 +1,15 @@
 // ===== MAIN SCRIPT FOR INNOVATION EARTH PROJECTS =====
 // Fixed version with all issues resolved
 
-// Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-    apiKey: "your-api-key",
-    authDomain: "your-project.firebaseapp.com",
-    projectId: "your-project-id",
-    storageBucket: "your-project.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "your-app-id"
+  apiKey: "AIzaSyCgV39r2JAR68jXqt2tSLMoW_2vKtJEFV0",
+  authDomain: "innovation-earth-projects.firebaseapp.com",
+  projectId: "innovation-earth-projects",
+  storageBucket: "innovation-earth-projects.firebasestorage.app",
+  messagingSenderId: "1061525102040",
+  appId: "1:1061525102040:web:737c648bc2a548e90ce6ad",
+  measurementId: "G-GBZCTX7LBL"
 };
 
 // Initialize Firebase
