@@ -1,15 +1,15 @@
 // ===== MAIN SCRIPT FOR INNOVATION EARTH PROJECTS =====
-// Fixed version with all issues resolved
+// Fixed version with all syntax errors resolved
 
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyCgV39r2JAR68jXqt2tSLMoW_2vKtJEFV0",
-  authDomain: "innovation-earth-projects.firebaseapp.com",
-  projectId: "innovation-earth-projects",
-  storageBucket: "innovation-earth-projects.firebasestorage.app",
-  messagingSenderId: "1061525102040",
-  appId: "1:1061525102040:web:737c648bc2a548e90ce6ad",
-  measurementId: "G-GBZCTX7LBL"
+    apiKey: "AIzaSyCgV39r2JAR68jXqt2tSLMoW_2vKtJEFV0",
+    authDomain: "innovation-earth-projects.firebaseapp.com",
+    projectId: "innovation-earth-projects",
+    storageBucket: "innovation-earth-projects.firebasestorage.app",
+    messagingSenderId: "1061525102040",
+    appId: "1:1061525102040:web:737c648bc2a548e90ce6ad",
+    measurementId: "G-GBZCTX7LBL"
 };
 
 // Initialize Firebase
@@ -24,7 +24,7 @@ try {
     console.warn('⚠️ Firebase initialization failed:', error);
 }
 
-// Main initialization when DOM is ready
+// ===== MAIN INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing Innovation Earth Projects...');
     
@@ -37,6 +37,13 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeCompetitionTabs();
     initializeContactForm();
     initializeSmoothScrolling();
+    initializeQuickLinkCards();
+    initializeAdminPanel();
+    
+    // Load projects if on projects section
+    if (window.location.hash === '#projects') {
+        loadProjects();
+    }
     
     console.log('✅ All functionality loaded successfully!');
 });
@@ -101,9 +108,16 @@ function showSection(sectionId) {
         // Scroll to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
         
+        // Load section-specific content
+        if (sectionId === '#projects') {
+            loadProjects();
+        }
+        
         console.log('✅ Section activated:', sectionId);
     } else {
         console.warn('❌ Section not found:', sectionId);
+        // Fallback to home
+        showSection('#home');
     }
 }
 
@@ -220,11 +234,13 @@ function initializeCategoryTabs() {
             const container = this.closest('.container');
             container.querySelectorAll('.project-category, .competition-category, .role-category').forEach(cat => {
                 cat.classList.remove('active');
+                cat.style.display = 'none';
             });
             
             const targetCategory = document.getElementById(category);
             if (targetCategory) {
                 targetCategory.classList.add('active');
+                targetCategory.style.display = 'block';
             }
         });
     });
@@ -300,112 +316,7 @@ function initializeContactForm() {
     }
 }
 
-// ===== ADMIN PANEL =====
-function toggleAdmin() {
-    const panel = document.getElementById('adminPanel');
-    if (panel) {
-        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-    }
-}
-
-async function addCard() {
-    const title = document.getElementById('cardTitle').value;
-    const description = document.getElementById('cardDesc').value;
-    
-    if (!title || !description) {
-        alert('Please fill in both fields');
-        return;
-    }
-    
-    try {
-        if (db) {
-            await db.collection("projects").add({
-                title: title,
-                description: description,
-                createdAt: new Date()
-            });
-            alert('Project added successfully!');
-            document.getElementById('cardTitle').value = '';
-            document.getElementById('cardDesc').value = '';
-        } else {
-            alert('Firebase not available. Using local storage.');
-            // Fallback to local storage
-            const projects = JSON.parse(localStorage.getItem('projects') || '[]');
-            projects.push({ title, description, createdAt: new Date() });
-            localStorage.setItem('projects', JSON.stringify(projects));
-        }
-    } catch (error) {
-        console.error('Error adding card:', error);
-        alert('Error adding project: ' + error.message);
-    }
-}
-
-// ===== LOAD PROJECTS =====
-async function loadProjects() {
-    try {
-        let projects = [];
-        
-        if (db) {
-            // Load from Firebase
-            const querySnapshot = await db.collection("projects").get();
-            projects = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        } else {
-            // Load from local storage
-            projects = JSON.parse(localStorage.getItem('projects') || '[]');
-        }
-        
-        const container = document.getElementById('projects-container');
-        if (!container) return;
-        
-        container.innerHTML = '';
-        
-        if (projects.length === 0) {
-            container.innerHTML = '<div class="projects-loading">No projects yet. Add some through the admin panel</div>';
-            return;
-        }
-        
-        projects.forEach(project => {
-            const card = document.createElement('div');
-            card.className = 'dynamic-project-card';
-            card.innerHTML = `
-                <h3>${project.title}</h3>
-                <p>${project.description}</p>
-                <div class="project-meta">
-                    <span class="project-date">Added: ${new Date(project.createdAt).toLocaleDateString()}</span>
-                    <div class="project-actions">
-                        <button class="btn-small btn-delete" onclick="deleteProject('${project.id}')">Delete</button>
-                    </div>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-    } catch (error) {
-        console.error('Error loading projects:', error);
-        const container = document.getElementById('projects-container');
-        if (container) {
-            container.innerHTML = '<div class="projects-loading">Error loading projects</div>';
-        }
-    }
-}
-
-// Auto-load projects when projects section is shown
-document.addEventListener('DOMContentLoaded', function() {
-    // Observe section changes to load projects when needed
-    const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                const target = mutation.target;
-                if (target.id === 'projects' && target.style.display !== 'none') {
-                    loadProjects();
-                }
-            }
-        });
-    });
-    
-    observer.observe(document.getElementById('projects'), { attributes: true });
-});
-
-// ===== QUICK LINK CARD NAVIGATION =====
+// ===== QUICK LINK CARDS =====
 function initializeQuickLinkCards() {
     console.log('🔗 Initializing quick link cards...');
     
@@ -438,87 +349,158 @@ function initializeQuickLinkCards() {
     });
 }
 
-// ===== ENHANCED SECTION NAVIGATION =====
-function showSection(sectionId) {
-    console.log('🔄 Navigating to section:', sectionId);
+// ===== ADMIN PANEL =====
+function initializeAdminPanel() {
+    console.log('🔧 Setting up admin panel...');
     
-    // Hide all sections
-    document.querySelectorAll('.section').forEach(section => {
-        section.classList.remove('active');
-        section.style.display = 'none';
-    });
+    // Admin toggle button
+    const adminBtn = document.querySelector('.admin-toggle-btn');
+    if (adminBtn) {
+        adminBtn.addEventListener('click', toggleAdminPanel);
+    }
     
-    // Show target section
-    const targetSection = document.querySelector(sectionId);
-    if (targetSection) {
-        targetSection.classList.add('active');
-        targetSection.style.display = 'block';
+    // Add card button
+    const addCardBtn = document.querySelector('button[onclick="addCard()"]');
+    if (addCardBtn) {
+        addCardBtn.onclick = addCard;
+    }
+}
+
+function toggleAdminPanel() {
+    const panel = document.getElementById('adminPanel');
+    if (panel) {
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+}
+
+async function addCard() {
+    const title = document.getElementById('cardTitle').value;
+    const description = document.getElementById('cardDesc').value;
+    
+    if (!title || !description) {
+        alert('Please fill in both fields');
+        return;
+    }
+    
+    try {
+        const cardData = {
+            title: title,
+            description: description,
+            createdAt: new Date()
+        };
         
-        // Update URL for browser history
-        history.pushState(null, '', sectionId);
+        if (db) {
+            await db.collection("projects").add(cardData);
+            alert('✅ Project added to Firebase!');
+        } else {
+            // Fallback to local storage
+            const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+            projects.push(cardData);
+            localStorage.setItem('projects', JSON.stringify(projects));
+            alert('✅ Project saved to local storage!');
+        }
         
-        // Update navigation highlights
-        updateNavHighlight(sectionId);
+        // Clear form
+        document.getElementById('cardTitle').value = '';
+        document.getElementById('cardDesc').value = '';
         
-        // Scroll to top smoothly
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
+        // Reload projects
+        loadProjects();
+        
+    } catch (error) {
+        console.error('❌ Error adding card:', error);
+        alert('Error adding project: ' + error.message);
+    }
+}
+
+// ===== LOAD PROJECTS =====
+async function loadProjects() {
+    try {
+        let projects = [];
+        
+        if (db) {
+            // Load from Firebase
+            const querySnapshot = await db.collection("projects").get();
+            projects = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        } else {
+            // Load from local storage
+            projects = JSON.parse(localStorage.getItem('projects') || '[]');
+        }
+        
+        const container = document.getElementById('projects-container');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        if (projects.length === 0) {
+            container.innerHTML = '<div class="projects-loading">No projects yet. Add some through the admin panel!</div>';
+            return;
+        }
+        
+        projects.forEach(project => {
+            const card = document.createElement('div');
+            card.className = 'dynamic-project-card';
+            card.innerHTML = `
+                <h3>${project.title}</h3>
+                <p>${project.description}</p>
+                <div class="project-meta">
+                    <span class="project-date">Added: ${new Date(project.createdAt).toLocaleDateString()}</span>
+                    <div class="project-actions">
+                        <button class="btn-small btn-delete" onclick="deleteProject('${project.id}')">Delete</button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
         });
         
-        // Trigger animations for the new section
-        setTimeout(() => {
-            triggerSectionAnimations(sectionId);
-            
-            // Load section-specific content
-            if (sectionId === '#projects') {
-                loadProjects();
-            } else if (sectionId === '#competitions') {
-                initializeCompetitionTabs();
+        console.log('✅ Projects loaded:', projects.length);
+        
+    } catch (error) {
+        console.error('❌ Error loading projects:', error);
+        const container = document.getElementById('projects-container');
+        if (container) {
+            container.innerHTML = '<div class="projects-loading">Error loading projects</div>';
+        }
+    }
+}
+
+// ===== DELETE PROJECT =====
+async function deleteProject(projectId) {
+    if (confirm('Are you sure you want to delete this project?')) {
+        try {
+            if (db) {
+                await db.collection("projects").doc(projectId).delete();
+            } else {
+                let projects = JSON.parse(localStorage.getItem('projects') || '[]');
+                projects = projects.filter(p => p.id !== projectId);
+                localStorage.setItem('projects', JSON.stringify(projects));
             }
-        }, 300);
-        
-        console.log('✅ Section activated:', sectionId);
-    } else {
-        console.warn('❌ Section not found:', sectionId);
-        // Fallback to home section
-        showSection('#home');
+            alert('✅ Project deleted successfully!');
+            loadProjects();
+        } catch (error) {
+            console.error('❌ Error deleting project:', error);
+            alert('Error deleting project');
+        }
     }
 }
 
-// ===== UPDATE NAVIGATION HIGHLIGHTS =====
-function updateNavHighlight(sectionId) {
-    // Remove active class from all nav links
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.classList.remove('active');
-    });
-    
-    // Add active class to current nav link
-    const currentNavLink = document.querySelector(`.nav-link[href="${sectionId}"]`);
-    if (currentNavLink) {
-        currentNavLink.classList.add('active');
-    }
-    
-    // Also update any other navigation elements that might need highlighting
-    document.querySelectorAll(`a[href="${sectionId}"]`).forEach(link => {
-        link.classList.add('active');
-    });
-}
-
-// ===== TRIGGER SECTION ANIMATIONS =====
-function triggerSectionAnimations(sectionId) {
-    const section = document.querySelector(sectionId);
-    if (section) {
-        // Re-trigger scroll animations
-        const animateElements = section.querySelectorAll('.animate-on-scroll');
-        animateElements.forEach(el => {
-            el.classList.remove('animated');
-            // Trigger reflow
-            void el.offsetWidth;
-            el.classList.add('animated');
+// ===== AUTO-LOAD PROJECTS WHEN PROJECTS SECTION IS VIEWED =====
+document.addEventListener('DOMContentLoaded', function() {
+    const projectsSection = document.getElementById('projects');
+    if (projectsSection) {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    if (projectsSection.style.display !== 'none') {
+                        loadProjects();
+                    }
+                }
+            });
         });
+        
+        observer.observe(projectsSection, { attributes: true });
     }
-}
+});
 
 // ===== ENHANCED QUICK LINK CARD STYLING =====
 // Add this CSS to make the cards more interactive
@@ -561,34 +543,4 @@ const styleSheet = document.createElement('style');
 styleSheet.textContent = quickLinkStyles;
 document.head.appendChild(styleSheet);
 
-// ===== INITIALIZE QUICK LINKS =====
-// Add this function call to your main initialization function
-function initializeAllFunctionality() {
-    console.log('🚀 Initializing Innovation Earth Projects...');
-    
-    // Initialize all functionality in correct order
-    initializeSectionManagement();
-    initializeMobileMenu();
-    initializeBannerSlider();
-    initializeNavigation();
-    initializeScrollAnimations();
-    initializeCategoryTabs();
-    initializeCompetitionTabs();
-    initializeStatsCounter();
-    initializeContactForm();
-    initializeSmoothScrolling();
-    initializeProjectCards();
-    initializeRoleCards();
-    initializeEventRegistration();
-    animateProgressBars();
-    initializeAdminPanel();
-    initializeCompetitionLinks();
-    initializeQuickLinkCards(); // ADD THIS LINE HERE
-    
-    console.log('✅ All functionality loaded successfully!');
-}
-
-// Update your DOMContentLoaded event listener
-document.addEventListener('DOMContentLoaded', function() {
-    initializeAllFunctionality();
-});
+console.log("✅ Innovation Earth Projects script loaded successfully!");
