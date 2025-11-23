@@ -394,3 +394,190 @@ document.addEventListener('DOMContentLoaded', function() {
     
     observer.observe(document.getElementById('projects'), { attributes: true });
 });
+// ===== QUICK LINK CARD NAVIGATION =====
+function initializeQuickLinkCards() {
+    console.log('🔗 Initializing quick link cards...');
+    
+    // Add click handlers to all quick link cards
+    document.querySelectorAll('.quick-link-card').forEach(card => {
+        card.addEventListener('click', function(e) {
+            // Don't trigger if user clicked on the button inside
+            if (e.target.closest('a') || e.target.closest('button')) {
+                return;
+            }
+            
+            // Get the target section from the card's content
+            const link = this.querySelector('a[href^="#"]');
+            if (link) {
+                const targetSection = link.getAttribute('href');
+                showSection(targetSection);
+            }
+        });
+    });
+
+    // Add specific click handlers for the buttons to prevent event bubbling
+    document.querySelectorAll('.quick-link-card .btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent the card click event
+            const targetSection = this.getAttribute('href');
+            if (targetSection) {
+                showSection(targetSection);
+            }
+        });
+    });
+}
+
+// ===== ENHANCED SECTION NAVIGATION =====
+function showSection(sectionId) {
+    console.log('🔄 Navigating to section:', sectionId);
+    
+    // Hide all sections
+    document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+        section.style.display = 'none';
+    });
+    
+    // Show target section
+    const targetSection = document.querySelector(sectionId);
+    if (targetSection) {
+        targetSection.classList.add('active');
+        targetSection.style.display = 'block';
+        
+        // Update URL for browser history
+        history.pushState(null, '', sectionId);
+        
+        // Update navigation highlights
+        updateNavHighlight(sectionId);
+        
+        // Scroll to top smoothly
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+        
+        // Trigger animations for the new section
+        setTimeout(() => {
+            triggerSectionAnimations(sectionId);
+            
+            // Load section-specific content
+            if (sectionId === '#projects') {
+                loadProjects();
+            } else if (sectionId === '#competitions') {
+                initializeCompetitionTabs();
+            }
+        }, 300);
+        
+        console.log('✅ Section activated:', sectionId);
+    } else {
+        console.warn('❌ Section not found:', sectionId);
+        // Fallback to home section
+        showSection('#home');
+    }
+}
+
+// ===== UPDATE NAVIGATION HIGHLIGHTS =====
+function updateNavHighlight(sectionId) {
+    // Remove active class from all nav links
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    
+    // Add active class to current nav link
+    const currentNavLink = document.querySelector(`.nav-link[href="${sectionId}"]`);
+    if (currentNavLink) {
+        currentNavLink.classList.add('active');
+    }
+    
+    // Also update any other navigation elements that might need highlighting
+    document.querySelectorAll(`a[href="${sectionId}"]`).forEach(link => {
+        link.classList.add('active');
+    });
+}
+
+// ===== TRIGGER SECTION ANIMATIONS =====
+function triggerSectionAnimations(sectionId) {
+    const section = document.querySelector(sectionId);
+    if (section) {
+        // Re-trigger scroll animations
+        const animateElements = section.querySelectorAll('.animate-on-scroll');
+        animateElements.forEach(el => {
+            el.classList.remove('animated');
+            // Trigger reflow
+            void el.offsetWidth;
+            el.classList.add('animated');
+        });
+    }
+}
+
+// ===== ENHANCED QUICK LINK CARD STYLING =====
+// Add this CSS to make the cards more interactive
+const quickLinkStyles = `
+.quick-link-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.quick-link-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 206, 209, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.quick-link-card:hover::before {
+    left: 100%;
+}
+
+.quick-link-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.quick-link-card .btn {
+    position: relative;
+    z-index: 2;
+}
+`;
+
+// Inject the styles
+const styleSheet = document.createElement('style');
+styleSheet.textContent = quickLinkStyles;
+document.head.appendChild(styleSheet);
+
+// ===== INITIALIZE QUICK LINKS =====
+// Add this function call to your main initialization function
+function initializeAllFunctionality() {
+    console.log('🚀 Initializing Innovation Earth Projects...');
+    
+    // Initialize all functionality in correct order
+    initializeSectionManagement();
+    initializeMobileMenu();
+    initializeBannerSlider();
+    initializeNavigation();
+    initializeScrollAnimations();
+    initializeCategoryTabs();
+    initializeCompetitionTabs();
+    initializeStatsCounter();
+    initializeContactForm();
+    initializeSmoothScrolling();
+    initializeProjectCards();
+    initializeRoleCards();
+    initializeEventRegistration();
+    animateProgressBars();
+    initializeAdminPanel();
+    initializeCompetitionLinks();
+    initializeQuickLinkCards(); // ADD THIS LINE HERE
+    
+    console.log('✅ All functionality loaded successfully!');
+}
+
+// Update your DOMContentLoaded event listener
+document.addEventListener('DOMContentLoaded', function() {
+    initializeAllFunctionality();
+});
