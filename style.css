@@ -1768,6 +1768,107 @@ p {
     }
 }
 
+/* Add these missing CSS variables */
+:root {
+    /* Add these missing color variables */
+    --cyan: #00CED1;
+    --dark-green: #006400;
+    --gray-light: #f5f5f5;
+    --light: #f0f8ff;
+    --text-light: #666;
+    
+    /* Add these missing spacing variables */
+    --border-radius-lg: 12px;
+    --border-radius: 8px;
+    
+    /* Add these missing effect variables */
+    --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.15);
+    --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.1);
+    --transition-slow: all 0.6s ease;
+}
+
+/* Add missing admin panel styles */
+.admin-toggle-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 10000;
+}
+
+.admin-panel {
+    display: none;
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: white;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    z-index: 10000;
+    width: 300px;
+}
+
+.admin-panel input,
+.admin-panel textarea {
+    width: 100%;
+    margin: 5px 0;
+    padding: 8px;
+}
+
+/* Fix section management */
+.section {
+    display: none;
+    min-height: 100vh;
+    padding: var(--space-xxl) 0;
+    opacity: 0;
+    transform: translateY(50px);
+    transition: all 0.5s ease;
+    width: 100%;
+}
+
+.section.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Fix competition tabs */
+.competition-category {
+    display: none;
+}
+
+.competition-category.active {
+    display: block;
+}
+
+/* Add responsive fixes */
+@media (max-width: 768px) {
+    .nav-list {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--teal);
+        padding: var(--space-sm);
+    }
+    
+    .nav-list.show {
+        display: flex;
+    }
+    
+    .mobile-menu-toggle {
+        display: block;
+    }
+}
+
 /* Enhanced competition section header */
 #competitions .section-header h2 {
     background: linear-gradient(135deg, var(--teal), var(--cyan));
