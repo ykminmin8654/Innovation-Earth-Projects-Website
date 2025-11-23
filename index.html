@@ -9,6 +9,9 @@
     <!-- External Resources -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="./style.css">
+    <!-- Add this to your existing head section -->
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -40,6 +43,38 @@
             </div>
         </div>
     </header>
+
+    <!-- Simple Admin Button - Add this after your header -->
+<button onclick="toggleAdmin()" style="
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 10000;
+">Admin Panel</button>
+
+<div id="adminPanel" style="
+    display: none;
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: white;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    z-index: 10000;
+    width: 300px;
+">
+    <h3>Add Project Card</h3>
+    <input type="text" id="cardTitle" placeholder="Title" style="width:100%; margin:5px 0; padding:8px;"><br>
+    <textarea id="cardDesc" placeholder="Description" style="width:100%; margin:5px 0; padding:8px; height:60px;"></textarea><br>
+    <button onclick="addCard()" style="background:#667eea; color:white; padding:8px 15px; border:none; border-radius:3px; cursor:pointer;">Add Card</button>
+</div>
 
     <!-- Main Content -->
     <main class="main-content">
@@ -542,6 +577,60 @@
             </div>
         </div>
     </footer>
+<script>
+    
+// Simple Admin Functions
+function toggleAdmin() {
+    const panel = document.getElementById('adminPanel');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+async function addCard() {
+    // Your Firebase config
+    const firebaseConfig = {
+        apiKey: "AIzaSyCgV39r2JAR68jXqt2tSLMoW_2vKtJEFV0",
+        authDomain: "innovation-earth-projects.firebaseapp.com",
+        projectId: "innovation-earth-projects", 
+        storageBucket: "innovation-earth-projects.firebasestorage.app",
+        messagingSenderId: "1061525102040",
+        appId: "1:1061525102040:web:737c648bc2a548e90ce6ad",
+        measurementId: "G-GBZCTX7LBL"
+    };
+    
+    // Initialize Firebase
+    if (typeof firebase === 'undefined') {
+        alert('Firebase not loaded yet. Please wait and try again.');
+        return;
+    }
+    
+    if (!firebase.apps.length) {
+        firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.firestore();
+    
+    const cardData = {
+        title: document.getElementById('cardTitle').value,
+        description: document.getElementById('cardDesc').value,
+        createdAt: new Date()
+    };
+    
+    if (!cardData.title || !cardData.description) {
+        alert('Please enter both title and description');
+        return;
+    }
+    
+    try {
+        await db.collection("projects").add(cardData);
+        alert('✅ Card added to Firebase!');
+        // Clear form
+        document.getElementById('cardTitle').value = '';
+        document.getElementById('cardDesc').value = '';
+    } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Error adding card: ' + error.message);
+    }
+}
+</script>
 
     <!-- JavaScript -->
     <script src="script.js"></script>
