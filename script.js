@@ -1,5 +1,5 @@
 // ===== MAIN SCRIPT FOR INNOVATION EARTH PROJECTS =====
-// Complete version with all original functionality and navigation fixes
+// Complete version with all original functionality and competition section integration
 
 // Main initialization when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeNavigation();
     initializeScrollAnimations();
     initializeCategoryTabs();
+    initializeCompetitionTabs(); // NEW: Competition section tabs
     initializeStatsCounter();
     initializeContactForm();
     initializeSmoothScrolling();
@@ -22,6 +23,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeRoleCards();
     initializeEventRegistration();
     animateProgressBars();
+    initializeAdminPanel();
+    initializeCompetitionLinks(); // NEW: Competition resource links
     
     console.log('✅ Innovation Earth Projects - All functionality loaded successfully!');
 });
@@ -32,7 +35,7 @@ function initializeSectionManagement() {
     
     // Make sure all sections are properly set up
     document.querySelectorAll('.section').forEach(section => {
-        section.style.display = 'block';
+        section.style.display = 'none';
         section.style.minHeight = '100vh';
     });
     
@@ -119,6 +122,11 @@ function showSection(sectionId) {
         // Trigger animations for the new section
         setTimeout(() => {
             triggerSectionAnimations(sectionId);
+            
+            // Load section-specific content
+            if (sectionId === '#projects') {
+                loadProjects();
+            }
         }, 300);
         
         console.log('✅ Section activated:', sectionId);
@@ -147,7 +155,8 @@ function triggerSectionAnimations(sectionId) {
         const animateElements = section.querySelectorAll('.animate-on-scroll');
         animateElements.forEach(el => {
             el.classList.remove('animated');
-            void el.offsetWidth; // Trigger reflow
+            // Trigger reflow
+            void el.offsetWidth;
             el.classList.add('animated');
         });
     }
@@ -346,6 +355,43 @@ function initializeCategoryTabs() {
             if (targetCategory) {
                 targetCategory.classList.add('active');
                 populateRoleCategory(category);
+            }
+        });
+    });
+}
+
+// ===== COMPETITION TABS FUNCTIONALITY =====
+function initializeCompetitionTabs() {
+    const competitionTabs = document.querySelectorAll('.category-nav .category-tab[data-category]');
+    
+    competitionTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const category = this.getAttribute('data-category');
+            
+            // Update active tab
+            competitionTabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Show selected category, hide others
+            document.querySelectorAll('.competition-category').forEach(cat => {
+                cat.classList.remove('active');
+                cat.setAttribute('hidden', 'true');
+            });
+            
+            const targetCategory = document.getElementById(category);
+            if (targetCategory) {
+                targetCategory.classList.add('active');
+                targetCategory.removeAttribute('hidden');
+                
+                // Trigger animations for the new category
+                setTimeout(() => {
+                    const animateElements = targetCategory.querySelectorAll('.animate-on-scroll');
+                    animateElements.forEach(el => {
+                        el.classList.remove('animated');
+                        void el.offsetWidth;
+                        el.classList.add('animated');
+                    });
+                }, 100);
             }
         });
     });
@@ -1149,17 +1195,17 @@ function addCalendarIntegration() {
     });
 }
 
-function addToCalendar(eventTitle, date, time, location) {
+function addToCalendar(title, date, time, location) {
     // Create calendar event URL
     const startTime = new Date(`${date} ${time}`).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
     const endTime = new Date(new Date(`${date} ${time}`).getTime() + 2 * 60 * 60 * 1000).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
     
-    const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(eventTitle)}&dates=${startTime}/${endTime}&details=${encodeURIComponent(`Event: ${eventTitle}\nLocation: ${location}`)}&location=${encodeURIComponent(location)}`;
+    const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startTime}/${endTime}&details=${encodeURIComponent(`Event: ${title}\nLocation: ${location}`)}&location=${encodeURIComponent(location)}`;
     
     window.open(calendarUrl, '_blank');
 }
 
-// ==// ===== EVENT DETAILS MODAL =====
+// ===== EVENT DETAILS MODAL =====
 function showEventDetails(eventItem) {
     const modal = createModal({
         title: 'Event Details',
@@ -1309,6 +1355,67 @@ function showToast(message, type = 'success') {
     }, 3000);
 }
 
+// ===== COMPETITION LINKS FUNCTIONALITY =====
+function initializeCompetitionLinks() {
+    // Add click handlers for competition resource links
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.competition-resource-link')) {
+            e.preventDefault();
+            const link = e.target.closest('.competition-resource-link');
+            const url = link.href;
+            window.open(url, '_blank');
+        }
+    });
+}
+
+// ===== ADMIN PANEL FUNCTIONALITY =====
+function initializeAdminPanel() {
+    // Admin panel toggle
+    window.toggleAdmin = function() {
+        const panel = document.getElementById('adminPanel');
+        if (panel) {
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        }
+    };
+    
+    // Add card function
+    window.addCard = async function() {
+        const title = document.getElementById('cardTitle')?.value;
+        const description = document.getElementById('cardDesc')?.value;
+        
+        if (!title || !description) {
+            alert('Please enter both title and description');
+            return;
+        }
+        
+        const cardData = {
+            title: title,
+            description: description,
+            createdAt: new Date(),
+            status: 'Active'
+        };
+        
+        try {
+            if (db) {
+                await db.collection("projects").add(cardData);
+                showToast('✅ Project added to Firebase!', 'success');
+                
+                // Clear form
+                document.getElementById('cardTitle').value = '';
+                document.getElementById('cardDesc').value = '';
+                
+                // Reload projects
+                loadProjects();
+            } else {
+                showToast('❌ Firebase not available', 'error');
+            }
+        } catch (error) {
+            console.error('Error adding card:', error);
+            showToast('❌ Error adding project: ' + error.message, 'error');
+        }
+    };
+}
+
 // ===== MISSING FUNCTIONS THAT YOUR CODE REFERENCES =====
 function showRegistrationModal(eventData) {
     // Simple registration modal implementation
@@ -1328,9 +1435,66 @@ function showRegistrationModal(eventData) {
     document.body.appendChild(modal);
 }
 
-function addToCalendar(title, date, time, location) {
-    // Simple calendar integration
-    alert(`Adding to calendar:\n\nEvent: ${title}\nDate: ${date}\nTime: ${time}\nLocation: ${location}\n\nThis would open your calendar app.`);
+function showEventModal(options) {
+    const modal = createModal({
+        title: options.title,
+        onClose: 'closeModal()'
+    });
+    
+    modal.querySelector('.modal-content').innerHTML = `
+        <div style="padding: 20px; text-align: center;">
+            <p>${options.content}</p>
+            <div class="modal-actions">
+                ${options.buttons.map(btn => 
+                    `<button class="btn ${btn.text === 'OK' ? 'btn-primary' : 'btn-secondary'}" onclick="${btn.action}">${btn.text}</button>`
+                ).join('')}
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+// ===== LOAD PROJECTS FROM FIREBASE =====
+async function loadProjects() {
+    try {
+        if (typeof firebase === 'undefined' || !db) {
+            console.log('Firebase not available, using sample projects');
+            return;
+        }
+        
+        const querySnapshot = await db.collection("projects").get();
+        const container = document.getElementById('projects-container');
+        
+        if (!container) return;
+        
+        container.innerHTML = '';
+        
+        if (querySnapshot.empty) {
+            container.innerHTML = '<p>No projects yet. Add some through the admin panel!</p>';
+            return;
+        }
+        
+        querySnapshot.forEach((doc) => {
+            const project = doc.data();
+            const card = `
+                <div class="project-card" style="
+                    background: white;
+                    padding: 20px;
+                    margin: 15px 0;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                ">
+                    <h3>${project.title}</h3>
+                    <p>${project.description}</p>
+                    <small>Added: ${project.createdAt?.toDate().toLocaleDateString() || 'Recently'}</small>
+                </div>
+            `;
+            container.innerHTML += card;
+        });
+    } catch (error) {
+        console.error('Error loading projects:', error);
+    }
 }
 
 // ===== INITIALIZATION =====
@@ -1351,4 +1515,3 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 100);
 });
-// ===== Push 2 =====
