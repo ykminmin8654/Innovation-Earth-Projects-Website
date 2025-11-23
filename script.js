@@ -359,22 +359,31 @@ async function loadProjects() {
         container.innerHTML = '';
         
         if (projects.length === 0) {
-            container.innerHTML = '<p>No projects yet. Add some through the admin panel!</p>';
+            container.innerHTML = '<div class="projects-loading">No projects yet. Add some through the admin panel</div>';
             return;
         }
         
         projects.forEach(project => {
             const card = document.createElement('div');
-            card.className = 'project-card';
+            card.className = 'dynamic-project-card';
             card.innerHTML = `
                 <h3>${project.title}</h3>
                 <p>${project.description}</p>
-                <small>Added: ${new Date(project.createdAt).toLocaleDateString()}</small>
+                <div class="project-meta">
+                    <span class="project-date">Added: ${new Date(project.createdAt).toLocaleDateString()}</span>
+                    <div class="project-actions">
+                        <button class="btn-small btn-delete" onclick="deleteProject('${project.id}')">Delete</button>
+                    </div>
+                </div>
             `;
             container.appendChild(card);
         });
     } catch (error) {
         console.error('Error loading projects:', error);
+        const container = document.getElementById('projects-container');
+        if (container) {
+            container.innerHTML = '<div class="projects-loading">Error loading projects</div>';
+        }
     }
 }
 
@@ -394,6 +403,28 @@ document.addEventListener('DOMContentLoaded', function() {
     
     observer.observe(document.getElementById('projects'), { attributes: true });
 });
+
+// ===== DELETE PROJECT FUNCTION =====
+async function deleteProject(projectId) {
+    if (confirm('Are you sure you want to delete this project?')) {
+        try {
+            if (db) {
+                await db.collection("projects").doc(projectId).delete();
+            } else {
+                // Fallback to local storage
+                let projects = JSON.parse(localStorage.getItem('projects') || '[]');
+                projects = projects.filter(p => p.id !== projectId);
+                localStorage.setItem('projects', JSON.stringify(projects));
+            }
+            alert('Project deleted successfully!');
+            loadProjects(); // Reload the projects
+        } catch (error) {
+            console.error('Error deleting project:', error);
+            alert('Error deleting project');
+        }
+    }
+}
+
 // ===== QUICK LINK CARD NAVIGATION =====
 function initializeQuickLinkCards() {
     console.log('🔗 Initializing quick link cards...');
