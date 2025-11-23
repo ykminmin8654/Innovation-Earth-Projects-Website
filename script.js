@@ -360,42 +360,112 @@ function initializeCategoryTabs() {
     });
 }
 
-// ===== COMPETITION TABS FUNCTIONALITY =====
+// ===== COMPETITION TABS FUNCTIONALITY (consolidated single section) =====
+let competitionTabs = [];
+
 function initializeCompetitionTabs() {
-    const competitionTabs = document.querySelectorAll('.category-nav .category-tab[data-category]');
-    
+    competitionTabs = Array.from(document.querySelectorAll('.category-nav .category-tab[data-category]'));
+    const categories = Array.from(document.querySelectorAll('.competition-category'));
+
+    if (competitionTabs.length === 0) {
+        console.warn('⚠️ No competition tabs found');
+        categories.forEach(cat => {
+            cat.classList.remove('active');
+            cat.style.display = 'none';
+            cat.setAttribute('aria-hidden', 'true');
+        });
+        return;
+    }
+
+    // Ensure all categories are hidden initially
+    categories.forEach(cat => {
+        cat.classList.remove('active');
+        cat.style.display = 'none';
+        cat.setAttribute('aria-hidden', 'true');
+    });
+
+    // Accessibility + interaction for each tab
     competitionTabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            const category = this.getAttribute('data-category');
-            
-            // Update active tab
-            competitionTabs.forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Show selected category, hide others
-            document.querySelectorAll('.competition-category').forEach(cat => {
-                cat.classList.remove('active');
-                cat.setAttribute('hidden', 'true');
-            });
-            
-            const targetCategory = document.getElementById(category);
-            if (targetCategory) {
-                targetCategory.classList.add('active');
-                targetCategory.removeAttribute('hidden');
-                
-                // Trigger animations for the new category
-                setTimeout(() => {
-                    const animateElements = targetCategory.querySelectorAll('.animate-on-scroll');
-                    animateElements.forEach(el => {
-                        el.classList.remove('animated');
-                        void el.offsetWidth;
-                        el.classList.add('animated');
-                    });
-                }, 100);
+        tab.setAttribute('role', 'tab');
+        tab.setAttribute('tabindex', '0');
+        tab.setAttribute('aria-selected', 'false');
+
+        tab.addEventListener('click', () => activateCompetitionTab(tab));
+        tab.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                activateCompetitionTab(tab);
+            } else if (e.key === 'ArrowRight') {
+                const idx = competitionTabs.indexOf(tab);
+                const next = competitionTabs[(idx + 1) % competitionTabs.length];
+                next && next.focus();
+            } else if (e.key === 'ArrowLeft') {
+                const idx = competitionTabs.indexOf(tab);
+                const prev = competitionTabs[(idx - 1 + competitionTabs.length) % competitionTabs.length];
+                prev && prev.focus();
             }
         });
     });
+
+    function activateCompetitionTab(tab) {
+        const category = tab.getAttribute('data-category');
+
+        // Update tab states
+        competitionTabs.forEach(t => {
+            t.classList.remove('active');
+            t.setAttribute('aria-selected', 'false');
+        });
+        tab.classList.add('active');
+        tab.setAttribute('aria-selected', 'true');
+
+        // Hide all categories
+        categories.forEach(cat => {
+            cat.classList.remove('active');
+            cat.style.display = 'none';
+            cat.setAttribute('aria-hidden', 'true');
+        });
+
+        // Show target category
+        const target = document.getElementById(category);
+        if (target) {
+            target.classList.add('active');
+            target.style.display = 'block';
+            target.setAttribute('aria-hidden', 'false');
+
+            // Trigger animations for visible elements
+            setTimeout(() => {
+                target.querySelectorAll('.animate-on-scroll').forEach(el => {
+                    el.classList.remove('animated');
+                    void el.offsetWidth;
+                    el.classList.add('animated');
+                });
+            }, 100);
+        } else {
+            console.warn('Competition category not found:', category);
+        }
+    }
+
+    // Activate the first tab by default
+    const firstTab = competitionTabs[0];
+    if (firstTab) {
+        activateCompetitionTab(firstTab);
+    }
 }
+    // Initialize first tab as active
+    const firstTab = competitionTabs[0];
+    if (firstTab) {
+        const firstCategory = firstTab.getAttribute('data-category');
+        const firstCategoryElement = document.getElementById(firstCategory);
+        if (firstCategoryElement) {
+            firstCategoryElement.style.display = 'block';
+            firstCategoryElement.setAttribute('aria-hidden', 'false');
+        }
+    }
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCompetitionTabs();
+});
 
 // ===== PROJECT CATEGORY POPULATION =====
 function populateProjectCategory(category) {
