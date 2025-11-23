@@ -363,453 +363,797 @@
             </div>
         </section>
 
-        <!-- Competitions Section -->
-        <section id="competitions" class="section section-alt">
-            <div class="container">
-                <div class="section-header">
-                    <h2>Competition Resources</h2>
-                    <p>Comprehensive resources for student competitions and organizations</p>
-                </div>
+ <!-- Competitions Section -->
+<section id="competitions" class="section section-alt">
+    <div class="container">
+        <div class="section-header">
+            <h2 id="competitions-heading">Competition Resources</h2>
+            <p>Comprehensive resources for student competitions and organizations</p>
+        </div>
 
-                <!-- Competition Category Navigation -->
-                <nav class="category-nav">
-                    <ul class="category-list">
-                        <li>
-                            <button class="category-tab active" data-category="business-leadership">
-                                <i class="fas fa-chart-line"></i> Business & Leadership
-                            </button>
-                        </li>
-                        <li>
-                            <button class="category-tab" data-category="healthcare">
-                                <i class="fas fa-heartbeat"></i> Healthcare
-                            </button>
-                        </li>
-                        <li>
-                            <button class="category-tab" data-category="career-technical">
-                                <i class="fas fa-tools"></i> Career & Technical
-                            </button>
-                        </li>
-                        <li>
-                            <button class="category-tab" data-category="stem-technology">
-                                <i class="fas fa-rocket"></i> STEM & Technology
-                            </button>
-                        </li>
-                        <li>
-                            <button class="category-tab" data-category="science-olympiad">
-                                <i class="fas fa-flask"></i> Science Olympiad
-                            </button>
-                        </li>
-                        <li>
-                            <button class="category-tab" data-category="math">
-                                <i class="fas fa-calculator"></i> Math Competitions
-                            </button>
-                        </li>
-                    </ul>
-                </nav>
+        <!-- Competition Category Navigation -->
+        <nav class="category-nav" aria-label="Competition categories">
+            <ul class="category-list" role="tablist">
+                <li role="presentation">
+                    <button class="category-tab active" data-category="business-leadership" role="tab" aria-selected="true">
+                        <i class="fas fa-chart-line" aria-hidden="true"></i> Business & Leadership
+                    </button>
+                </li>
+                <li role="presentation">
+                    <button class="category-tab" data-category="healthcare" role="tab">
+                        <i class="fas fa-heartbeat" aria-hidden="true"></i> Healthcare
+                    </button>
+                </li>
+                <li role="presentation">
+                    <button class="category-tab" data-category="stem-technology" role="tab">
+                        <i class="fas fa-rocket" aria-hidden="true"></i> STEM & Technology
+                    </button>
+                </li>
+                <li role="presentation">
+                    <button class="category-tab" data-category="science-olympiads" role="tab">
+                        <i class="fas fa-flask" aria-hidden="true"></i> Science Olympiads
+                    </button>
+                </li>
+                <li role="presentation">
+                    <button class="category-tab" data-category="math-competitions" role="tab">
+                        <i class="fas fa-calculator" aria-hidden="true"></i> Math Competitions
+                    </button>
+                </li>
+                <li role="presentation">
+                    <button class="category-tab" data-category="career-technical" role="tab">
+                        <i class="fas fa-tools" aria-hidden="true"></i> Career & Technical
+                    </button>
+                </li>
+            </ul>
+        </nav>
 
-                <!-- Competition Categories Content -->
-                <div class="competitions-content">
+        <!-- Competition Categories Content -->
+        <div class="competitions-content">
+            
+            <!-- Business & Leadership Category -->
+            <div id="business-leadership" class="competition-category active" role="tabpanel">
+                <div class="competitions-grid">
                     
-                    <!-- Business & Leadership Category -->
-                    <div id="business-leadership" class="competition-category active">
-                        <div class="competitions-grid">
-                            
-                            <!-- FBLA Card -->
-                            <article class="competition-card animate-on-scroll">
-                                <div class="competition-header">
-                                    <div class="competition-icon">
-                                        <i class="fas fa-chart-bar"></i>
-                                    </div>
-                                    <h3>FBLA (Future Business Leaders of America)</h3>
-                                </div>
-                                <div class="competition-content">
-                                    <p>Prepares students for careers in business and business-related fields through academic competitions, leadership development, and educational programs.</p>
-                                    <div class="competition-details">
-                                        <div class="detail-item">
-                                            <strong>Website:</strong> 
-                                            <a href="https://www.fbla.org" target="_blank" class="competition-resource-link">fbla.org</a>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Competition Areas:</strong>
-                                            <span class="tags">
-                                                <span class="tag">Business Management</span>
-                                                <span class="tag">Accounting</span>
-                                                <span class="tag">Marketing</span>
-                                                <span class="tag">Public Speaking</span>
-                                                <span class="tag">Entrepreneurship</span>
-                                                <span class="tag">Finance</span>
-                                            </span>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Key Resources:</strong>
-                                            <ul>
-                                                <li><a href="https://www.fbla.org/competitive-events/" target="_blank">Official Competitive Events List</a></li>
-                                                <li><a href="https://www.fbla.org/resources/study-guides/" target="_blank">Study Guides & Materials</a></li>
-                                                <li><a href="https://www.fbla.org/leadership-conferences/" target="_blank">National Leadership Conference</a></li>
-                                                <li><a href="https://www.fbla.org/chapters/" target="_blank">Chapter Resources</a></li>
-                                            </ul>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Popular Events:</strong>
-                                            <ul>
-                                                <li>Business Plan Competition</li>
-                                                <li>Public Speaking Events</li>
-                                                <li>Accounting & Finance Competitions</li>
-                                                <li>Marketing & Management Events</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </article>
-
-                            <!-- DECA Card -->
-                            <article class="competition-card animate-on-scroll">
-                                <div class="competition-header">
-                                    <div class="competition-icon">
-                                        <i class="fas fa-shopping-bag"></i>
-                                    </div>
-                                    <h3>DECA (Distributive Education Clubs of America)</h3>
-                                </div>
-                                <div class="competition-content">
-                                    <p>Prepares emerging leaders and entrepreneurs in marketing, finance, hospitality, and management in high schools and colleges around the globe.</p>
-                                    <div class="competition-details">
-                                        <div class="detail-item">
-                                            <strong>Website:</strong> 
-                                            <a href="https://www.deca.org" target="_blank" class="competition-resource-link">deca.org</a>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Competition Areas:</strong>
-                                            <span class="tags">
-                                                <span class="tag">Marketing</span>
-                                                <span class="tag">Finance</span>
-                                                <span class="tag">Hospitality</span>
-                                                <span class="tag">Entrepreneurship</span>
-                                                <span class="tag">Business Management</span>
-                                                <span class="tag">Professional Selling</span>
-                                            </span>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Key Resources:</strong>
-                                            <ul>
-                                                <li><a href="https://www.deca.org/high-school-programs/competitive-events/" target="_blank">Competitive Events Guide</a></li>
-                                                <li><a href="https://www.deca.org/classroom-resources/" target="_blank">Classroom Resources</a></li>
-                                                <li><a href="https://www.deca.org/icdc/" target="_blank">International Career Development Conference</a></li>
-                                                <li><a href="https://www.deca.org/study-resources/" target="_blank">Study Resources</a></li>
-                                            </ul>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Signature Programs:</strong>
-                                            <ul>
-                                                <li>Entrepreneurship Events</li>
-                                                <li>Professional Selling Events</li>
-                                                <li>Business Operations Research Events</li>
-                                                <li>Hospitality & Tourism Events</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </article>
-
-                            <!-- BPA Card -->
-                            <article class="competition-card animate-on-scroll">
-                                <div class="competition-header">
-                                    <div class="competition-icon">
-                                        <i class="fas fa-briefcase"></i>
-                                    </div>
-                                    <h3>BPA (Business Professionals of America)</h3>
-                                </div>
-                                <div class="competition-content">
-                                    <p>A career and technical student organization providing leadership development and business education for middle school, high school, and college students.</p>
-                                    <div class="competition-details">
-                                        <div class="detail-item">
-                                            <strong>Website:</strong> 
-                                            <a href="https://www.bpa.org" target="_blank" class="competition-resource-link">bpa.org</a>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Competition Areas:</strong>
-                                            <span class="tags">
-                                                <span class="tag">Information Technology</span>
-                                                <span class="tag">Finance</span>
-                                                <span class="tag">Management</span>
-                                                <span class="tag">Administration</span>
-                                                <span class="tag">Digital Communication</span>
-                                            </span>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Resources:</strong>
-                                            <ul>
-                                                <li><a href="https://www.bpa.org/compete" target="_blank">Competition Information</a></li>
-                                                <li><a href="https://www.bpa.org/conferences" target="_blank">Conference Details</a></li>
-                                                <li><a href="https://www.bpa.org/resources" target="_blank">Member Resources</a></li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </article>
-
+                    <!-- FBLA Card -->
+                    <article class="competition-card animate-on-scroll">
+                        <div class="competition-header">
+                            <div class="competition-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <h3>FBLA (Future Business Leaders of America)</h3>
                         </div>
-                    </div>
-
-                    <!-- Healthcare Category -->
-                    <div id="healthcare" class="competition-category">
-                        <div class="competitions-grid">
-                            
-                            <!-- HOSA Card -->
-                            <article class="competition-card animate-on-scroll">
-                                <div class="competition-header">
-                                    <div class="competition-icon">
-                                        <i class="fas fa-heartbeat"></i>
-                                    </div>
-                                    <h3>HOSA (Future Health Professionals)</h3>
+                        <div class="competition-content">
+                            <p>Prepares students for careers in business and business-related fields through academic competitions, leadership development, and educational programs.</p>
+                            <div class="competition-details">
+                                <div class="detail-item">
+                                    <strong>Website:</strong> 
+                                    <a href="https://www.fbla.org" target="_blank" class="competition-resource-link">fbla.org</a>
                                 </div>
-                                <div class="competition-content">
-                                    <p>A global student-led organization recognized by the U.S. Department of Education that promotes career opportunities in the healthcare industry.</p>
-                                    <div class="competition-details">
-                                        <div class="detail-item">
-                                            <strong>Website:</strong> 
-                                            <a href="https://www.hosa.org" target="_blank" class="competition-resource-link">hosa.org</a>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Competition Areas:</strong>
-                                            <span class="tags">
-                                                <span class="tag">Medical Terminology</span>
-                                                <span class="tag">Nursing</span>
-                                                <span class="tag">Dental Science</span>
-                                                <span class="tag">Public Health</span>
-                                                <span class="tag">Veterinary Science</span>
-                                                <span class="tag">Biomedical Science</span>
-                                            </span>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Key Resources:</strong>
-                                            <ul>
-                                                <li><a href="https://www.hosa.org/competitive-events" target="_blank">Competitive Events Guide</a></li>
-                                                <li><a href="https://www.hosa.org/study-resources" target="_blank">Study Resources & Guidelines</a></li>
-                                                <li><a href="https://www.hosa.org/iclc" target="_blank">International Leadership Conference</a></li>
-                                                <li><a href="https://www.hosa.org/event-guidelines" target="_blank">Event Guidelines</a></li>
-                                            </ul>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Popular Events:</strong>
-                                            <ul>
-                                                <li>Medical Terminology Exam</li>
-                                                <li>Health Science Events</li>
-                                                <li>Emergency Preparedness Events</li>
-                                                <li>Healthcare Career Display</li>
-                                                <li>Biomedical Laboratory Science</li>
-                                            </ul>
-                                        </div>
-                                    </div>
+                                <div class="detail-item">
+                                    <strong>Competition Areas:</strong>
+                                    <span class="tags">
+                                        <span class="tag">Business Management</span>
+                                        <span class="tag">Accounting</span>
+                                        <span class="tag">Marketing</span>
+                                        <span class="tag">Public Speaking</span>
+                                        <span class="tag">Entrepreneurship</span>
+                                        <span class="tag">Finance</span>
+                                    </span>
                                 </div>
-                            </article>
-
+                                <div class="detail-item">
+                                    <strong>Key Resources:</strong>
+                                    <ul>
+                                        <li><a href="https://www.fbla.org/competitive-events/" target="_blank">Official Competitive Events List</a></li>
+                                        <li><a href="https://www.fbla.org/resources/study-guides/" target="_blank">Study Guides & Materials</a></li>
+                                        <li><a href="https://www.fbla.org/leadership-conferences/" target="_blank">National Leadership Conference</a></li>
+                                        <li><a href="https://www.fbla.org/chapters/" target="_blank">Chapter Resources</a></li>
+                                    </ul>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Popular Events:</strong>
+                                    <ul>
+                                        <li>Business Plan Competition</li>
+                                        <li>Public Speaking Events</li>
+                                        <li>Accounting & Finance Competitions</li>
+                                        <li>Marketing & Management Events</li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    </article>
 
-                    <!-- Career & Technical Category -->
-                    <div id="career-technical" class="competition-category">
-                        <div class="competitions-grid">
-                            
-                            <!-- SkillsUSA Card -->
-                            <article class="competition-card animate-on-scroll">
-                                <div class="competition-header">
-                                    <div class="competition-icon">
-                                        <i class="fas fa-tools"></i>
-                                    </div>
-                                    <h3>SkillsUSA</h3>
-                                </div>
-                                <div class="competition-content">
-                                    <p>A partnership of students, teachers, and industry working together to ensure America has a skilled workforce through quality educational programs.</p>
-                                    <div class="competition-details">
-                                        <div class="detail-item">
-                                            <strong>Website:</strong> 
-                                            <a href="https://www.skillsusa.org" target="_blank" class="competition-resource-link">skillsusa.org</a>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Competition Areas:</strong>
-                                            <span class="tags">
-                                                <span class="tag">Automotive</span>
-                                                <span class="tag">Construction</span>
-                                                <span class="tag">Information Technology</span>
-                                                <span class="tag">Manufacturing</span>
-                                                <span class="tag">Healthcare</span>
-                                                <span class="tag">Culinary Arts</span>
-                                                <span class="tag">Cosmetology</span>
-                                            </span>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Key Resources:</strong>
-                                            <ul>
-                                                <li><a href="https://www.skillsusa.org/competitions/contest-updates/" target="_blank">Contest Updates & Information</a></li>
-                                                <li><a href="https://www.skillsusa.org/competitions/technical-standards/" target="_blank">Technical Standards</a></li>
-                                                <li><a href="https://www.skillsusa.org/competitions/skillsusa-championships/" target="_blank">National Leadership & Skills Conference</a></li>
-                                                <li><a href="https://www.skillsusa.org/competitions/contest-materials/" target="_blank">Contest Materials</a></li>
-                                            </ul>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Major Competition Categories:</strong>
-                                            <ul>
-                                                <li>Trade & Industrial</li>
-                                                <li>Health Occupations</li>
-                                                <li>Automotive Services</li>
-                                                <li>Construction</li>
-                                                <li>Information Technology</li>
-                                                <li>Personal Services</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </article>
-
+                    <!-- DECA Card -->
+                    <article class="competition-card animate-on-scroll">
+                        <div class="competition-header">
+                            <div class="competition-icon">
+                                <i class="fas fa-shopping-bag"></i>
+                            </div>
+                            <h3>DECA (Distributive Education Clubs of America)</h3>
                         </div>
-                    </div>
-
-                    <!-- STEM & Technology Category -->
-                    <div id="stem-technology" class="competition-category">
-                        <div class="competitions-grid">
-                            
-                            <!-- Conrad Challenge -->
-                            <article class="competition-card animate-on-scroll">
-                                <div class="competition-header">
-                                    <div class="competition-icon">
-                                        <i class="fas fa-rocket"></i>
-                                    </div>
-                                    <h3>Conrad Challenge</h3>
+                        <div class="competition-content">
+                            <p>Prepares emerging leaders and entrepreneurs in marketing, finance, hospitality, and management in high schools and colleges around the globe.</p>
+                            <div class="competition-details">
+                                <div class="detail-item">
+                                    <strong>Website:</strong> 
+                                    <a href="https://www.deca.org" target="_blank" class="competition-resource-link">deca.org</a>
                                 </div>
-                                <div class="competition-content">
-                                    <p>An annual innovation and entrepreneurship competition that challenges students to address global issues using science, technology, and engineering.</p>
-                                    <div class="competition-details">
-                                        <div class="detail-item">
-                                            <strong>Website:</strong> 
-                                            <a href="https://www.conradchallenge.org" target="_blank" class="competition-resource-link">conradchallenge.org</a>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Categories:</strong>
-                                            <span class="tags">
-                                                <span class="tag">Aerospace & Aviation</span>
-                                                <span class="tag">Cyber-Technology</span>
-                                                <span class="tag">Energy & Environment</span>
-                                                <span class="tag">Health & Nutrition</span>
-                                                <span class="tag">Education & Technology</span>
-                                            </span>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Competition Structure:</strong>
-                                            <ul>
-                                                <li>Team-based competition (2-5 students)</li>
-                                                <li>Multiple rounds of judging</li>
-                                                <li>Focus on innovation and entrepreneurship</li>
-                                                <li>International participation</li>
-                                            </ul>
-                                        </div>
-                                    </div>
+                                <div class="detail-item">
+                                    <strong>Competition Areas:</strong>
+                                    <span class="tags">
+                                        <span class="tag">Marketing</span>
+                                        <span class="tag">Finance</span>
+                                        <span class="tag">Hospitality</span>
+                                        <span class="tag">Entrepreneurship</span>
+                                        <span class="tag">Business Management</span>
+                                        <span class="tag">Professional Selling</span>
+                                    </span>
                                 </div>
-                            </article>
-
+                                <div class="detail-item">
+                                    <strong>Key Resources:</strong>
+                                    <ul>
+                                        <li><a href="https://www.deca.org/competitive-events/" target="_blank">Competitive Events Guide</a></li>
+                                        <li><a href="https://www.deca.org/classroom-resources/" target="_blank">Classroom Resources</a></li>
+                                        <li><a href="https://www.deca.org/icdc/" target="_blank">International Career Development Conference</a></li>
+                                        <li><a href="https://www.deca.org/study-resources/" target="_blank">Study Resources</a></li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    </article>
 
-                    <!-- Science Olympiad Category -->
-                    <div id="science-olympiad" class="competition-category">
-                        <div class="competitions-grid">
-                            
-                            <!-- Science Olympiad -->
-                            <article class="competition-card animate-on-scroll">
-                                <div class="competition-header">
-                                    <div class="competition-icon">
-                                        <i class="fas fa-flask"></i>
-                                    </div>
-                                    <h3>Science Olympiad</h3>
-                                </div>
-                                <div class="competition-content">
-                                    <p>Team-based competition where students compete in 23 events pertaining to various scientific disciplines, including biology, earth science, chemistry, physics, and engineering.</p>
-                                    <div class="competition-details">
-                                        <div class="detail-item">
-                                            <strong>Website:</strong> 
-                                            <a href="https://www.soinc.org" target="_blank" class="competition-resource-link">soinc.org</a>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Event Categories:</strong>
-                                            <span class="tags">
-                                                <span class="tag">Life Science</span>
-                                                <span class="tag">Earth Science</span>
-                                                <span class="tag">Physical Science</span>
-                                                <span class="tag">Technology & Engineering</span>
-                                                <span class="tag">Inquiry & Nature of Science</span>
-                                            </span>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Key Resources:</strong>
-                                            <ul>
-                                                <li><a href="https://www.soinc.org/events" target="_blank">Event Descriptions & Rules</a></li>
-                                                <li><a href="https://www.soinc.org/start-team" target="_blank">Starting a Team</a></li>
-                                                <li><a href="https://www.soinc.org/tournaments" target="_blank">Tournament Information</a></li>
-                                                <li><a href="https://www.soinc.org/study-materials" target="_blank">Study Materials & Resources</a></li>
-                                            </ul>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Popular Events:</strong>
-                                            <ul>
-                                                <li>Anatomy & Physiology</li>
-                                                <li>Chemistry Lab</li>
-                                                <li>Electric Vehicle</li>
-                                                <li>Forensics</li>
-                                                <li>Rocks & Minerals</li>
-                                                <li>Wright Stuff</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                            </article>
-
+                    <!-- BPA Card -->
+                    <article class="competition-card animate-on-scroll">
+                        <div class="competition-header">
+                            <div class="competition-icon">
+                                <i class="fas fa-briefcase"></i>
+                            </div>
+                            <h3>BPA (Business Professionals of America)</h3>
                         </div>
-                    </div>
-
-                    <!-- Math Competitions Category -->
-                    <div id="math" class="competition-category">
-                        <div class="competitions-grid">
-                            
-                            <!-- Math Competitions -->
-                            <article class="competition-card animate-on-scroll">
-                                <div class="competition-header">
-                                    <div class="competition-icon">
-                                        <i class="fas fa-calculator"></i>
-                                    </div>
-                                    <h3>Mathematics Competitions</h3>
+                        <div class="competition-content">
+                            <p>A career and technical student organization providing leadership development and business education for middle school, high school, and college students.</p>
+                            <div class="competition-details">
+                                <div class="detail-item">
+                                    <strong>Website:</strong> 
+                                    <a href="https://www.bpa.org" target="_blank" class="competition-resource-link">bpa.org</a>
                                 </div>
-                                <div class="competition-content">
-                                    <p>Various mathematics competitions and olympiads for students at different skill levels, from beginner to advanced.</p>
-                                    <div class="competition-details">
-                                        <div class="detail-item">
-                                            <strong>Major Math Competitions:</strong>
-                                            <ul>
-                                                <li><strong>AMC 8/10/12:</strong> American Mathematics Competitions</li>
-                                                <li><strong>AIME:</strong> American Invitational Mathematics Examination</li>
-                                                <li><strong>USAMO:</strong> USA Mathematical Olympiad</li>
-                                                <li><strong>IMO:</strong> International Mathematical Olympiad</li>
-                                                <li><strong>MathCounts:</strong> National middle school competition</li>
-                                                <li><strong>Purple Comet:</strong> International team-based contest</li>
-                                            </ul>
-                                        </div>
-                                        <div class="detail-item">
-                                            <strong>Resources:</strong>
-                                            <ul>
-                                                <li><a href="https://www.maa.org/math-competitions" target="_blank">MAA Competitions</a></li>
-                                                <li><a href="https://artofproblemsolving.com" target="_blank">Art of Problem Solving</a></li>
-                                                <li><a href="https://www.mathcounts.org" target="_blank">MathCounts Resources</a></li>
-                                                <li><a href="https://www.imo-official.org" target="_blank">IMO Official Site</a></li>
-                                            </ul>
-                                        </div>
-                                    </div>
+                                <div class="detail-item">
+                                    <strong>Competition Areas:</strong>
+                                    <span class="tags">
+                                        <span class="tag">Information Technology</span>
+                                        <span class="tag">Finance</span>
+                                        <span class="tag">Management</span>
+                                        <span class="tag">Administration</span>
+                                        <span class="tag">Digital Communication</span>
+                                    </span>
                                 </div>
-                            </article>
-
+                                <div class="detail-item">
+                                    <strong>Resources:</strong>
+                                    <ul>
+                                        <li><a href="https://www.bpa.org/compete" target="_blank">Competition Information</a></li>
+                                        <li><a href="https://www.bpa.org/conferences" target="_blank">Conference Details</a></li>
+                                        <li><a href="https://www.bpa.org/resources" target="_blank">Member Resources</a></li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    </article>
 
                 </div>
             </div>
-        </section>
+
+            <!-- Healthcare Category -->
+            <div id="healthcare" class="competition-category" role="tabpanel" style="display: none;">
+                <div class="competitions-grid">
+                    
+                    <!-- HOSA Card -->
+                    <article class="competition-card animate-on-scroll">
+                        <div class="competition-header">
+                            <div class="competition-icon">
+                                <i class="fas fa-heartbeat"></i>
+                            </div>
+                            <h3>HOSA (Future Health Professionals)</h3>
+                        </div>
+                        <div class="competition-content">
+                            <p>A global student-led organization recognized by the U.S. Department of Education that promotes career opportunities in the healthcare industry.</p>
+                            <div class="competition-details">
+                                <div class="detail-item">
+                                    <strong>Website:</strong> 
+                                    <a href="https://www.hosa.org" target="_blank" class="competition-resource-link">hosa.org</a>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Competition Areas:</strong>
+                                    <span class="tags">
+                                        <span class="tag">Medical Terminology</span>
+                                        <span class="tag">Nursing</span>
+                                        <span class="tag">Dental Science</span>
+                                        <span class="tag">Public Health</span>
+                                        <span class="tag">Veterinary Science</span>
+                                        <span class="tag">Biomedical Science</span>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Key Resources:</strong>
+                                    <ul>
+                                        <li><a href="https://www.hosa.org/competitive-events" target="_blank">Competitive Events Guide</a></li>
+                                        <li><a href="https://www.hosa.org/study-resources" target="_blank">Study Resources & Guidelines</a></li>
+                                        <li><a href="https://www.hosa.org/iclc" target="_blank">International Leadership Conference</a></li>
+                                        <li><a href="https://www.hosa.org/event-guidelines" target="_blank">Event Guidelines</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                </div>
+            </div>
+
+            <!-- STEM & Technology Category -->
+            <div id="stem-technology" class="competition-category" role="tabpanel" style="display: none;">
+                <div class="competitions-grid">
+                    
+                    <!-- TSA Card -->
+                    <article class="competition-card animate-on-scroll">
+                        <div class="competition-header">
+                            <div class="competition-icon">
+                                <i class="fas fa-cogs"></i>
+                            </div>
+                            <h3>TSA (Technology Student Association)</h3>
+                        </div>
+                        <div class="competition-content">
+                            <p>A national student organization devoted exclusively to the needs of students interested in technology and engineering.</p>
+                            <div class="competition-details">
+                                <div class="detail-item">
+                                    <strong>Website:</strong> 
+                                    <a href="https://tsaweb.org" target="_blank" class="competition-resource-link">tsaweb.org</a>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Competition Areas:</strong>
+                                    <span class="tags">
+                                        <span class="tag">Biotechnology</span>
+                                        <span class="tag">CAD Engineering</span>
+                                        <span class="tag">Cybersecurity</span>
+                                        <span class="tag">Video Game Design</span>
+                                        <span class="tag">Structural Engineering</span>
+                                        <span class="tag">Digital Video Production</span>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Resources:</strong>
+                                    <ul>
+                                        <li><a href="https://tsaweb.org/competitions" target="_blank">Competition Events</a></li>
+                                        <li><a href="https://tsaweb.org/high-school-competitions" target="_blank">High School Events</a></li>
+                                        <li><a href="https://tsaweb.org/middle-school-competitions" target="_blank">Middle School Events</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- FIRST Robotics Card -->
+                    <article class="competition-card animate-on-scroll">
+                        <div class="competition-header">
+                            <div class="competition-icon">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <h3>FIRST Robotics Competition</h3>
+                        </div>
+                        <div class="competition-content">
+                            <p>International robotics competition that combines the excitement of sport with the rigors of science and technology.</p>
+                            <div class="competition-details">
+                                <div class="detail-item">
+                                    <strong>Website:</strong> 
+                                    <a href="https://www.firstinspires.org/robotics/frc" target="_blank" class="competition-resource-link">firstinspires.org</a>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Competition Levels:</strong>
+                                    <span class="tags">
+                                        <span class="tag">FIRST Robotics Competition (FRC)</span>
+                                        <span class="tag">FIRST Tech Challenge (FTC)</span>
+                                        <span class="tag">FIRST LEGO League (FLL)</span>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Key Resources:</strong>
+                                    <ul>
+                                        <li><a href="https://www.firstinspires.org/robotics/frc/game-and-season" target="_blank">Game & Season Information</a></li>
+                                        <li><a href="https://www.firstinspires.org/robotics/frc/competition-manual-and-related-documents" target="_blank">Competition Manuals</a></li>
+                                        <li><a href="https://www.firstinspires.org/robotics/frc/calendar" target="_blank">Competition Calendar</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- CyberPatriot Card -->
+                    <article class="competition-card animate-on-scroll">
+                        <div class="competition-header">
+                            <div class="competition-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <h3>CyberPatriot</h3>
+                        </div>
+                        <div class="competition-content">
+                            <p>National Youth Cyber Defense Competition designed to inspire students toward careers in cybersecurity or other STEM disciplines.</p>
+                            <div class="competition-details">
+                                <div class="detail-item">
+                                    <strong>Website:</strong> 
+                                    <a href="https://www.uscyberpatriot.org" target="_blank" class="competition-resource-link">uscyberpatriot.org</a>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Competition Divisions:</strong>
+                                    <span class="tags">
+                                        <span class="tag">Open Division</span>
+                                        <span class="tag">All Service Division</span>
+                                        <span class="tag">Middle School Division</span>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Resources:</strong>
+                                    <ul>
+                                        <li><a href="https://www.uscyberpatriot.org/Competition/Competition-Overview" target="_blank">Competition Overview</a></li>
+                                        <li><a href="https://www.uscyberpatriot.org/Competition/Competition-Resources" target="_blank">Training Resources</a></li>
+                                        <li><a href="https://www.uscyberpatriot.org/Competition/National-Finals" target="_blank">National Finals</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                </div>
+            </div>
+
+            <!-- Science Olympiads Category -->
+            <div id="science-olympiads" class="competition-category" role="tabpanel" style="display: none;">
+                <div class="competitions-grid">
+                    
+                    <!-- Science Olympiad Card -->
+                    <article class="competition-card animate-on-scroll">
+                        <div class="competition-header">
+                            <div class="competition-icon">
+                                <i class="fas fa-flask"></i>
+                            </div>
+                            <h3>Science Olympiad</h3>
+                        </div>
+                        <div class="competition-content">
+                            <p>Team-based competition where students compete in 23 events pertaining to various scientific disciplines.</p>
+                            <div class="competition-details">
+                                <div class="detail-item">
+                                    <strong>Website:</strong> 
+                                    <a href="https://www.soinc.org" target="_blank" class="competition-resource-link">soinc.org</a>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Event Categories:</strong>
+                                    <span class="tags">
+                                        <span class="tag">Life Science</span>
+                                        <span class="tag">Earth Science</span>
+                                        <span class="tag">Physical Science</span>
+                                        <span class="tag">Technology & Engineering</span>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Key Resources:</strong>
+                                    <ul>
+                                        <li><a href="https://www.soinc.org/events" target="_blank">Event Descriptions & Rules</a></li>
+                                        <li><a href="https://www.soinc.org/start-team" target="_blank">Starting a Team</a></li>
+                                        <li><a href="https://www.soinc.org/tournaments" target="_blank">Tournament Information</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- USABO Card -->
+                    <article class="competition-card animate-on-scroll">
+                        <div class="competition-header">
+                            <div class="competition-icon">
+                                <i class="fas fa-dna"></i>
+                            </div>
+                            <h3>USA Biology Olympiad (USABO)</h3>
+                        </div>
+                        <div class="competition-content">
+                            <p>Premier biology competition for high school students in the United States.</p>
+                            <div class="competition-details">
+                                <div class="detail-item">
+                                    <strong>Website:</strong> 
+                                    <a href="https://www.usabo-trc.org" target="_blank" class="competition-resource-link">usabo-trc.org</a>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Competition Levels:</strong>
+                                    <span class="tags">
+                                        <span class="tag">Open Exam</span>
+                                        <span class="tag">Semifinal Exam</span>
+                                        <span class="tag">National Finals</span>
+                                        <span class="tag">International Biology Olympiad</span>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Study Resources:</strong>
+                                    <ul>
+                                        <li><a href="https://www.usabo-trc.org/study-materials" target="_blank">Official Study Materials</a></li>
+                                        <li><a href="https://www.usabo-trc.org/past-exams" target="_blank">Past Exams & Solutions</a></li>
+                                        <li><a href="https://www.usabo-trc.org/summer-program" target="_blank">Summer Training Program</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- USNCO Card -->
+                    <article class="competition-card animate-on-scroll">
+                        <div class="competition-header">
+                            <div class="competition-icon">
+                                <i class="fas fa-atom"></i>
+                            </div>
+                            <h3>US National Chemistry Olympiad (USNCO)</h3>
+                        </div>
+                        <div class="competition-content">
+                            <p>Multitiered competition designed to stimulate and promote achievement in high school chemistry.</p>
+                            <div class="competition-details">
+                                <div class="detail-item">
+                                    <strong>Website:</strong> 
+                                    <a href="https://www.acs.org/education/students/highschool/olympiad.html" target="_blank" class="competition-resource-link">acs.org/olympiad</a>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Competition Structure:</strong>
+                                    <span class="tags">
+                                        <span class="tag">Local Exam</span>
+                                        <span class="tag">National Exam</span>
+                                        <span class="tag">Study Camp</span>
+                                        <span class="tag">International Chemistry Olympiad</span>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Resources:</strong>
+                                    <ul>
+                                        <li><a href="https://www.acs.org/education/students/highschool/olympiad/pastexams.html" target="_blank">Past Exams</a></li>
+                                        <li><a href="https://www.acs.org/education/students/highschool/olympiad/study-materials.html" target="_blank">Study Materials</a></li>
+                                        <li><a href="https://www.acs.org/education/students/highschool/olympiad/preparation.html" target="_blank">Preparation Guide</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- USAPhO Card -->
+                    <article class="competition-card animate-on-scroll">
+                        <div class="competition-header">
+                            <div class="competition-icon">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <h3>USA Physics Olympiad (USAPhO)</h3>
+                        </div>
+                        <div class="competition-content">
+                            <p>High school physics competition that selects teams for the International Physics Olympiad.</p>
+                            <div class="competition-details">
+                                <div class="detail-item">
+                                    <strong>Website:</strong> 
+                                    <a href="https://www.aapt.org/physicsteam" target="_blank" class="competition-resource-link">aapt.org/physicsteam</a>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Competition Levels:</strong>
+                                    <span class="tags">
+                                        <span class="tag">F=ma Exam</span>
+                                        <span class="tag">USAPhO Exam</span>
+                                        <span class="tag">Training Camp</span>
+                                        <span class="tag">International Physics Olympiad</span>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Study Resources:</strong>
+                                    <ul>
+                                        <li><a href="https://www.aapt.org/physicsteam/2024/upload/2023_F-ma-Contest.pdf" target="_blank">Past F=ma Exams</a></li>
+                                        <li><a href="https://www.aapt.org/physicsteam/2024/exams.cfm" target="_blank">Past USAPhO Exams</a></li>
+                                        <li><a href="https://www.aapt.org/physicsteam/2024/preparation.cfm" target="_blank">Preparation Materials</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Science Bowl Card -->
+                    <article class="competition-card animate-on-scroll">
+                        <div class="competition-header">
+                            <div class="competition-icon">
+                                <i class="fas fa-brain"></i>
+                            </div>
+                            <h3>National Science Bowl</h3>
+                        </div>
+                        <div class="competition-content">
+                            <p>Premier science competition for middle and high school students, testing knowledge in all areas of science and mathematics.</p>
+                            <div class="competition-details">
+                                <div class="detail-item">
+                                    <strong>Website:</strong> 
+                                    <a href="https://science.osti.gov/wdts/nsb" target="_blank" class="competition-resource-link">science.osti.gov/nsb</a>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Competition Areas:</strong>
+                                    <span class="tags">
+                                        <span class="tag">Biology</span>
+                                        <span class="tag">Chemistry</span>
+                                        <span class="tag">Physics</span>
+                                        <span class="tag">Earth Science</span>
+                                        <span class="tag">Energy</span>
+                                        <span class="tag">Mathematics</span>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Resources:</strong>
+                                    <ul>
+                                        <li><a href="https://science.osti.gov/wdts/nsb/Regional-Competitions" target="_blank">Regional Competitions</a></li>
+                                        <li><a href="https://science.osti.gov/wdts/nsb/Rules" target="_blank">Official Rules</a></li>
+                                        <li><a href="https://science.osti.gov/wdts/nsb/Resources" target="_blank">Study Resources</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                </div>
+            </div>
+
+            <!-- Math Competitions Category -->
+            <div id="math-competitions" class="competition-category" role="tabpanel" style="display: none;">
+                <div class="competitions-grid">
+                    
+                    <!-- AMC 8 Card -->
+                    <article class="competition-card animate-on-scroll">
+                        <div class="competition-header">
+                            <div class="competition-icon">
+                                <i class="fas fa-calculator"></i>
+                            </div>
+                            <h3>AMC 8 (American Mathematics Competition 8)</h3>
+                        </div>
+                        <div class="competition-content">
+                            <p>25-question, 40-minute multiple-choice examination in middle school mathematics designed to promote problem-solving skills.</p>
+                            <div class="competition-details">
+                                <div class="detail-item">
+                                    <strong>Website:</strong> 
+                                    <a href="https://www.maa.org/math-competitions/amc-8" target="_blank" class="competition-resource-link">maa.org/amc-8</a>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Eligibility:</strong>
+                                    <span class="tags">
+                                        <span class="tag">Grade 8 & Below</span>
+                                        <span class="tag">Age 14.5 & Below</span>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Resources:</strong>
+                                    <ul>
+                                        <li><a href="https://www.maa.org/math-competitions/amc-8/amc-8-resources" target="_blank">Official Resources</a></li>
+                                        <li><a href="https://www.maa.org/math-competitions/amc-8/amc-8-problems-and-solutions" target="_blank">Past Problems</a></li>
+                                        <li><a href="https://artofproblemsolving.com/wiki/index.php/AMC_8_Problems_and_Solutions" target="_blank">AoPS Wiki</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- AMC 10 Card -->
+                    <article class="competition-card animate-on-scroll">
+                        <div class="competition-header">
+                            <div class="competition-icon">
+                                <i class="fas fa-square-root-alt"></i>
+                            </div>
+                            <h3>AMC 10 (American Mathematics Competition 10)</h3>
+                        </div>
+                        <div class="competition-content">
+                            <p>25-question, 75-minute multiple-choice examination in high school mathematics designed to promote problem-solving skills.</p>
+                            <div class="competition-details">
+                                <div class="detail-item">
+                                    <strong>Website:</strong> 
+                                    <a href="https://www.maa.org/math-competitions/amc-10" target="_blank" class="competition-resource-link">maa.org/amc-10</a>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Eligibility:</strong>
+                                    <span class="tags">
+                                        <span class="tag">Grade 10 & Below</span>
+                                        <span class="tag">Age 17.5 & Below</span>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Resources:</strong>
+                                    <ul>
+                                        <li><a href="https://www.maa.org/math-competitions/amc-10/amc-10-resources" target="_blank">Official Resources</a></li>
+                                        <li><a href="https://www.maa.org/math-competitions/amc-10/amc-10-problems-and-solutions" target="_blank">Past Problems</a></li>
+                                        <li><a href="https://artofproblemsolving.com/wiki/index.php/AMC_10_Problems_and_Solutions" target="_blank">AoPS Wiki</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- AMC 12 Card -->
+                    <article class="competition-card animate-on-scroll">
+                        <div class="competition-header">
+                            <div class="competition-icon">
+                                <i class="fas fa-infinity"></i>
+                            </div>
+                            <h3>AMC 12 (American Mathematics Competition 12)</h3>
+                        </div>
+                        <div class="competition-content">
+                            <p>25-question, 75-minute multiple-choice examination in high school mathematics designed to promote problem-solving skills.</p>
+                            <div class="competition-details">
+                                <div class="detail-item">
+                                    <strong>Website:</strong> 
+                                    <a href="https://www.maa.org/math-competitions/amc-12" target="_blank" class="competition-resource-link">maa.org/amc-12</a>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Eligibility:</strong>
+                                    <span class="tags">
+                                        <span class="tag">Grade 12 & Below</span>
+                                        <span class="tag">Age 19.5 & Below</span>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Resources:</strong>
+                                    <ul>
+                                        <li><a href="https://www.maa.org/math-competitions/amc-12/amc-12-resources" target="_blank">Official Resources</a></li>
+                                        <li><a href="https://www.maa.org/math-competitions/amc-12/amc-12-problems-and-solutions" target="_blank">Past Problems</a></li>
+                                        <li><a href="https://artofproblemsolving.com/wiki/index.php/AMC_12_Problems_and_Solutions" target="_blank">AoPS Wiki</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- Mathcounts Card -->
+                    <article class="competition-card animate-on-scroll">
+                        <div class="competition-header">
+                            <div class="competition-icon">
+                                <i class="fas fa-calculator"></i>
+                            </div>
+                            <h3>Mathcounts</h3>
+                        </div>
+                        <div class="competition-content">
+                            <p>National middle school mathematics competition that promotes mathematics achievement through grassroots involvement.</p>
+                            <div class="competition-details">
+                                <div class="detail-item">
+                                    <strong>Website:</strong> 
+                                    <a href="https://www.mathcounts.org" target="_blank" class="competition-resource-link">mathcounts.org</a>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Competition Levels:</strong>
+                                    <span class="tags">
+                                        <span class="tag">School Level</span>
+                                        <span class="tag">Chapter Level</span>
+                                        <span class="tag">State Level</span>
+                                        <span class="tag">National Level</span>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Resources:</strong>
+                                    <ul>
+                                        <li><a href="https://www.mathcounts.org/programs/competition-series" target="_blank">Competition Series</a></li>
+                                        <li><a href="https://www.mathcounts.org/resources/problem-of-the-week" target="_blank">Problem of the Week</a></li>
+                                        <li><a href="https://www.mathcounts.org/resources/competition-preparation" target="_blank">Competition Preparation</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- USAMTS Card -->
+                    <article class="competition-card animate-on-scroll">
+                        <div class="competition-header">
+                            <div class="competition-icon">
+                                <i class="fas fa-pencil-alt"></i>
+                            </div>
+                            <h3>USA Mathematical Talent Search (USAMTS)</h3>
+                        </div>
+                        <div class="competition-content">
+                            <p>Free, proof-based mathematics competition open to all US middle and high school students.</p>
+                            <div class="competition-details">
+                                <div class="detail-item">
+                                    <strong>Website:</strong> 
+                                    <a href="https://www.usamts.org" target="_blank" class="competition-resource-link">usamts.org</a>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Competition Features:</strong>
+                                    <span class="tags">
+                                        <span class="tag">Proof-Based</span>
+                                        <span class="tag">Month-Long Rounds</span>
+                                        <span class="tag">Free to Enter</span>
+                                        <span class="tag">All Skill Levels</span>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Resources:</strong>
+                                    <ul>
+                                        <li><a href="https://www.usamts.org/About/U_FAQ.php" target="_blank">FAQ</a></li>
+                                        <li><a href="https://www.usamts.org/Problems/U_Problems.php" target="_blank">Past Problems</a></li>
+                                        <li><a href="https://www.usamts.org/Problems/U_Solutions.php" target="_blank">Solutions</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <!-- AIME Card -->
+                    <article class="competition-card animate-on-scroll">
+                        <div class="competition-header">
+                            <div class="competition-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <h3>AIME (American Invitational Mathematics Examination)</h3>
+                        </div>
+                        <div class="competition-content">
+                            <p>15-question, 3-hour examination in which each answer is an integer number from 0 to 999.</p>
+                            <div class="competition-details">
+                                <div class="detail-item">
+                                    <strong>Website:</strong> 
+                                    <a href="https://www.maa.org/math-competitions/aime" target="_blank" class="competition-resource-link">maa.org/aime</a>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Qualification:</strong>
+                                    <span class="tags">
+                                        <span class="tag">Top AMC 10/12 Scorers</span>
+                                        <span class="tag">Invitation Only</span>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Resources:</strong>
+                                    <ul>
+                                        <li><a href="https://www.maa.org/math-competitions/aime/aime-problems-and-solutions" target="_blank">Past Problems</a></li>
+                                        <li><a href="https://artofproblemsolving.com/wiki/index.php/AIME_Problems_and_Solutions" target="_blank">AoPS Wiki</a></li>
+                                        <li><a href="https://www.maa.org/math-competitions/aime/aime-resources" target="_blank">Preparation Resources</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                </div>
+            </div>
+
+            <!-- Career & Technical Category -->
+            <div id="career-technical" class="competition-category" role="tabpanel" style="display: none;">
+                <div class="competitions-grid">
+                    
+                    <!-- SkillsUSA Card -->
+                    <article class="competition-card animate-on-scroll">
+                        <div class="competition-header">
+                            <div class="competition-icon">
+                                <i class="fas fa-tools"></i>
+                            </div>
+                            <h3>SkillsUSA</h3>
+                        </div>
+                        <div class="competition-content">
+                            <p>A partnership of students, teachers, and industry working together to ensure America has a skilled workforce.</p>
+                            <div class="competition-details">
+                                <div class="detail-item">
+                                    <strong>Website:</strong> 
+                                    <a href="https://www.skillsusa.org" target="_blank" class="competition-resource-link">skillsusa.org</a>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Competition Areas:</strong>
+                                    <span class="tags">
+                                        <span class="tag">Automotive</span>
+                                        <span class="tag">Construction</span>
+                                        <span class="tag">Information Technology</span>
+                                        <span class="tag">Manufacturing</span>
+                                        <span class="tag">Healthcare</span>
+                                        <span class="tag">Culinary Arts</span>
+                                    </span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong>Resources:</strong>
+                                    <ul>
+                                        <li><a href="https://www.skillsusa.org/competitions/contest-updates/" target="_blank">Contest Updates</a></li>
+                                        <li><a href="https://www.skillsusa.org/competitions/technical-standards/" target="_blank">Technical Standards</a></li>
+                                        <li><a href="https://www.skillsusa.org/competitions/skillsusa-championships/" target="_blank">National Championships</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
 
         <!-- Join Us Section -->
         <section id="join" class="section section-alt">
