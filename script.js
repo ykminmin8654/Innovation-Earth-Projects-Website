@@ -413,17 +413,18 @@ async function addCard() {
     }
 }
 
-// ===== LOAD PROJECTS =====
 async function loadProjects() {
     try {
         let projects = [];
         
         if (db) {
-            // Load from Firebase
             const querySnapshot = await db.collection("projects").get();
-            projects = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            projects = querySnapshot.docs.map(doc => ({ 
+                id: doc.id, 
+                ...doc.data(),
+                createdAt: doc.data().createdAt ? doc.data().createdAt.toDate() : new Date()
+            }));
         } else {
-            // Load from local storage
             projects = JSON.parse(localStorage.getItem('projects') || '[]');
         }
         
@@ -433,34 +434,71 @@ async function loadProjects() {
         container.innerHTML = '';
         
         if (projects.length === 0) {
-            container.innerHTML = '<div class="projects-loading">No projects yet. Add some through the admin panel!</div>';
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <h3>No Projects Yet</h3>
+                    <p>Add your first project using the admin panel!</p>
+                </div>
+            `;
             return;
         }
         
-        projects.forEach(project => {
+        // Sort by creation date (newest first)
+        projects.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        
+        projects.forEach((project, index) => {
             const card = document.createElement('div');
             card.className = 'dynamic-project-card';
+            card.style.animationDelay = `${index * 0.1}s`;
+            
             card.innerHTML = `
+                <div class="card-image">
+                    <i class="fas fa-project-diagram"></i>
+                </div>
+                
+                <span class="card-status status-active">Active</span>
+                
                 <h3>${project.title}</h3>
                 <p>${project.description}</p>
+                
+                <div class="card-tags">
+                    <span class="card-tag">Innovation</span>
+                    <span class="card-tag">Technology</span>
+                    <span class="card-tag">Community</span>
+                </div>
+                
+                <div class="card-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${Math.floor(Math.random() * 50) + 50}%"></div>
+                    </div>
+                    <div class="progress-text">${Math.floor(Math.random() * 50) + 50}% Complete</div>
+                </div>
+                
                 <div class="project-meta">
-                    <span class="project-date">Added: ${new Date(project.createdAt).toLocaleDateString()}</span>
+                    <span class="project-date">
+                        <i class="fas fa-calendar-plus"></i>
+                        Added: ${new Date(project.createdAt).toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'short', 
+                            day: 'numeric' 
+                        })}
+                    </span>
                     <div class="project-actions">
-                        <button class="btn-small btn-delete" onclick="deleteProject('${project.id}')">Delete</button>
+                        <button class="btn-small btn-edit">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn-small btn-delete" onclick="deleteProject('${project.id}')">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
                     </div>
                 </div>
             `;
             container.appendChild(card);
         });
         
-        console.log('✅ Projects loaded:', projects.length);
-        
     } catch (error) {
-        console.error('❌ Error loading projects:', error);
-        const container = document.getElementById('projects-container');
-        if (container) {
-            container.innerHTML = '<div class="projects-loading">Error loading projects</div>';
-        }
+        console.error('Error loading projects:', error);
     }
 }
 
@@ -501,46 +539,5 @@ document.addEventListener('DOMContentLoaded', function() {
         observer.observe(projectsSection, { attributes: true });
     }
 });
-
-// ===== ENHANCED QUICK LINK CARD STYLING =====
-// Add this CSS to make the cards more interactive
-const quickLinkStyles = `
-.quick-link-card {
-    transition: all 0.3s ease;
-    cursor: pointer;
-    position: relative;
-    overflow: hidden;
-}
-
-.quick-link-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(0, 206, 209, 0.1), transparent);
-    transition: left 0.6s ease;
-}
-
-.quick-link-card:hover::before {
-    left: 100%;
-}
-
-.quick-link-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-}
-
-.quick-link-card .btn {
-    position: relative;
-    z-index: 2;
-}
-`;
-
-// Inject the styles
-const styleSheet = document.createElement('style');
-styleSheet.textContent = quickLinkStyles;
-document.head.appendChild(styleSheet);
 
 console.log("✅ Innovation Earth Projects script loaded successfully!");

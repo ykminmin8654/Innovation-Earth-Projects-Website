@@ -49,12 +49,42 @@
     <!-- Simple Admin Button -->
     <button onclick="toggleAdmin()" class="admin-toggle-btn">Admin Panel</button>
 
-    <div id="adminPanel" class="admin-panel">
-        <h3>Add Project Card</h3>
-        <input type="text" id="cardTitle" placeholder="Title">
-        <textarea id="cardDesc" placeholder="Description"></textarea>
-        <button onclick="addCard()" class="btn btn-primary">Add Card</button>
+<div id="adminPanel" class="admin-panel">
+    <h3>Add New Project</h3>
+    
+    <div class="form-group">
+        <label>Project Title:</label>
+        <input type="text" id="cardTitle" placeholder="Enter project title" class="form-input">
     </div>
+    
+    <div class="form-group">
+        <label>Description:</label>
+        <textarea id="cardDesc" placeholder="Enter project description" class="form-textarea"></textarea>
+    </div>
+    
+    <div class="form-group">
+        <label>Category:</label>
+        <select id="cardCategory" class="form-select">
+            <option value="technology">Technology</option>
+            <option value="sustainability">Sustainability</option>
+            <option value="education">Education</option>
+            <option value="community">Community</option>
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label>Status:</label>
+        <select id="cardStatus" class="form-select">
+            <option value="planning">Planning</option>
+            <option value="active" selected>Active</option>
+            <option value="completed">Completed</option>
+        </select>
+    </div>
+    
+    <button onclick="addCard()" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add Project
+    </button>
+</div>
 
     <!-- Main Content -->
     <main class="main-content">
