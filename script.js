@@ -381,6 +381,8 @@ async function addCard() {
     const status = document.getElementById('cardStatus').value;
     const priority = document.getElementById('cardPriority').value;
     
+    console.log('📝 Form values:', { title, description, category, status, priority }); // Debug
+    
     if (!title || !description) {
         alert('Please fill in both title and description');
         return;
@@ -390,16 +392,18 @@ async function addCard() {
         const cardData = {
             title: title,
             description: description,
-            category: category,
+            category: category, // Make sure this is being set correctly
             status: status,
             priority: priority,
             createdAt: new Date(),
-            progress: 0 // Start at 0% progress
+            progress: calculateProgress(status) // Auto-calculate progress based on status
         };
+        
+        console.log('📦 Saving card data:', cardData); // Debug
         
         if (db) {
             await db.collection("projects").add(cardData);
-            alert('✅ Project added successfully!');
+            alert('✅ Project added successfully to ' + getCategoryLabel(category) + '!');
             
             // Clear form
             document.getElementById('cardTitle').value = '';
@@ -408,8 +412,9 @@ async function addCard() {
             document.getElementById('cardStatus').value = 'idea';
             document.getElementById('cardPriority').value = 'medium';
             
-            // Load projects in the correct category
+            // Load projects and switch to correct category
             loadProjects();
+            switchCategory(category); // Switch to the category where the project was added
             showSection('#projects');
             
         } else {
@@ -418,31 +423,76 @@ async function addCard() {
             projects.push(cardData);
             localStorage.setItem('projects', JSON.stringify(projects));
             loadProjects();
+            switchCategory(category);
         }
     } catch (error) {
-        console.error('Error adding card:', error);
+        console.error('❌ Error adding card:', error);
         alert('Error adding project: ' + error.message);
     }
 }
 
+// Helper function to calculate progress based on status
+function calculateProgress(status) {
+    const progressMap = {
+        'idea': 10,
+        'planning': 30,
+        'development': 60,
+        'testing': 80,
+        'completed': 100
+    };
+    return progressMap[status] || 0;
+}
+
+// Helper function to get category label
+function getCategoryLabel(category) {
+    const labels = {
+        'concepts': 'Project Concepts',
+        'planning': 'Planning Stage', 
+        'future': 'Future Concepts'
+    };
+    return labels[category] || 'Projects';
+}
+
 // Enhanced loadProjects function with categories
-async function loadProjects() {
+// Debug function to check your data
+async function debugProjects() {
     try {
-        let projects = [];
-        
         if (db) {
             const querySnapshot = await db.collection("projects").get();
-            projects = querySnapshot.docs.map(doc => ({ 
-                id: doc.id, 
-                ...doc.data(),
-                createdAt: doc.data().createdAt ? doc.data().createdAt.toDate() : new Date()
-            }));
+            console.log('🐛 DEBUG - All projects in database:');
+            querySnapshot.forEach((doc) => {
+                console.log('📄 Document ID:', doc.id);
+                console.log('📊 Data:', doc.data());
+                console.log('---');
+            });
         } else {
-            projects = JSON.parse(localStorage.getItem('projects') || '[]');
+            const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+            console.log('🐛 DEBUG - All projects in local storage:');
+            projects.forEach((project, index) => {
+                console.log(`📄 Project ${index}:`, project);
+                console.log('---');
+            });
         }
-        
-        // Clear all containers
-        const containers = {
+    } catch (error) {
+        console.error('❌ Debug error:', error);
+    }
+}
+   
+        async function loadProjects() {
+            let projects = [];
+
+            try {
+                if (db) {
+                    const querySnapshot = await db.collection("projects").get();
+                    querySnapshot.forEach((doc) => {
+                        projects.push(Object.assign({ id: doc.id }, doc.data()));
+                    });
+                } else {
+                    projects = JSON.parse(localStorage.getItem('projects') || '[]');
+                }
+
+                // Clear all containers
+                const containers = {
             concepts: document.getElementById('concepts-container'),
             planning: document.getElementById('planning-container'),
             future: document.getElementById('future-container')
@@ -488,18 +538,17 @@ async function loadProjects() {
             });
         });
         
-        console.log(`✅ Loaded ${projects.length} projects across categories`);
-        
-    } catch (error) {
-        console.error('❌ Error loading projects:', error);
+            console.log(`✅ Loaded ${projects.length} projects across categories`);
+        } catch (error) {
+            console.error('❌ Error loading projects:', error);
         // Show error in all containers
-        Object.values(containers).forEach(container => {
+            Object.values(containers).forEach(container => {
             if (container) {
                 container.innerHTML = getErrorState();
             }
         });
+        }
     }
-}
 
 // Helper function to create project cards
 function createProjectCard(project, index) {
