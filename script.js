@@ -373,12 +373,16 @@ function toggleAdminPanel() {
     }
 }
 
+// Enhanced addCard function with categories
 async function addCard() {
     const title = document.getElementById('cardTitle').value;
     const description = document.getElementById('cardDesc').value;
+    const category = document.getElementById('cardCategory').value;
+    const status = document.getElementById('cardStatus').value;
+    const priority = document.getElementById('cardPriority').value;
     
     if (!title || !description) {
-        alert('Please fill in both fields');
+        alert('Please fill in both title and description');
         return;
     }
     
@@ -386,33 +390,42 @@ async function addCard() {
         const cardData = {
             title: title,
             description: description,
-            createdAt: new Date()
+            category: category,
+            status: status,
+            priority: priority,
+            createdAt: new Date(),
+            progress: 0 // Start at 0% progress
         };
         
         if (db) {
             await db.collection("projects").add(cardData);
-            alert('✅ Project added to Firebase!');
+            alert('✅ Project added successfully!');
+            
+            // Clear form
+            document.getElementById('cardTitle').value = '';
+            document.getElementById('cardDesc').value = '';
+            document.getElementById('cardCategory').value = 'concepts';
+            document.getElementById('cardStatus').value = 'idea';
+            document.getElementById('cardPriority').value = 'medium';
+            
+            // Load projects in the correct category
+            loadProjects();
+            showSection('#projects');
+            
         } else {
-            // Fallback to local storage
+            alert('Firebase not available. Using local storage.');
             const projects = JSON.parse(localStorage.getItem('projects') || '[]');
             projects.push(cardData);
             localStorage.setItem('projects', JSON.stringify(projects));
-            alert('✅ Project saved to local storage!');
+            loadProjects();
         }
-        
-        // Clear form
-        document.getElementById('cardTitle').value = '';
-        document.getElementById('cardDesc').value = '';
-        
-        // Reload projects
-        loadProjects();
-        
     } catch (error) {
-        console.error('❌ Error adding card:', error);
+        console.error('Error adding card:', error);
         alert('Error adding project: ' + error.message);
     }
 }
 
+// Enhanced loadProjects function with categories
 async function loadProjects() {
     try {
         let projects = [];
@@ -428,80 +441,218 @@ async function loadProjects() {
             projects = JSON.parse(localStorage.getItem('projects') || '[]');
         }
         
-        const container = document.getElementById('projects-container');
-        if (!container) return;
+        // Clear all containers
+        const containers = {
+            concepts: document.getElementById('concepts-container'),
+            planning: document.getElementById('planning-container'),
+            future: document.getElementById('future-container')
+        };
         
-        container.innerHTML = '';
+        Object.values(containers).forEach(container => {
+            if (container) container.innerHTML = '';
+        });
         
         if (projects.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-inbox"></i>
-                    <h3>No Projects Yet</h3>
-                    <p>Add your first project using the admin panel!</p>
-                </div>
-            `;
+            // Show empty states for all categories
+            Object.values(containers).forEach(container => {
+                if (container) {
+                    container.innerHTML = getEmptyState('concepts');
+                }
+            });
             return;
         }
         
         // Sort by creation date (newest first)
         projects.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         
-        projects.forEach((project, index) => {
-            const card = document.createElement('div');
-            card.className = 'dynamic-project-card';
-            card.style.animationDelay = `${index * 0.1}s`;
+        // Group projects by category
+        const projectsByCategory = {
+            concepts: projects.filter(p => p.category === 'concepts'),
+            planning: projects.filter(p => p.category === 'planning'),
+            future: projects.filter(p => p.category === 'future')
+        };
+        
+        // Render projects for each category
+        Object.entries(projectsByCategory).forEach(([category, categoryProjects]) => {
+            const container = containers[category];
+            if (!container) return;
             
-            card.innerHTML = `
-                <div class="card-image">
-                    <i class="fas fa-project-diagram"></i>
-                </div>
-                
-                <span class="card-status status-active">Active</span>
-                
-                <h3>${project.title}</h3>
-                <p>${project.description}</p>
-                
-                <div class="card-tags">
-                    <span class="card-tag">Innovation</span>
-                    <span class="card-tag">Technology</span>
-                    <span class="card-tag">Community</span>
-                </div>
-                
-                <div class="card-progress">
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${Math.floor(Math.random() * 50) + 50}%"></div>
-                    </div>
-                    <div class="progress-text">${Math.floor(Math.random() * 50) + 50}% Complete</div>
-                </div>
-                
-                <div class="project-meta">
-                    <span class="project-date">
-                        <i class="fas fa-calendar-plus"></i>
-                        Added: ${new Date(project.createdAt).toLocaleDateString('en-US', { 
-                            year: 'numeric', 
-                            month: 'short', 
-                            day: 'numeric' 
-                        })}
-                    </span>
-                    <div class="project-actions">
-                        <button class="btn-small btn-edit">
-                            <i class="fas fa-edit"></i> Edit
-                        </button>
-                        <button class="btn-small btn-delete" onclick="deleteProject('${project.id}')">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
-                    </div>
-                </div>
-            `;
-            container.appendChild(card);
+            if (categoryProjects.length === 0) {
+                container.innerHTML = getEmptyState(category);
+                return;
+            }
+            
+            categoryProjects.forEach((project, index) => {
+                const card = createProjectCard(project, index);
+                container.appendChild(card);
+            });
         });
         
+        console.log(`✅ Loaded ${projects.length} projects across categories`);
+        
     } catch (error) {
-        console.error('Error loading projects:', error);
+        console.error('❌ Error loading projects:', error);
+        // Show error in all containers
+        Object.values(containers).forEach(container => {
+            if (container) {
+                container.innerHTML = getErrorState();
+            }
+        });
     }
 }
 
+// Helper function to create project cards
+function createProjectCard(project, index) {
+    const card = document.createElement('div');
+    card.className = 'dynamic-project-card';
+    card.style.animationDelay = `${index * 0.1}s`;
+    
+    // Get appropriate icon and color based on category
+    const categoryConfig = getCategoryConfig(project.category);
+    const statusConfig = getStatusConfig(project.status);
+    const priorityConfig = getPriorityConfig(project.priority);
+    
+    card.innerHTML = `
+        <div class="card-image" style="background: linear-gradient(135deg, ${categoryConfig.color1}, ${categoryConfig.color2})">
+            <i class="${categoryConfig.icon}"></i>
+        </div>
+        
+        <span class="card-status ${statusConfig.class}">${statusConfig.label}</span>
+        <span class="card-priority ${priorityConfig.class}">${priorityConfig.label}</span>
+        
+        <h3>${project.title}</h3>
+        <p>${project.description}</p>
+        
+        <div class="card-tags">
+            <span class="card-tag">${categoryConfig.label}</span>
+            <span class="card-tag">${priorityConfig.label}</span>
+        </div>
+        
+        <div class="card-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: ${project.progress || 0}%"></div>
+            </div>
+            <div class="progress-text">${project.progress || 0}% Complete</div>
+        </div>
+        
+        <div class="project-meta">
+            <span class="project-date">
+                <i class="fas fa-calendar-plus"></i>
+                Added: ${new Date(project.createdAt).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                })}
+            </span>
+            <div class="project-actions">
+                <button class="btn-small btn-edit" onclick="editProject('${project.id}')">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="btn-small btn-delete" onclick="deleteProject('${project.id}')">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
+
+// Helper functions for category configurations
+function getCategoryConfig(category) {
+    const configs = {
+        concepts: { label: 'Concept', icon: 'fas fa-lightbulb', color1: '#FFD700', color2: '#FFA500' },
+        planning: { label: 'Planning', icon: 'fas fa-tasks', color1: '#3498db', color2: '#2980b9' },
+        future: { label: 'Future', icon: 'fas fa-rocket', color1: '#9b59b6', color2: '#8e44ad' }
+    };
+    return configs[category] || configs.concepts;
+}
+
+function getStatusConfig(status) {
+    const configs = {
+        idea: { label: 'Idea Phase', class: 'status-idea' },
+        planning: { label: 'Planning', class: 'status-planning' },
+        development: { label: 'Development', class: 'status-development' },
+        testing: { label: 'Testing', class: 'status-testing' },
+        completed: { label: 'Completed', class: 'status-completed' }
+    };
+    return configs[status] || configs.idea;
+}
+
+function getPriorityConfig(priority) {
+    const configs = {
+        low: { label: 'Low Priority', class: 'priority-low' },
+        medium: { label: 'Medium Priority', class: 'priority-medium' },
+        high: { label: 'High Priority', class: 'priority-high' },
+        critical: { label: 'Critical', class: 'priority-critical' }
+    };
+    return configs[priority] || configs.medium;
+}
+
+function getEmptyState(category) {
+    const messages = {
+        concepts: 'No project concepts yet. Add some innovative ideas!',
+        planning: 'No projects in planning stage. Start planning your next big project!',
+        future: 'No future concepts yet. Dream big and add your vision!'
+    };
+    
+    return `
+        <div class="empty-category">
+            <i class="${getCategoryConfig(category).icon}"></i>
+            <h4>No ${getCategoryConfig(category).label} Projects</h4>
+            <p>${messages[category] || 'No projects in this category yet.'}</p>
+            <button class="btn btn-primary" onclick="toggleAdminPanel()">
+                <i class="fas fa-plus"></i> Add Project
+            </button>
+        </div>
+    `;
+}
+
+function getErrorState() {
+    return `
+        <div class="empty-category">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h4>Error Loading Projects</h4>
+            <p>Please check your connection and try again.</p>
+        </div>
+    `;
+}
+
+// Category tab functionality
+function initializeCategoryTabs() {
+    document.querySelectorAll('.category-tab[data-category]').forEach(tab => {
+        tab.addEventListener('click', function() {
+            const category = this.getAttribute('data-category');
+            switchCategory(category);
+        });
+    });
+}
+
+function switchCategory(category) {
+    // Update active tab
+    document.querySelectorAll('.category-tab').forEach(tab => {
+        tab.classList.remove('active');
+        tab.setAttribute('aria-selected', 'false');
+    });
+    
+    const activeTab = document.querySelector(`.category-tab[data-category="${category}"]`);
+    if (activeTab) {
+        activeTab.classList.add('active');
+        activeTab.setAttribute('aria-selected', 'true');
+    }
+    
+    // Update active content
+    document.querySelectorAll('.project-category').forEach(content => {
+        content.classList.remove('active');
+        content.style.display = 'none';
+    });
+    
+    const activeContent = document.getElementById(category);
+    if (activeContent) {
+        activeContent.classList.add('active');
+        activeContent.style.display = 'block';
+    }
+}
 // ===== DELETE PROJECT =====
 async function deleteProject(projectId) {
     if (confirm('Are you sure you want to delete this project?')) {

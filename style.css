@@ -708,6 +708,96 @@ p {
     opacity: 0.9;
 }
 
+/* ===== PROJECT CATEGORY STYLES ===== */
+.category-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 2rem 0;
+    border-bottom: 2px solid rgba(0, 206, 209, 0.1);
+}
+
+.category-header h3 {
+    color: var(--teal);
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.category-header p {
+    color: var(--text-light);
+    font-size: 1.1rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 2rem;
+    margin-top: 1rem;
+}
+
+.project-category {
+    display: none;
+    animation: fadeIn 0.5s ease;
+}
+
+.project-category.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Empty State for Categories */
+.empty-category {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-light);
+}
+
+.empty-category i {
+    font-size: 4rem;
+    color: var(--border);
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-category h4 {
+    color: var(--text-light);
+    margin-bottom: 0.5rem;
+}
+
+.empty-category p {
+    margin-bottom: 1.5rem;
+}
+
+/* Priority and Status Badges */
+.card-priority {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 3;
+}
+
+.priority-low { background: #27ae60; color: white; }
+.priority-medium { background: #f39c12; color: white; }
+.priority-high { background: #e74c3c; color: white; }
+.priority-critical { background: #8e44ad; color: white; }
+
+.status-idea { background: #95a5a6; color: white; }
+.status-planning { background: #3498db; color: white; }
+.status-development { background: #f39c12; color: white; }
+.status-testing { background: #9b59b6; color: white; }
+.status-completed { background: #27ae60; color: white; }
+
 /* ===== EVENTS SECTION ===== */
 .events-section {
     padding: var(--space-xxl) 0;

@@ -71,6 +71,54 @@
             <option value="community">Community</option>
         </select>
     </div>
+
+    <div id="adminPanel" class="admin-panel">
+    <h3>Add New Project</h3>
+    
+    <div class="form-group">
+        <label>Project Title:</label>
+        <input type="text" id="cardTitle" placeholder="Enter project title" class="form-input">
+    </div>
+    
+    <div class="form-group">
+        <label>Description:</label>
+        <textarea id="cardDesc" placeholder="Enter project description" class="form-textarea"></textarea>
+    </div>
+    
+    <div class="form-group">
+        <label>Category:</label>
+        <select id="cardCategory" class="form-select">
+            <option value="concepts">Project Concepts</option>
+            <option value="planning">Planning Stage</option>
+            <option value="future">Future Concepts</option>
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label>Status:</label>
+        <select id="cardStatus" class="form-select">
+            <option value="idea">Idea Phase</option>
+            <option value="planning">Planning Phase</option>
+            <option value="development">Development</option>
+            <option value="testing">Testing</option>
+            <option value="completed">Completed</option>
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label>Priority:</label>
+        <select id="cardPriority" class="form-select">
+            <option value="low">Low Priority</option>
+            <option value="medium" selected>Medium Priority</option>
+            <option value="high">High Priority</option>
+            <option value="critical">Critical</option>
+        </select>
+    </div>
+    
+    <button onclick="addCard()" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add Project
+    </button>
+</div>
     
     <div class="form-group">
         <label>Status:</label>
@@ -326,72 +374,73 @@
             </section>
         </section>
 
-        <!-- Projects Section -->
-        <section id="projects" class="section">
-            <div class="container">
-                <div class="section-header">
-                    <h2>Project Ideas</h2>
-                    <p>Help us bring these first project concepts to life</p>
+<!-- Projects Section -->
+<section id="projects" class="section">
+    <div class="container">
+        <div class="section-header">
+            <h2>Our Projects</h2>
+            <p>Explore our innovation pipeline from concept to completion</p>
+        </div>
+
+        <!-- Category Navigation -->
+        <nav class="category-nav">
+            <ul class="category-list" role="tablist">
+                <li role="presentation">
+                    <button class="category-tab active" data-category="concepts" role="tab" aria-selected="true">
+                        <i class="fas fa-lightbulb" aria-hidden="true"></i> Project Concepts
+                    </button>
+                </li>
+                <li role="presentation">
+                    <button class="category-tab" data-category="planning" role="tab">
+                        <i class="fas fa-tasks" aria-hidden="true"></i> Planning Stage
+                    </button>
+                </li>
+                <li role="presentation">
+                    <button class="category-tab" data-category="future" role="tab">
+                        <i class="fas fa-rocket" aria-hidden="true"></i> Future Concepts
+                    </button>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Projects Content -->
+        <div class="projects-content">
+            
+            <!-- Project Concepts Tab -->
+            <div id="concepts" class="project-category active" role="tabpanel">
+                <div class="category-header">
+                    <h3>Project Concepts</h3>
+                    <p>Fresh ideas and innovative concepts ready for development</p>
                 </div>
-
-                <!-- Category Navigation -->
-                <nav class="category-nav">
-                    <ul class="category-list">
-                        <li>
-                            <button class="category-tab active" data-category="concepts">
-                                <i class="fas fa-lightbulb"></i> Project Concepts
-                            </button>
-                        </li>
-                        <li>
-                            <button class="category-tab" data-category="development">
-                                <i class="fas fa-tools"></i> Planning Stage
-                            </button>
-                        </li>
-                        <li>
-                            <button class="category-tab" data-category="upcoming">
-                                <i class="fas fa-calendar-alt"></i> Future Ideas
-                            </button>
-                        </li>
-                    </ul>
-                </nav>
-
-                <!-- Project Categories -->
-                <div class="projects-content">
-                    <div id="concepts" class="project-category active">
-                        <div class="empty-state">
-                            <i class="fas fa-lightbulb"></i>
-                            <h3>Share Your Project Ideas</h3>
-                            <p>We're just getting started! What projects would you like to work on? Share your ideas and help us build our first initiatives.</p>
-                            <a href="#contact" class="btn btn-primary">Suggest a Project</a>
-                        </div>
-                    </div>
-                    
-                    <div id="development" class="project-category">
-                        <div class="empty-state">
-                            <i class="fas fa-tools"></i>
-                            <h3>Project Planning Phase</h3>
-                            <p>Our first projects are in the planning stage. Join us to help turn ideas into action.</p>
-                            <a href="#join" class="btn btn-primary">Join Planning Team</a>
-                        </div>
-                    </div>
-                    
-                    <div id="upcoming" class="project-category">
-                        <div class="empty-state">
-                            <i class="fas fa-calendar-alt"></i>
-                            <h3>Future Initiatives</h3>
-                            <p>We're dreaming big! What should we tackle next? Your ideas will shape our future projects.</p>
-                            <a href="#contact" class="btn btn-primary">Share Your Vision</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Dynamic Projects Container -->
-                <h2>Our Projects</h2>
-                <div id="projects-container">
-                    <!-- Dynamic cards will load here -->
+                <div id="concepts-container" class="projects-grid">
+                    <!-- Concepts cards will load here -->
                 </div>
             </div>
-        </section>
+            
+            <!-- Planning Stage Tab -->
+            <div id="planning" class="project-category" role="tabpanel" style="display: none;">
+                <div class="category-header">
+                    <h3>Planning Stage</h3>
+                    <p>Active projects currently in development and planning</p>
+                </div>
+                <div id="planning-container" class="projects-grid">
+                    <!-- Planning cards will load here -->
+                </div>
+            </div>
+            
+            <!-- Future Concepts Tab -->
+            <div id="future" class="project-category" role="tabpanel" style="display: none;">
+                <div class="category-header">
+                    <h3>Future Concepts</h3>
+                    <p>Long-term vision and upcoming innovation opportunities</p>
+                </div>
+                <div id="future-container" class="projects-grid">
+                    <!-- Future cards will load here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
  <!-- Competitions Section -->
 <section id="competitions" class="section section-alt">
