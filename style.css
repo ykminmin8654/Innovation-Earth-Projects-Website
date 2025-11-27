@@ -6,6 +6,26 @@
 }
 
 :root {
+    /* ADD THESE MISSING VARIABLES */
+:root {
+    /* Missing color variables */
+    --lime-green: #32CD32;
+    --cyan: #00CED1;
+    --dark-green: #006400;
+    --gray-light: #f5f5f5;
+    --light: #f0f8ff;
+    --text-light: #666;
+    
+    /* Missing spacing variables */
+    --space-xxl: 5rem;
+    
+    /* Missing effect variables */
+    --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.15);
+    --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.1);
+    --border-radius-lg: 12px;
+    --transition-slow: all 0.6s ease;
+}
+
     /* Color Palette */
     --teal: #008080;
     --cyan: #00CED1;
@@ -85,6 +105,74 @@ p {
     margin-bottom: var(--space-sm);
     color: var(--text-light);
     line-height: 1.6;
+}
+
+/* ADMIN PANEL STYLES */
+.admin-toggle-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: var(--teal);
+    color: var(--white);
+    border: none;
+    padding: 10px 15px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    z-index: 10000;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+}
+
+.admin-toggle-btn:hover {
+    background: var(--blue);
+    transform: translateY(-2px);
+}
+
+.admin-panel {
+    display: none;
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: var(--white);
+    padding: var(--space-lg);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-xl);
+    z-index: 10000;
+    width: 350px;
+    max-width: 90vw;
+    border: 1px solid var(--border);
+}
+
+.admin-panel h3 {
+    color: var(--teal);
+    margin-bottom: var(--space-md);
+    text-align: center;
+}
+
+.form-group {
+    margin-bottom: var(--space-md);
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: var(--space-xs);
+    font-weight: 600;
+    color: var(--teal);
+}
+
+.form-input, .form-textarea, .form-select {
+    width: 100%;
+    padding: var(--space-sm);
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    font-size: var(--font-size-base);
+    transition: var(--transition);
+}
+
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(30, 144, 255, 0.1);
 }
 
 /* ===== BUTTON STYLES ===== */

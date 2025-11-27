@@ -15,6 +15,79 @@
     <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
+    
+    <!-- Add this button to your header or near the top of body -->
+<button class="admin-toggle-btn" onclick="toggleAdminPanel()">
+    <i class="fas fa-cog"></i> Admin Panel
+</button>
+
+    <!-- ADD THESE CONTAINERS TO YOUR PROJECTS SECTION -->
+<section id="projects" class="section">
+    <div class="container">
+        <div class="section-header">
+            <h2>Our Projects</h2>
+            <p>Explore our innovation pipeline from concept to completion</p>
+        </div>
+
+        <!-- Category Navigation -->
+        <nav class="category-nav">
+            <ul class="category-list" role="tablist">
+                <li role="presentation">
+                    <button class="category-tab active" data-category="concepts" role="tab" aria-selected="true">
+                        <i class="fas fa-lightbulb"></i> Project Concepts
+                    </button>
+                </li>
+                <li role="presentation">
+                    <button class="category-tab" data-category="planning" role="tab">
+                        <i class="fas fa-tasks"></i> Planning Stage
+                    </button>
+                </li>
+                <li role="presentation">
+                    <button class="category-tab" data-category="future" role="tab">
+                        <i class="fas fa-rocket"></i> Future Concepts
+                    </button>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Project Categories Content -->
+        <div class="projects-content">
+            
+            <!-- Concepts Category -->
+            <div id="concepts" class="project-category active">
+                <div class="category-header">
+                    <h3>Project Concepts</h3>
+                    <p>Fresh ideas and innovative concepts ready for development</p>
+                </div>
+                <div id="concepts-container" class="projects-grid">
+                    <!-- Dynamic content will load here -->
+                </div>
+            </div>
+            
+            <!-- Planning Category -->
+            <div id="planning" class="project-category" style="display: none;">
+                <div class="category-header">
+                    <h3>Planning Stage</h3>
+                    <p>Active projects currently in development and planning</p>
+                </div>
+                <div id="planning-container" class="projects-grid">
+                    <!-- Dynamic content will load here -->
+                </div>
+            </div>
+            
+            <!-- Future Category -->
+            <div id="future" class="project-category" style="display: none;">
+                <div class="category-header">
+                    <h3>Future Concepts</h3>
+                    <p>Long-term vision and upcoming innovation opportunities</p>
+                </div>
+                <div id="future-container" class="projects-grid">
+                    <!-- Dynamic content will load here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
     <!-- Header Section -->
     <header class="header">
@@ -49,7 +122,8 @@
     <!-- Simple Admin Button -->
     <button onclick="toggleAdmin()" class="admin-toggle-btn">Admin Panel</button>
 
-<div id="adminPanel" class="admin-panel">
+<!-- CORRECT: Single admin panel -->
+<div id="adminPanel" class="admin-panel" style="display: none;">
     <h3>Add New Project</h3>
     
     <div class="form-group">
@@ -61,14 +135,41 @@
         <label>Description:</label>
         <textarea id="cardDesc" placeholder="Enter project description" class="form-textarea"></textarea>
     </div>
-
-    <div id="adminPanel" class="admin-panel">
-    <h3>Add New Project</h3>
     
     <div class="form-group">
-        <label>Project Title:</label>
-        <input type="text" id="cardTitle" placeholder="Enter project title" class="form-input">
+        <label>Category:</label>
+        <select id="cardCategory" class="form-select">
+            <option value="concepts">Project Concepts</option>
+            <option value="planning">Planning Stage</option>
+            <option value="future">Future Concepts</option>
+        </select>
     </div>
+    
+    <div class="form-group">
+        <label>Status:</label>
+        <select id="cardStatus" class="form-select">
+            <option value="idea">Idea Phase</option>
+            <option value="planning">Planning Phase</option>
+            <option value="development">Development</option>
+            <option value="testing">Testing</option>
+            <option value="completed">Completed</option>
+        </select>
+    </div>
+    
+    <div class="form-group">
+        <label>Priority:</label>
+        <select id="cardPriority" class="form-select">
+            <option value="low">Low Priority</option>
+            <option value="medium" selected>Medium Priority</option>
+            <option value="high">High Priority</option>
+            <option value="critical">Critical</option>
+        </select>
+    </div>
+    
+    <button onclick="addCard()" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Add Project
+    </button>
+</div>
     
     <div class="form-group">
         <label>Description:</label>
