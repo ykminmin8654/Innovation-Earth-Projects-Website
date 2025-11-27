@@ -175,6 +175,34 @@ p {
     box-shadow: 0 0 0 3px rgba(30, 144, 255, 0.1);
 }
 
+/* Add this to your existing CSS */
+.admin-panel {
+    display: none !important; /* Force hide initially */
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    z-index: 10000;
+    width: 350px;
+    border: 1px solid #ccc;
+}
+
+.admin-toggle-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #008080;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    z-index: 10000;
+}
+
 /* ===== BUTTON STYLES ===== */
 .btn {
     display: inline-flex;

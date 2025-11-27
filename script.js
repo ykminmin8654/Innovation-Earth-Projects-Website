@@ -378,12 +378,24 @@ function initializeAdminPanel() {
     }
 }
 
-function toggleAdminPanel() {
+function toggleAdmin() {
     const panel = document.getElementById('adminPanel');
     if (panel) {
-        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        if (panel.style.display === 'none' || panel.style.display === '') {
+            panel.style.display = 'block';
+        } else {
+            panel.style.display = 'none';
+        }
     }
 }
+
+// Force hide on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const panel = document.getElementById('adminPanel');
+    if (panel) {
+        panel.style.display = 'none';
+    }
+});
 
 // Enhanced addCard function with categories
 async function addCard() {
