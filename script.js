@@ -377,11 +377,8 @@ function toggleAdminPanel() {
 async function addCard() {
     const title = document.getElementById('cardTitle').value;
     const description = document.getElementById('cardDesc').value;
-    const category = document.getElementById('cardCategory').value;
     const status = document.getElementById('cardStatus').value;
     const priority = document.getElementById('cardPriority').value;
-    
-    console.log('📝 Form values:', { title, description, category, status, priority }); // Debug
     
     if (!title || !description) {
         alert('Please fill in both title and description');
@@ -392,30 +389,26 @@ async function addCard() {
         const cardData = {
             title: title,
             description: description,
-            category: category,
             status: status,
             priority: priority,
             createdAt: new Date(),
             progress: calculateProgress(status)
         };
         
-        console.log('💾 Saving card data:', cardData);
+        console.log('💾 Saving project:', cardData);
         
         if (db) {
             await db.collection("projects").add(cardData);
-            alert('✅ Project added successfully to ' + getCategoryLabel(category) + '!');
+            alert('✅ Project added successfully!');
             
             // Clear form
             document.getElementById('cardTitle').value = '';
             document.getElementById('cardDesc').value = '';
-            document.getElementById('cardCategory').value = 'concepts';
             document.getElementById('cardStatus').value = 'idea';
             document.getElementById('cardPriority').value = 'medium';
             
-            // Load projects and switch to correct category
+            // Load projects
             loadProjects();
-            switchCategory(category);
-            showSection('#projects');
             
         } else {
             alert('Firebase not available. Using local storage.');
@@ -423,24 +416,11 @@ async function addCard() {
             projects.push(cardData);
             localStorage.setItem('projects', JSON.stringify(projects));
             loadProjects();
-            switchCategory(category);
         }
     } catch (error) {
-        console.error('❌ Error adding card:', error);
+        console.error('❌ Error adding project:', error);
         alert('Error adding project: ' + error.message);
     }
-}
-
-// Helper function to calculate progress based on status
-function calculateProgress(status) {
-    const progressMap = {
-        'idea': 10,
-        'planning': 30,
-        'development': 60,
-        'testing': 80,
-        'completed': 100
-    };
-    return progressMap[status] || 0;
 }
 
 // Helper function to get category label
@@ -478,77 +458,54 @@ async function debugProjects() {
     }
 }
    
-        async function loadProjects() {
-            let projects = [];
+async function loadProjects() {
+    let projects = [];
 
-            try {
-                if (db) {
-                    const querySnapshot = await db.collection("projects").get();
-                    querySnapshot.forEach((doc) => {
-                        projects.push(Object.assign({ id: doc.id }, doc.data()));
-                    });
-                } else {
-                    projects = JSON.parse(localStorage.getItem('projects') || '[]');
-                }
+    try {
+        if (db) {
+            const querySnapshot = await db.collection("projects").get();
+            querySnapshot.forEach((doc) => {
+                projects.push(Object.assign({ id: doc.id }, doc.data()));
+            });
+        } else {
+            projects = JSON.parse(localStorage.getItem('projects') || '[]');
+        }
 
-                // Clear all containers
-                const containers = {
-            concepts: document.getElementById('concepts-container'),
-            planning: document.getElementById('planning-container'),
-            future: document.getElementById('future-container')
-        };
+        console.log('📂 All projects loaded:', projects);
         
-        Object.values(containers).forEach(container => {
-            if (container) container.innerHTML = '';
-        });
+        // Get the single projects container
+        const projectsContainer = document.getElementById('projects-container');
+        if (!projectsContainer) {
+            console.error('❌ Projects container not found');
+            return;
+        }
+        
+        // Clear container
+        projectsContainer.innerHTML = '';
         
         if (projects.length === 0) {
-            // Show empty states for all categories
-            Object.values(containers).forEach(container => {
-                if (container) {
-                    container.innerHTML = getEmptyState('concepts');
-                }
-            });
+            projectsContainer.innerHTML = getEmptyState();
             return;
         }
         
         // Sort by creation date (newest first)
         projects.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         
-        // Group projects by category
-        const projectsByCategory = {
-            concepts: projects.filter(p => p.category === 'concepts'),
-            planning: projects.filter(p => p.category === 'planning'),
-            future: projects.filter(p => p.category === 'future')
-        };
-        
-        // Render projects for each category
-        Object.entries(projectsByCategory).forEach(([category, categoryProjects]) => {
-            const container = containers[category];
-            if (!container) return;
-            
-            if (categoryProjects.length === 0) {
-                container.innerHTML = getEmptyState(category);
-                return;
-            }
-            
-            categoryProjects.forEach((project, index) => {
-                const card = createProjectCard(project, index);
-                container.appendChild(card);
-            });
+        // Render all projects in one container
+        projects.forEach((project, index) => {
+            const card = createProjectCard(project, index);
+            projectsContainer.appendChild(card);
         });
         
-            console.log(`✅ Loaded ${projects.length} projects across categories`);
-        } catch (error) {
-            console.error('❌ Error loading projects:', error);
-        // Show error in all containers
-            Object.values(containers).forEach(container => {
-            if (container) {
-                container.innerHTML = getErrorState();
-            }
-        });
+        console.log(`✅ Loaded ${projects.length} projects`);
+    } catch (error) {
+        console.error('❌ Error loading projects:', error);
+        const projectsContainer = document.getElementById('projects-container');
+        if (projectsContainer) {
+            projectsContainer.innerHTML = getErrorState();
         }
     }
+}
 
 // Helper function to create project cards
 function createProjectCard(project, index) {
@@ -638,20 +595,14 @@ function getPriorityConfig(priority) {
     return configs[priority] || configs.medium;
 }
 
-function getEmptyState(category) {
-    const messages = {
-        concepts: 'No project concepts yet. Add some innovative ideas!',
-        planning: 'No projects in planning stage. Start planning your next big project!',
-        future: 'No future concepts yet. Dream big and add your vision!'
-    };
-    
+function getEmptyState() {
     return `
-        <div class="empty-category">
-            <i class="${getCategoryConfig(category).icon}"></i>
-            <h4>No ${getCategoryConfig(category).label} Projects</h4>
-            <p>${messages[category] || 'No projects in this category yet.'}</p>
+        <div class="empty-state">
+            <i class="fas fa-lightbulb"></i>
+            <h3>No Projects Yet</h3>
+            <p>Start by adding your first project using the admin panel!</p>
             <button class="btn btn-primary" onclick="toggleAdminPanel()">
-                <i class="fas fa-plus"></i> Add Project
+                <i class="fas fa-plus"></i> Add Your First Project
             </button>
         </div>
     `;
@@ -659,9 +610,9 @@ function getEmptyState(category) {
 
 function getErrorState() {
     return `
-        <div class="empty-category">
+        <div class="empty-state">
             <i class="fas fa-exclamation-triangle"></i>
-            <h4>Error Loading Projects</h4>
+            <h3>Error Loading Projects</h3>
             <p>Please check your connection and try again.</p>
         </div>
     `;

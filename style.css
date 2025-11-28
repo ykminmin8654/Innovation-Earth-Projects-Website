@@ -938,46 +938,6 @@ p {
     flex-wrap: wrap;
 }
 
-/* ===== CATEGORY NAVIGATION STYLES ===== */
-.category-nav {
-    margin-bottom: var(--space-xl);
-}
-
-.category-list {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-    list-style: none;
-    padding-bottom: var(--space-xs);
-}
-
-.category-tab {
-    padding: var(--space-sm) var(--space-md);
-    background: var(--white);
-    border: 2px solid var(--border);
-    border-radius: var(--border-radius);
-    font-size: var(--font-size-base);
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition);
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-}
-
-.category-tab:hover {
-    border-color: var(--blue);
-    background: var(--light);
-}
-
-.category-tab.active {
-    background: var(--blue);
-    color: var(--white);
-    border-color: var(--blue);
-}
-
 /* ===== PROJECTS CONTENT LAYOUT ===== */
 .projects-content {
     position: relative;

@@ -76,15 +76,6 @@
     </div>
     
     <div class="form-group">
-        <label>Category:</label>
-        <select id="cardCategory" class="form-select">
-            <option value="concepts">Project Concepts</option>
-            <option value="planning">Planning Stage</option>
-            <option value="future">Future Concepts</option>
-        </select>
-    </div>
-    
-    <div class="form-group">
         <label>Status:</label>
         <select id="cardStatus" class="form-select">
             <option value="idea">Idea Phase</option>
@@ -372,26 +363,14 @@
             <p>Explore our innovation pipeline from concept to completion</p>
         </div>
 
-        <!-- Category Navigation -->
-        <nav class="category-nav">
-            <ul class="category-list" role="tablist">
-                <li role="presentation">
-                    <button class="category-tab active" data-category="concepts" role="tab" aria-selected="true">
-                        <i class="fas fa-lightbulb" aria-hidden="true"></i> Project Concepts
-                    </button>
-                </li>
-                <li role="presentation">
-                    <button class="category-tab" data-category="planning" role="tab">
-                        <i class="fas fa-tasks" aria-hidden="true"></i> Planning Stage
-                    </button>
-                </li>
-                <li role="presentation">
-                    <button class="category-tab" data-category="future" role="tab">
-                        <i class="fas fa-rocket" aria-hidden="true"></i> Future Concepts
-                    </button>
-                </li>
-            </ul>
-        </nav>
+<!-- Remove category navigation entirely -->
+
+<!-- Single projects container -->
+<div class="projects-content">
+    <div id="projects-container" class="projects-grid">
+        <!-- All projects will load here -->
+    </div>
+</div>
 
         <!-- Projects Content -->
         <div class="projects-content">
