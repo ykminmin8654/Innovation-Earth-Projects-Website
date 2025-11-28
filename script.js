@@ -1,5 +1,5 @@
 // ===== MAIN SCRIPT FOR INNOVATION EARTH PROJECTS =====
-// Fixed version with all syntax errors resolved
+// Complete rewrite with progress bar and tag management
 
 // Firebase configuration
 const firebaseConfig = {
@@ -24,6 +24,9 @@ try {
     console.warn('⚠️ Firebase initialization failed:', error);
 }
 
+// ===== GLOBAL VARIABLES =====
+let currentTags = [];
+
 // ===== MAIN INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing Innovation Earth Projects...');
@@ -39,6 +42,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeSmoothScrolling();
     initializeQuickLinkCards();
     initializeAdminPanel();
+    initializeTagSystem();
+    initializeProgressBar();
     
     // Load projects if on projects section
     if (window.location.hash === '#projects') {
@@ -373,12 +378,139 @@ function toggleAdminPanel() {
     }
 }
 
-// Enhanced addCard function with categories
+// ===== TAG MANAGEMENT SYSTEM =====
+function initializeTagSystem() {
+    console.log('🏷️ Initializing tag system...');
+    
+    const tagInput = document.getElementById('tagInput');
+    const addTagBtn = document.getElementById('addTagBtn');
+    
+    if (tagInput && addTagBtn) {
+        // Add tag on button click
+        addTagBtn.addEventListener('click', addTag);
+        
+        // Add tag on Enter key
+        tagInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addTag();
+            }
+        });
+        
+        // Quick tag suggestions
+        document.querySelectorAll('.tag-suggestion').forEach(suggestion => {
+            suggestion.addEventListener('click', function() {
+                const tag = this.getAttribute('data-tag');
+                tagInput.value = tag;
+                addTag();
+            });
+        });
+    }
+    
+    // Clear tags when form is submitted
+    document.addEventListener('DOMContentLoaded', function() {
+        clearTags();
+    });
+}
+
+function addTag() {
+    const tagInput = document.getElementById('tagInput');
+    const tag = tagInput.value.trim().toLowerCase();
+    
+    if (tag && !currentTags.includes(tag)) {
+        currentTags.push(tag);
+        renderTags();
+        tagInput.value = '';
+        tagInput.focus();
+    }
+}
+
+function removeTag(tagToRemove) {
+    currentTags = currentTags.filter(tag => tag !== tagToRemove);
+    renderTags();
+}
+
+function renderTags() {
+    const tagsContainer = document.getElementById('tagsContainer');
+    if (!tagsContainer) return;
+    
+    tagsContainer.innerHTML = '';
+    
+    if (currentTags.length === 0) {
+        tagsContainer.innerHTML = '<div class="tags-empty">No tags added yet</div>';
+        return;
+    }
+    
+    currentTags.forEach(tag => {
+        const tagElement = document.createElement('div');
+        tagElement.className = 'tag-item';
+        tagElement.innerHTML = `
+            ${tag}
+            <button type="button" class="tag-remove" onclick="removeTag('${tag}')">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        tagsContainer.appendChild(tagElement);
+    });
+}
+
+function clearTags() {
+    currentTags = [];
+    renderTags();
+}
+
+function getCurrentTags() {
+    return [...currentTags];
+}
+
+// ===== PROGRESS BAR MANAGEMENT =====
+function initializeProgressBar() {
+    console.log('📊 Initializing progress bar...');
+    
+    const progressSlider = document.getElementById('cardProgress');
+    const progressValue = document.getElementById('progressValue');
+    
+    if (progressSlider && progressValue) {
+        progressSlider.addEventListener('input', function() {
+            progressValue.textContent = this.value + '%';
+        });
+        
+        // Update progress when status changes
+        const statusSelect = document.getElementById('cardStatus');
+        if (statusSelect) {
+            statusSelect.addEventListener('change', function() {
+                const progress = calculateProgress(this.value);
+                progressSlider.value = progress;
+                progressValue.textContent = progress + '%';
+            });
+        }
+    }
+}
+
+function calculateProgress(status) {
+    const progressMap = {
+        'idea': 10,
+        'planning': 30,
+        'development': 60,
+        'testing': 80,
+        'completed': 100
+    };
+    return progressMap[status] || 0;
+}
+
+// ===== ENHANCED ADD CARD FUNCTION =====
 async function addCard() {
+    console.log('💾 Starting to add card...');
+    
     const title = document.getElementById('cardTitle').value;
     const description = document.getElementById('cardDesc').value;
+    const url = document.getElementById('cardUrl').value;
     const status = document.getElementById('cardStatus').value;
     const priority = document.getElementById('cardPriority').value;
+    const progress = parseInt(document.getElementById('cardProgress').value);
+    const tags = getCurrentTags();
+    
+    console.log('📝 Form values:', { title, description, url, status, priority, progress, tags });
     
     if (!title || !description) {
         alert('Please fill in both title and description');
@@ -389,25 +521,22 @@ async function addCard() {
         const cardData = {
             title: title,
             description: description,
+            url: url,
             status: status,
             priority: priority,
-            createdAt: new Date(),
-            progress: calculateProgress(status)
+            progress: progress,
+            tags: tags,
+            createdAt: new Date()
         };
         
-        console.log('💾 Saving project:', cardData);
+        console.log('💾 Saving project data:', cardData);
         
         if (db) {
             await db.collection("projects").add(cardData);
             alert('✅ Project added successfully!');
             
             // Clear form
-            document.getElementById('cardTitle').value = '';
-            document.getElementById('cardDesc').value = '';
-            document.getElementById('cardStatus').value = 'idea';
-            document.getElementById('cardPriority').value = 'medium';
-            
-            // Load projects
+            clearForm();
             loadProjects();
             
         } else {
@@ -423,41 +552,18 @@ async function addCard() {
     }
 }
 
-// Helper function to get category label
-function getCategoryLabel(category) {
-    const labels = {
-        'concepts': 'Project Concepts',
-        'planning': 'Planning Stage', 
-        'future': 'Future Concepts'
-    };
-    return labels[category] || 'Projects';
+function clearForm() {
+    document.getElementById('cardTitle').value = '';
+    document.getElementById('cardDesc').value = '';
+    document.getElementById('cardUrl').value = '';
+    document.getElementById('cardStatus').value = 'idea';
+    document.getElementById('cardPriority').value = 'medium';
+    document.getElementById('cardProgress').value = '0';
+    document.getElementById('progressValue').textContent = '0%';
+    clearTags();
 }
 
-// Enhanced loadProjects function with categories
-// Debug function to check your data
-async function debugProjects() {
-    try {
-        if (db) {
-            const querySnapshot = await db.collection("projects").get();
-            console.log('🐛 DEBUG - All projects in database:');
-            querySnapshot.forEach((doc) => {
-                console.log('📄 Document ID:', doc.id);
-                console.log('📊 Data:', doc.data());
-                console.log('---');
-            });
-        } else {
-            const projects = JSON.parse(localStorage.getItem('projects') || '[]');
-            console.log('🐛 DEBUG - All projects in local storage:');
-            projects.forEach((project, index) => {
-                console.log(`📄 Project ${index}:`, project);
-                console.log('---');
-            });
-        }
-    } catch (error) {
-        console.error('❌ Debug error:', error);
-    }
-}
-   
+// ===== PROJECT LOADING AND DISPLAY =====
 async function loadProjects() {
     let projects = [];
 
@@ -507,19 +613,69 @@ async function loadProjects() {
     }
 }
 
-// Helper function to create project cards
+// ===== ENHANCED ADMIN PANEL MANAGEMENT =====
+function toggleAdminPanel() {
+    const panel = document.getElementById('adminPanel');
+    if (panel) {
+        const isVisible = panel.style.display !== 'none';
+        panel.style.display = isVisible ? 'none' : 'block';
+        
+        if (!isVisible) {
+            // Scroll to top when opening
+            panel.scrollTop = 0;
+            // Focus on first input
+            const firstInput = panel.querySelector('input, textarea, select');
+            if (firstInput) firstInput.focus();
+        }
+    }
+}
+
+// Close admin panel when clicking outside
+document.addEventListener('click', function(e) {
+    const adminPanel = document.getElementById('adminPanel');
+    const adminBtn = document.querySelector('.admin-toggle-btn');
+    
+    if (adminPanel && adminPanel.style.display !== 'none') {
+        if (!adminPanel.contains(e.target) && !adminBtn.contains(e.target)) {
+            adminPanel.style.display = 'none';
+        }
+    }
+});
+
+// Escape key to close admin panel
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const adminPanel = document.getElementById('adminPanel');
+        if (adminPanel && adminPanel.style.display !== 'none') {
+            adminPanel.style.display = 'none';
+        }
+    }
+});
+
+// Auto-adjust height on window resize
+window.addEventListener('resize', function() {
+    const adminPanel = document.getElementById('adminPanel');
+    if (adminPanel && adminPanel.style.display !== 'none') {
+        adminPanel.style.maxHeight = '80vh';
+    }
+});
+
 function createProjectCard(project, index) {
     const card = document.createElement('div');
     card.className = 'dynamic-project-card';
     card.style.animationDelay = `${index * 0.1}s`;
     
-    // FIX: Use status and priority only (no category)
+    const hasUrl = project.url && project.url.trim() !== '';
     const statusConfig = getStatusConfig(project.status);
     const priorityConfig = getPriorityConfig(project.priority);
+    
+    // Generate tags HTML
+    const tagsHtml = generateTagsHtml(project.tags, statusConfig, priorityConfig);
     
     card.innerHTML = `
         <div class="card-image" style="background: linear-gradient(135deg, #3498db, #2980b9)">
             <i class="fas fa-project-diagram"></i>
+            ${hasUrl ? '<div class="link-indicator"><i class="fas fa-external-link-alt"></i></div>' : ''}
         </div>
         
         <span class="card-status ${statusConfig.class}">${statusConfig.label}</span>
@@ -528,9 +684,16 @@ function createProjectCard(project, index) {
         <h3>${project.title}</h3>
         <p>${project.description}</p>
         
+        ${hasUrl ? `
+            <div class="project-link">
+                <a href="${project.url}" target="_blank" class="btn btn-primary">
+                    <i class="fas fa-external-link-alt"></i> Visit Project Website
+                </a>
+            </div>
+        ` : ''}
+        
         <div class="card-tags">
-            <span class="card-tag">${statusConfig.label}</span>
-            <span class="card-tag">${priorityConfig.label}</span>
+            ${tagsHtml}
         </div>
         
         <div class="card-progress">
@@ -560,37 +723,57 @@ function createProjectCard(project, index) {
         </div>
     `;
     
+    // Make entire card clickable if URL exists
+    if (hasUrl) {
+        card.addEventListener('click', function(e) {
+            // Don't trigger if user clicked on buttons or links
+            if (e.target.closest('button') || e.target.closest('a')) {
+                return;
+            }
+            window.open(project.url, '_blank');
+        });
+    }
+    
     return card;
 }
 
-// Add this function if it's missing
-function calculateProgress(status) {
-    const progressMap = {
-        'idea': 10,
-        'planning': 30,
-        'development': 60,
-        'testing': 80,
-        'completed': 100
-    };
-    return progressMap[status] || 0;
+function generateTagsHtml(tags, statusConfig, priorityConfig) {
+    let html = '';
+    
+    // Add status tag
+    html += `<span class="card-tag status-tag">${statusConfig.label}</span>`;
+    
+    // Add priority tag
+    html += `<span class="card-tag priority-tag ${priorityConfig.class}">${priorityConfig.label}</span>`;
+    
+    // Add custom tags
+    if (tags && tags.length > 0) {
+        tags.forEach(tag => {
+            html += `<span class="card-tag custom-tag">${tag}</span>`;
+        });
+    }
+    
+    return html;
 }
 
-// Helper functions for category configurations
-function getCategoryConfig(category) {
+// ===== HELPER FUNCTIONS =====
+function getStatusConfig(status) {
     const configs = {
-        concepts: { label: 'Concept', icon: 'fas fa-lightbulb', color1: '#FFD700', color2: '#FFA500' },
-        planning: { label: 'Planning', icon: 'fas fa-tasks', color1: '#3498db', color2: '#2980b9' },
-        future: { label: 'Future', icon: 'fas fa-rocket', color1: '#9b59b6', color2: '#8e44ad' }
+        'idea': { label: 'Idea Phase', class: 'status-idea' },
+        'planning': { label: 'Planning', class: 'status-planning' },
+        'development': { label: 'Development', class: 'status-development' },
+        'testing': { label: 'Testing', class: 'status-testing' },
+        'completed': { label: 'Completed', class: 'status-completed' }
     };
-    return configs[category] || configs.concepts;
+    return configs[status] || configs.idea;
 }
 
 function getPriorityConfig(priority) {
     const configs = {
-        low: { label: 'Low Priority', class: 'priority-low' },
-        medium: { label: 'Medium Priority', class: 'priority-medium' },
-        high: { label: 'High Priority', class: 'priority-high' },
-        critical: { label: 'Critical', class: 'priority-critical' }
+        'low': { label: 'Low Priority', class: 'priority-low' },
+        'medium': { label: 'Medium Priority', class: 'priority-medium' },
+        'high': { label: 'High Priority', class: 'priority-high' },
+        'critical': { label: 'Critical', class: 'priority-critical' }
     };
     return configs[priority] || configs.medium;
 }
@@ -618,42 +801,7 @@ function getErrorState() {
     `;
 }
 
-// Category tab functionality
-function initializeCategoryTabs() {
-    document.querySelectorAll('.category-tab[data-category]').forEach(tab => {
-        tab.addEventListener('click', function() {
-            const category = this.getAttribute('data-category');
-            switchCategory(category);
-        });
-    });
-}
-
-function switchCategory(category) {
-    // Update active tab
-    document.querySelectorAll('.category-tab').forEach(tab => {
-        tab.classList.remove('active');
-        tab.setAttribute('aria-selected', 'false');
-    });
-    
-    const activeTab = document.querySelector(`.category-tab[data-category="${category}"]`);
-    if (activeTab) {
-        activeTab.classList.add('active');
-        activeTab.setAttribute('aria-selected', 'true');
-    }
-    
-    // Update active content
-    document.querySelectorAll('.project-category').forEach(content => {
-        content.classList.remove('active');
-        content.style.display = 'none';
-    });
-    
-    const activeContent = document.getElementById(category);
-    if (activeContent) {
-        activeContent.classList.add('active');
-        activeContent.style.display = 'block';
-    }
-}
-// ===== DELETE PROJECT =====
+// ===== PROJECT MANAGEMENT =====
 async function deleteProject(projectId) {
     if (confirm('Are you sure you want to delete this project?')) {
         try {
@@ -673,6 +821,11 @@ async function deleteProject(projectId) {
     }
 }
 
+function editProject(projectId) {
+    alert('Edit functionality coming soon! Project ID: ' + projectId);
+    // TODO: Implement edit functionality
+}
+
 // ===== AUTO-LOAD PROJECTS WHEN PROJECTS SECTION IS VIEWED =====
 document.addEventListener('DOMContentLoaded', function() {
     const projectsSection = document.getElementById('projects');
@@ -690,5 +843,35 @@ document.addEventListener('DOMContentLoaded', function() {
         observer.observe(projectsSection, { attributes: true });
     }
 });
+
+// ===== DEBUG FUNCTIONS =====
+async function debugProjects() {
+    try {
+        if (db) {
+            const querySnapshot = await db.collection("projects").get();
+            console.log('🐛 DEBUG - All projects in database:');
+            querySnapshot.forEach((doc) => {
+                console.log('📄 Document ID:', doc.id);
+                console.log('📊 Data:', doc.data());
+                console.log('---');
+            });
+        } else {
+            const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+            console.log('🐛 DEBUG - All projects in local storage:');
+            projects.forEach((project, index) => {
+                console.log(`📄 Project ${index}:`, project);
+                console.log('---');
+            });
+        }
+    } catch (error) {
+        console.error('❌ Debug error:', error);
+    }
+}
+
+function testAddCard() {
+    console.log('🧪 Testing addCard function...');
+    console.log('Current tags:', currentTags);
+    console.log('Progress value:', document.getElementById('cardProgress').value);
+}
 
 console.log("✅ Innovation Earth Projects script loaded successfully!");

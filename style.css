@@ -2861,6 +2861,133 @@ p {
     }
 }
 
+/* ===== ADMIN PANEL SCROLLABLE FIX ===== */
+.admin-panel {
+    display: none;
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: white;
+    padding: 20px;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-xl);
+    z-index: 10000;
+    width: 350px;
+    max-width: 90vw;
+    border: 1px solid var(--border);
+    
+    /* Make it scrollable */
+    max-height: 80vh; /* Limit height to 80% of viewport */
+    overflow-y: auto; /* Enable vertical scrolling */
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+}
+
+/* Ensure the panel content is properly contained */
+.admin-panel-content {
+    min-height: min-content;
+}
+
+/* Style the scrollbar */
+.admin-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.admin-panel::-webkit-scrollbar-track {
+    background: var(--gray-light);
+    border-radius: 3px;
+}
+
+.admin-panel::-webkit-scrollbar-thumb {
+    background: var(--teal);
+    border-radius: 3px;
+}
+
+.admin-panel::-webkit-scrollbar-thumb:hover {
+    background: var(--dark-green);
+}
+
+/* Ensure the add button is always visible at the bottom */
+.admin-panel .btn-primary {
+    position: sticky;
+    bottom: 0;
+    background: var(--lime-green);
+    margin-top: 1rem;
+    z-index: 10;
+}
+
+/* Add some padding to the bottom to ensure button is visible */
+.admin-panel::after {
+    content: '';
+    display: block;
+    height: 10px;
+}
+
+/* ===== RESPONSIVE ADMIN PANEL ===== */
+@media (max-width: 768px) {
+    .admin-panel {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 90vw;
+        max-width: 400px;
+        max-height: 85vh;
+        right: auto;
+        margin: 0;
+    }
+    
+    .admin-panel .btn-primary {
+        position: relative;
+        bottom: auto;
+    }
+}
+
+/* ===== FORM GROUP SPACING FIX ===== */
+.admin-panel .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.admin-panel .form-group:last-child {
+    margin-bottom: 0;
+}
+
+/* ===== TAGS CONTAINER HEIGHT FIX ===== */
+.tags-container {
+    max-height: 120px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    padding: 0.5rem;
+    background: var(--gray-light);
+    margin-bottom: 1rem;
+}
+
+/* ===== PROGRESS BAR CONTAINER FIX ===== */
+.progress-input-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.progress-display {
+    min-width: 60px;
+    text-align: center;
+    font-weight: bold;
+    color: var(--teal);
+}
+
+/* ===== BUTTON STICKY FIX ===== */
+.admin-panel .btn-primary[type="button"] {
+    position: sticky;
+    bottom: -10px;
+    background: var(--lime-green);
+    margin-top: 2rem;
+    padding: 1rem;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
 /* Competition section specific utilities */
 .competition-resource-link {
     display: inline-flex;
