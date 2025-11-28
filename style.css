@@ -2393,24 +2393,48 @@ p {
 }
 
 /* Admin panel styles */
+/* ===== ADMIN PANEL STYLES ===== */
 .admin-toggle-btn {
     position: fixed;
     top: 20px;
     right: 20px;
-    background: var(--teal);
+    background: linear-gradient(135deg, var(--teal), var(--cyan));
     color: var(--white);
     border: none;
-    padding: 10px 15px;
-    border-radius: var(--border-radius);
+    padding: 12px 20px;
+    border-radius: var(--border-radius-lg);
     cursor: pointer;
     z-index: 10000;
-    box-shadow: var(--shadow);
-    transition: var(--transition);
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    box-shadow: var(--shadow-lg);
+    transition: var(--transition-slow);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .admin-toggle-btn:hover {
-    background: var(--blue);
-    transform: translateY(-2px);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--shadow-xl);
+    background: linear-gradient(135deg, var(--cyan), var(--blue));
+}
+
+.admin-toggle-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.admin-toggle-btn:hover::before {
+    left: 100%;
 }
 
 .admin-panel {
@@ -2419,123 +2443,181 @@ p {
     top: 80px;
     right: 20px;
     background: var(--white);
-    padding: var(--space-lg);
+    padding: var(--space-xl);
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-xl);
     z-index: 10000;
-    width: 350px;
+    width: 400px;
     max-width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
     border: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0.95);
+    animation: panelSlideIn 0.3s ease-out;
+}
+
+@keyframes panelSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.admin-panel-content {
+    position: relative;
 }
 
 .admin-panel h3 {
     color: var(--teal);
-    margin-bottom: var(--space-md);
+    font-size: var(--font-size-lg);
+    margin-bottom: var(--space-lg);
     text-align: center;
+    position: relative;
+    padding-bottom: var(--space-sm);
 }
 
-.admin-panel input,
-.admin-panel textarea {
+.admin-panel h3::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--teal), var(--cyan));
+    border-radius: 2px;
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: var(--space-lg);
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: var(--space-xs);
+    font-weight: 600;
+    color: var(--dark);
+    font-size: var(--font-size-sm);
+}
+
+.form-input,
+.form-textarea,
+.form-select {
     width: 100%;
-    padding: var(--space-sm);
-    margin: var(--space-xs) 0;
-    border: 1px solid var(--border);
+    padding: 12px 16px;
+    border: 2px solid var(--border);
     border-radius: var(--border-radius);
     font-size: var(--font-size-base);
     transition: var(--transition);
+    background: var(--white);
+    font-family: var(--font-family);
 }
 
-.admin-panel input:focus,
-.admin-panel textarea:focus {
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
     outline: none;
-    border-color: var(--blue);
-    box-shadow: 0 0 0 3px rgba(30, 144, 255, 0.1);
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(0, 206, 209, 0.1);
+    transform: translateY(-1px);
 }
 
-.admin-panel textarea {
+.form-textarea {
     resize: vertical;
     min-height: 100px;
+    line-height: 1.5;
 }
 
-/* ===== PROGRESS BAR CUSTOMIZATION STYLES ===== */
+.form-select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23007AFF'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 16px;
+}
+
+/* Progress Bar Styles */
 .progress-input-group {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    margin: 1rem 0;
+    gap: var(--space-md);
+    margin-top: var(--space-xs);
 }
 
 .form-range {
     flex: 1;
-    height: 8px;
-    border-radius: 4px;
-    background: #ddd;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--gray-light);
     outline: none;
     appearance: none;
     -webkit-appearance: none;
-    cursor: pointer;
 }
 
 .form-range::-webkit-slider-thumb {
-    appearance: none;
     -webkit-appearance: none;
     width: 20px;
     height: 20px;
     border-radius: 50%;
-    background: var(--teal);
+    background: var(--cyan);
     cursor: pointer;
-    border: 2px solid white;
+    border: 3px solid var(--white);
     box-shadow: var(--shadow);
+    transition: var(--transition);
 }
 
-.form-range::-moz-range-thumb {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
+.form-range::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
     background: var(--teal);
-    cursor: pointer;
-    border: 2px solid white;
-    box-shadow: var(--shadow);
 }
 
 .progress-display {
     min-width: 60px;
     text-align: center;
-    font-weight: bold;
+    font-weight: 600;
     color: var(--teal);
-    font-size: 1.1rem;
+    font-size: var(--font-size-sm);
 }
 
-/* ===== TAG MANAGEMENT STYLES ===== */
+/* Tags System */
 .tags-input-container {
-    border: 1px solid var(--border);
-    border-radius: var(--border-radius);
-    padding: 1rem;
-    background: white;
-    margin: 1rem 0;
+    margin-top: var(--space-xs);
 }
 
 .tags-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-sm);
     min-height: 40px;
-    padding: 0.5rem;
+    padding: var(--space-sm);
     background: var(--gray-light);
     border-radius: var(--border-radius);
+    border: 1px solid var(--border);
+}
+
+.tags-empty {
+    color: var(--text-light);
+    font-style: italic;
+    font-size: var(--font-size-sm);
 }
 
 .tag-item {
     background: linear-gradient(135deg, var(--teal), var(--cyan));
-    color: white;
-    padding: 0.3rem 0.8rem;
+    color: var(--white);
+    padding: 4px 12px;
     border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: var(--font-size-sm);
+    font-weight: 500;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-xs);
     animation: tagAppear 0.3s ease;
 }
 
@@ -2551,65 +2633,234 @@ p {
 }
 
 .tag-remove {
-    background: rgba(255, 255, 255, 0.3);
+    background: none;
     border: none;
-    color: white;
+    color: var(--white);
     cursor: pointer;
-    padding: 0.1rem 0.3rem;
+    padding: 2px;
     border-radius: 50%;
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.7rem;
+    font-size: 10px;
     transition: var(--transition);
 }
 
 .tag-remove:hover {
-    background: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.2);
     transform: scale(1.1);
 }
 
 .tag-input-group {
     display: flex;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-}
-
-#tagInput {
-    flex: 1;
-    margin: 0;
-    padding: 0.6rem 0.8rem;
-}
-
-#addTagBtn {
-    white-space: nowrap;
-    padding: 0.6rem 1rem;
+    gap: var(--space-xs);
 }
 
 .tag-suggestions {
-    margin-top: 0.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
+    margin-top: var(--space-xs);
+}
+
+.tag-suggestions small {
+    color: var(--text-light);
+    margin-right: var(--space-xs);
 }
 
 .tag-suggestion {
-    background: rgba(0, 206, 209, 0.1);
-    color: var(--teal);
-    padding: 0.2rem 0.6rem;
+    display: inline-block;
+    background: var(--gray-light);
+    color: var(--text);
+    padding: 2px 8px;
     border-radius: 12px;
-    font-size: 0.7rem;
+    font-size: var(--font-size-sm);
     cursor: pointer;
-    border: 1px solid rgba(0, 206, 209, 0.2);
+    margin-right: var(--space-xs);
+    margin-bottom: var(--space-xs);
     transition: var(--transition);
+    border: 1px solid var(--border);
 }
 
 .tag-suggestion:hover {
-    background: rgba(0, 206, 209, 0.2);
+    background: var(--cyan);
+    color: var(--white);
     transform: translateY(-1px);
+}
+
+/* Submit Button */
+.admin-panel .btn-primary {
+    width: 100%;
+    padding: 16px;
+    font-size: var(--font-size-md);
+    font-weight: 600;
+    margin-top: var(--space-lg);
+    background: linear-gradient(135deg, var(--lime-green), var(--dark-green));
+    border: none;
+    border-radius: var(--border-radius);
+    transition: var(--transition-slow);
+    position: relative;
+    overflow: hidden;
+}
+
+.admin-panel .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    background: linear-gradient(135deg, var(--dark-green), var(--lime-green));
+}
+
+.admin-panel .btn-primary:active {
+    transform: translateY(0);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .admin-toggle-btn {
+        top: 10px;
+        right: 10px;
+        padding: 10px 16px;
+        font-size: var(--font-size-sm);
+    }
+    
+    .admin-panel {
+        top: 60px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+        max-width: none;
+        padding: var(--space-lg);
+    }
+    
+    .tag-input-group {
+        flex-direction: column;
+    }
+    
+    .tag-input-group .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .admin-panel {
+        padding: var(--space-md);
+    }
+    
+    .progress-input-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--space-sm);
+    }
+    
+    .progress-display {
+        text-align: left;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .admin-panel {
+        background: rgba(45, 45, 45, 0.95);
+        border-color: #444;
+        color: var(--white);
+    }
+    
+    .admin-panel h3 {
+        color: var(--cyan);
+    }
+    
+    .form-input,
+    .form-textarea,
+    .form-select {
+        background: #2a2a2a;
+        border-color: #444;
+        color: var(--white);
+    }
+    
+    .form-input:focus,
+    .form-textarea:focus,
+    .form-select:focus {
+        border-color: var(--cyan);
+        box-shadow: 0 0 0 3px rgba(0, 206, 209, 0.2);
+    }
+    
+    .tags-container {
+        background: #2a2a2a;
+        border-color: #444;
+    }
+    
+    .tag-suggestion {
+        background: #2a2a2a;
+        border-color: #444;
+        color: var(--white);
+    }
+}
+
+/* Animation for panel close */
+.admin-panel.closing {
+    animation: panelSlideOut 0.2s ease-in forwards;
+}
+
+@keyframes panelSlideOut {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.9);
+    }
+}
+
+/* Scrollbar styling for admin panel */
+.admin-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.admin-panel::-webkit-scrollbar-track {
+    background: var(--gray-light);
+    border-radius: 3px;
+}
+
+.admin-panel::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--teal), var(--cyan));
+    border-radius: 3px;
+}
+
+.admin-panel::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, var(--cyan), var(--blue));
+}
+
+/* Focus states for accessibility */
+.admin-toggle-btn:focus {
+    outline: 2px solid var(--cyan);
+    outline-offset: 2px;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+    outline: none;
+}
+
+/* Loading state for submit button */
+.btn-primary.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.btn-primary.loading::after {
+    content: '';
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: var(--space-xs);
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* ===== ENHANCED PROJECT CARD TAGS ===== */
