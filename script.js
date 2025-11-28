@@ -41,7 +41,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeContactForm();
     initializeSmoothScrolling();
     initializeQuickLinkCards();
-    initializeAdminPanel();
     initializeTagSystem();
     initializeProgressBar();
     
@@ -352,23 +351,6 @@ function initializeQuickLinkCards() {
             }
         });
     });
-}
-
-// ===== ADMIN PANEL =====
-function initializeAdminPanel() {
-    console.log('🔧 Setting up admin panel...');
-    
-    // Admin toggle button
-    const adminBtn = document.querySelector('.admin-toggle-btn');
-    if (adminBtn) {
-        adminBtn.addEventListener('click', toggleAdminPanel);
-    }
-    
-    // Add card button
-    const addCardBtn = document.querySelector('button[onclick="addCard()"]');
-    if (addCardBtn) {
-        addCardBtn.onclick = addCard;
-    }
 }
 
 function toggleAdminPanel() {
