@@ -1,5 +1,5 @@
 // ===== MAIN SCRIPT FOR INNOVATION EARTH PROJECTS =====
-// Complete rewrite with simplified functionality
+// Complete rewrite with progress bar and tag management
 
 // Firebase configuration
 const firebaseConfig = {
@@ -31,7 +31,7 @@ let currentTags = [];
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing Innovation Earth Projects...');
     
-    // Initialize all functionality
+    // Initialize all functionality in correct order
     initializeSectionManagement();
     initializeMobileMenu();
     initializeBannerSlider();
@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeContactForm();
     initializeSmoothScrolling();
     initializeQuickLinkCards();
+    initializeAdminPanel();
     initializeTagSystem();
     initializeProgressBar();
     
@@ -353,15 +354,27 @@ function initializeQuickLinkCards() {
     });
 }
 
-// ===== ADMIN PANEL FUNCTIONS =====
-function toggleAdmin() {
+// ===== ADMIN PANEL =====
+function initializeAdminPanel() {
+    console.log('🔧 Setting up admin panel...');
+    
+    // Admin toggle button
+    const adminBtn = document.querySelector('.admin-toggle-btn');
+    if (adminBtn) {
+        adminBtn.addEventListener('click', toggleAdminPanel);
+    }
+    
+    // Add card button
+    const addCardBtn = document.querySelector('button[onclick="addCard()"]');
+    if (addCardBtn) {
+        addCardBtn.onclick = addCard;
+    }
+}
+
+function toggleAdminPanel() {
     const panel = document.getElementById('adminPanel');
     if (panel) {
-        const isVisible = panel.style.display === 'block';
-        panel.style.display = isVisible ? 'none' : 'block';
-        console.log('🔧 Admin panel toggled:', !isVisible ? 'visible' : 'hidden');
-    } else {
-        console.error('❌ Admin panel element not found');
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
     }
 }
 
@@ -485,7 +498,7 @@ function calculateProgress(status) {
     return progressMap[status] || 0;
 }
 
-// ===== ADD PROJECT FUNCTION =====
+// ===== ENHANCED ADD CARD FUNCTION =====
 async function addCard() {
     console.log('💾 Starting to add card...');
     
@@ -599,6 +612,53 @@ async function loadProjects() {
         }
     }
 }
+
+// ===== ENHANCED ADMIN PANEL MANAGEMENT =====
+function toggleAdminPanel() {
+    const panel = document.getElementById('adminPanel');
+    if (panel) {
+        const isVisible = panel.style.display !== 'none';
+        panel.style.display = isVisible ? 'none' : 'block';
+        
+        if (!isVisible) {
+            // Scroll to top when opening
+            panel.scrollTop = 0;
+            // Focus on first input
+            const firstInput = panel.querySelector('input, textarea, select');
+            if (firstInput) firstInput.focus();
+        }
+    }
+}
+
+// Close admin panel when clicking outside
+document.addEventListener('click', function(e) {
+    const adminPanel = document.getElementById('adminPanel');
+    const adminBtn = document.querySelector('.admin-toggle-btn');
+    
+    if (adminPanel && adminPanel.style.display !== 'none') {
+        if (!adminPanel.contains(e.target) && !adminBtn.contains(e.target)) {
+            adminPanel.style.display = 'none';
+        }
+    }
+});
+
+// Escape key to close admin panel
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const adminPanel = document.getElementById('adminPanel');
+        if (adminPanel && adminPanel.style.display !== 'none') {
+            adminPanel.style.display = 'none';
+        }
+    }
+});
+
+// Auto-adjust height on window resize
+window.addEventListener('resize', function() {
+    const adminPanel = document.getElementById('adminPanel');
+    if (adminPanel && adminPanel.style.display !== 'none') {
+        adminPanel.style.maxHeight = '80vh';
+    }
+});
 
 function createProjectCard(project, index) {
     const card = document.createElement('div');
@@ -724,7 +784,7 @@ function getEmptyState() {
             <i class="fas fa-lightbulb"></i>
             <h3>No Projects Yet</h3>
             <p>Start by adding your first project using the admin panel!</p>
-            <button class="btn btn-primary" onclick="toggleAdmin()">
+            <button class="btn btn-primary" onclick="toggleAdminPanel()">
                 <i class="fas fa-plus"></i> Add Your First Project
             </button>
         </div>
@@ -783,5 +843,35 @@ document.addEventListener('DOMContentLoaded', function() {
         observer.observe(projectsSection, { attributes: true });
     }
 });
+
+// ===== DEBUG FUNCTIONS =====
+async function debugProjects() {
+    try {
+        if (db) {
+            const querySnapshot = await db.collection("projects").get();
+            console.log('🐛 DEBUG - All projects in database:');
+            querySnapshot.forEach((doc) => {
+                console.log('📄 Document ID:', doc.id);
+                console.log('📊 Data:', doc.data());
+                console.log('---');
+            });
+        } else {
+            const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+            console.log('🐛 DEBUG - All projects in local storage:');
+            projects.forEach((project, index) => {
+                console.log(`📄 Project ${index}:`, project);
+                console.log('---');
+            });
+        }
+    } catch (error) {
+        console.error('❌ Debug error:', error);
+    }
+}
+
+function testAddCard() {
+    console.log('🧪 Testing addCard function...');
+    console.log('Current tags:', currentTags);
+    console.log('Progress value:', document.getElementById('cardProgress').value);
+}
 
 console.log("✅ Innovation Earth Projects script loaded successfully!");

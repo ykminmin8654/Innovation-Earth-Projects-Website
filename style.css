@@ -2457,36 +2457,410 @@ p {
     min-height: 100px;
 }
 
-/* Responsive design for dynamic cards */
+/* ===== PROGRESS BAR CUSTOMIZATION STYLES ===== */
+.progress-input-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.form-range {
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+    background: #ddd;
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+
+.form-range::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--teal);
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: var(--shadow);
+}
+
+.form-range::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--teal);
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: var(--shadow);
+}
+
+.progress-display {
+    min-width: 60px;
+    text-align: center;
+    font-weight: bold;
+    color: var(--teal);
+    font-size: 1.1rem;
+}
+
+/* ===== TAG MANAGEMENT STYLES ===== */
+.tags-input-container {
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    background: white;
+    margin: 1rem 0;
+}
+
+.tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    min-height: 40px;
+    padding: 0.5rem;
+    background: var(--gray-light);
+    border-radius: var(--border-radius);
+}
+
+.tag-item {
+    background: linear-gradient(135deg, var(--teal), var(--cyan));
+    color: white;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    animation: tagAppear 0.3s ease;
+}
+
+@keyframes tagAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.tag-remove {
+    background: rgba(255, 255, 255, 0.3);
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0.1rem 0.3rem;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    transition: var(--transition);
+}
+
+.tag-remove:hover {
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(1.1);
+}
+
+.tag-input-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+#tagInput {
+    flex: 1;
+    margin: 0;
+    padding: 0.6rem 0.8rem;
+}
+
+#addTagBtn {
+    white-space: nowrap;
+    padding: 0.6rem 1rem;
+}
+
+.tag-suggestions {
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.tag-suggestion {
+    background: rgba(0, 206, 209, 0.1);
+    color: var(--teal);
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    border: 1px solid rgba(0, 206, 209, 0.2);
+    transition: var(--transition);
+}
+
+.tag-suggestion:hover {
+    background: rgba(0, 206, 209, 0.2);
+    transform: translateY(-1px);
+}
+
+/* ===== ENHANCED PROJECT CARD TAGS ===== */
+.card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.card-tag {
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-tag {
+    background: rgba(52, 152, 219, 0.1);
+    color: #3498db;
+    border: 1px solid rgba(52, 152, 219, 0.3);
+}
+
+.priority-tag {
+    color: white;
+    border: none;
+}
+
+.priority-low { 
+    background: linear-gradient(135deg, #27ae60, #2ecc71); 
+}
+
+.priority-medium { 
+    background: linear-gradient(135deg, #f39c12, #f1c40f); 
+}
+
+.priority-high { 
+    background: linear-gradient(135deg, #e74c3c, #c0392b); 
+}
+
+.priority-critical { 
+    background: linear-gradient(135deg, #8e44ad, #9b59b6); 
+}
+
+.custom-tag {
+    background: rgba(0, 206, 209, 0.1);
+    color: var(--teal);
+    border: 1px solid rgba(0, 206, 209, 0.2);
+}
+
+/* ===== ENHANCED PROGRESS BAR DISPLAY ===== */
+.card-progress {
+    margin: 1.5rem 0 1rem 0;
+}
+
+.progress-bar {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    height: 8px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+    position: relative;
+}
+
+.progress-fill {
+    background: linear-gradient(90deg, var(--lime-green), var(--cyan));
+    height: 100%;
+    border-radius: 10px;
+    transition: width 1s ease-in-out;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: shimmer 2s infinite;
+}
+
+.progress-text {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.progress-value {
+    font-weight: bold;
+    color: var(--teal);
+}
+
+/* ===== ADMIN PANEL ENHANCEMENTS ===== */
+.admin-panel {
+    background: white;
+    border-radius: var(--border-radius-lg);
+    padding: 2rem;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border);
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.admin-panel h3 {
+    text-align: center;
+    color: var(--teal);
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--dark);
+}
+
+.form-input, .form-textarea, .form-select {
+    width: 100%;
+    padding: 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    transition: var(--transition);
+    background: white;
+}
+
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+    outline: none;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(0, 128, 128, 0.1);
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 100px;
+    font-family: inherit;
+}
+
+/* ===== ADMIN PANEL - WIDER FIXED VERSION ===== */
+.admin-panel {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 2rem;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-xl);
+    z-index: 10000;
+    width: 500px; /* Wider width */
+    max-width: 90vw;
+    border: 1px solid var(--border);
+    
+    /* Remove scrolling */
+    max-height: none;
+    overflow-y: visible;
+}
+
+/* Remove sticky button styles */
+.admin-panel .btn-primary {
+    position: relative;
+    bottom: auto;
+    margin-top: 1.5rem;
+}
+
+/* Remove scrollbar styles */
+.admin-panel::-webkit-scrollbar {
+    display: none;
+}
+
+/* ===== FORM ELEMENTS - ADJUST FOR WIDER PANEL ===== */
+.admin-panel .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.admin-panel .form-input,
+.admin-panel .form-textarea,
+.admin-panel .form-select {
+    width: 100%;
+    padding: 0.8rem;
+    font-size: 1rem;
+}
+
+/* ===== TAGS CONTAINER - FULL WIDTH ===== */
+.tags-input-container {
+    width: 100%;
+}
+
+.tag-input-group {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+#tagInput {
+    flex: 1;
+}
+
+/* ===== PROGRESS BAR - FULL WIDTH ===== */
+.progress-input-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.form-range {
+    flex: 1;
+}
+
+.progress-display {
+    min-width: 60px;
+    text-align: center;
+    font-weight: bold;
+    color: var(--teal);
+}
+
+/* ===== RESPONSIVE ADJUSTMENTS ===== */
 @media (max-width: 768px) {
-    #projects-container {
-        grid-template-columns: 1fr;
-        gap: var(--space-md);
-    }
-    
-    .dynamic-project-card {
-        padding: var(--space-md);
-    }
-    
     .admin-panel {
-        right: 10px;
-        left: 10px;
-        width: auto;
+        width: 95vw;
+        max-width: 400px;
+        padding: 1.5rem;
     }
 }
 
 @media (max-width: 480px) {
-    .dynamic-project-card {
-        margin: 0 var(--space-xs);
+    .admin-panel {
+        width: 98vw;
+        padding: 1rem;
     }
     
-    .project-actions {
+    .tag-input-group {
         flex-direction: column;
     }
     
-    .btn-small {
+    #addTagBtn {
         width: 100%;
-        text-align: center;
     }
 }
 
