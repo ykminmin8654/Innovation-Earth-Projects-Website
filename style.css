@@ -2760,99 +2760,21 @@ p {
     font-family: inherit;
 }
 
-/* ===== ADMIN PANEL - WIDER FIXED VERSION ===== */
-.admin-panel {
-    display: none;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    padding: 2rem;
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-xl);
-    z-index: 10000;
-    width: 500px; /* Wider width */
-    max-width: 90vw;
-    border: 1px solid var(--border);
-    
-    /* Remove scrolling */
-    max-height: none;
-    overflow-y: visible;
-}
-
-/* Remove sticky button styles */
-.admin-panel .btn-primary {
-    position: relative;
-    bottom: auto;
-    margin-top: 1.5rem;
-}
-
-/* Remove scrollbar styles */
-.admin-panel::-webkit-scrollbar {
-    display: none;
-}
-
-/* ===== FORM ELEMENTS - ADJUST FOR WIDER PANEL ===== */
-.admin-panel .form-group {
-    margin-bottom: 1.5rem;
-}
-
-.admin-panel .form-input,
-.admin-panel .form-textarea,
-.admin-panel .form-select {
-    width: 100%;
-    padding: 0.8rem;
-    font-size: 1rem;
-}
-
-/* ===== TAGS CONTAINER - FULL WIDTH ===== */
-.tags-input-container {
-    width: 100%;
-}
-
-.tag-input-group {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-}
-
-#tagInput {
-    flex: 1;
-}
-
-/* ===== PROGRESS BAR - FULL WIDTH ===== */
-.progress-input-group {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin: 1rem 0;
-}
-
-.form-range {
-    flex: 1;
-}
-
-.progress-display {
-    min-width: 60px;
-    text-align: center;
-    font-weight: bold;
-    color: var(--teal);
-}
-
-/* ===== RESPONSIVE ADJUSTMENTS ===== */
+/* ===== RESPONSIVE DESIGN FOR ADMIN PANEL ===== */
 @media (max-width: 768px) {
     .admin-panel {
-        width: 95vw;
-        max-width: 400px;
+        margin: 1rem;
         padding: 1.5rem;
     }
-}
-
-@media (max-width: 480px) {
-    .admin-panel {
-        width: 98vw;
-        padding: 1rem;
+    
+    .progress-input-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    
+    .progress-display {
+        text-align: center;
     }
     
     .tag-input-group {
@@ -2862,6 +2784,208 @@ p {
     #addTagBtn {
         width: 100%;
     }
+}
+
+/* ===== EMPTY STATE FOR TAGS ===== */
+.tags-empty {
+    color: var(--text-light);
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+    font-size: 0.9rem;
+}
+
+/* ===== TAG MANAGEMENT ANIMATIONS ===== */
+@keyframes tagBounce {
+    0%, 20%, 53%, 80%, 100% {
+        transform: translate3d(0,0,0);
+    }
+    40%, 43% {
+        transform: translate3d(0,-8px,0);
+    }
+    70% {
+        transform: translate3d(0,-4px,0);
+    }
+    90% {
+        transform: translate3d(0,-2px,0);
+    }
+}
+
+.tag-item.added {
+    animation: tagBounce 0.6s ease;
+}
+
+/* ===== COLOR-CODED PROGRESS STATES ===== */
+.progress-0-25 { background: linear-gradient(90deg, #e74c3c, #c0392b); }
+.progress-26-50 { background: linear-gradient(90deg, #f39c12, #e67e22); }
+.progress-51-75 { background: linear-gradient(90deg, #3498db, #2980b9); }
+.progress-76-100 { background: linear-gradient(90deg, #27ae60, #2ecc71); }
+
+/* Dynamic progress color based on value */
+.progress-fill[style*="width: 0%"] { background: #e74c3c; }
+.progress-fill[style*="width: 25%"] { background: #f39c12; }
+.progress-fill[style*="width: 50%"] { background: #3498db; }
+.progress-fill[style*="width: 75%"] { background: #27ae60; }
+.progress-fill[style*="width: 100%"] { background: #2ecc71; }
+
+/* Responsive design for dynamic cards */
+@media (max-width: 768px) {
+    #projects-container {
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+    }
+    
+    .dynamic-project-card {
+        padding: var(--space-md);
+    }
+    
+    .admin-panel {
+        right: 10px;
+        left: 10px;
+        width: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .dynamic-project-card {
+        margin: 0 var(--space-xs);
+    }
+    
+    .project-actions {
+        flex-direction: column;
+    }
+    
+    .btn-small {
+        width: 100%;
+        text-align: center;
+    }
+}
+
+/* ===== ADMIN PANEL SCROLLABLE FIX ===== */
+.admin-panel {
+    display: none;
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: white;
+    padding: 20px;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-xl);
+    z-index: 10000;
+    width: 350px;
+    max-width: 90vw;
+    border: 1px solid var(--border);
+    
+    /* Make it scrollable */
+    max-height: 80vh; /* Limit height to 80% of viewport */
+    overflow-y: auto; /* Enable vertical scrolling */
+    overflow-x: hidden; /* Prevent horizontal scrolling */
+}
+
+/* Ensure the panel content is properly contained */
+.admin-panel-content {
+    min-height: min-content;
+}
+
+/* Style the scrollbar */
+.admin-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.admin-panel::-webkit-scrollbar-track {
+    background: var(--gray-light);
+    border-radius: 3px;
+}
+
+.admin-panel::-webkit-scrollbar-thumb {
+    background: var(--teal);
+    border-radius: 3px;
+}
+
+.admin-panel::-webkit-scrollbar-thumb:hover {
+    background: var(--dark-green);
+}
+
+/* Ensure the add button is always visible at the bottom */
+.admin-panel .btn-primary {
+    position: sticky;
+    bottom: 0;
+    background: var(--lime-green);
+    margin-top: 1rem;
+    z-index: 10;
+}
+
+/* Add some padding to the bottom to ensure button is visible */
+.admin-panel::after {
+    content: '';
+    display: block;
+    height: 10px;
+}
+
+/* ===== RESPONSIVE ADMIN PANEL ===== */
+@media (max-width: 768px) {
+    .admin-panel {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 90vw;
+        max-width: 400px;
+        max-height: 85vh;
+        right: auto;
+        margin: 0;
+    }
+    
+    .admin-panel .btn-primary {
+        position: relative;
+        bottom: auto;
+    }
+}
+
+/* ===== FORM GROUP SPACING FIX ===== */
+.admin-panel .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.admin-panel .form-group:last-child {
+    margin-bottom: 0;
+}
+
+/* ===== TAGS CONTAINER HEIGHT FIX ===== */
+.tags-container {
+    max-height: 120px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    padding: 0.5rem;
+    background: var(--gray-light);
+    margin-bottom: 1rem;
+}
+
+/* ===== PROGRESS BAR CONTAINER FIX ===== */
+.progress-input-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.progress-display {
+    min-width: 60px;
+    text-align: center;
+    font-weight: bold;
+    color: var(--teal);
+}
+
+/* ===== BUTTON STICKY FIX ===== */
+.admin-panel .btn-primary[type="button"] {
+    position: sticky;
+    bottom: -10px;
+    background: var(--lime-green);
+    margin-top: 2rem;
+    padding: 1rem;
+    font-size: 1.1rem;
+    font-weight: bold;
 }
 
 /* Competition section specific utilities */
