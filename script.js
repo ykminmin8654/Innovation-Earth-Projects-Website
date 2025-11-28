@@ -613,53 +613,6 @@ async function loadProjects() {
     }
 }
 
-// ===== ENHANCED ADMIN PANEL MANAGEMENT =====
-function toggleAdminPanel() {
-    const panel = document.getElementById('adminPanel');
-    if (panel) {
-        const isVisible = panel.style.display !== 'none';
-        panel.style.display = isVisible ? 'none' : 'block';
-        
-        if (!isVisible) {
-            // Scroll to top when opening
-            panel.scrollTop = 0;
-            // Focus on first input
-            const firstInput = panel.querySelector('input, textarea, select');
-            if (firstInput) firstInput.focus();
-        }
-    }
-}
-
-// Close admin panel when clicking outside
-document.addEventListener('click', function(e) {
-    const adminPanel = document.getElementById('adminPanel');
-    const adminBtn = document.querySelector('.admin-toggle-btn');
-    
-    if (adminPanel && adminPanel.style.display !== 'none') {
-        if (!adminPanel.contains(e.target) && !adminBtn.contains(e.target)) {
-            adminPanel.style.display = 'none';
-        }
-    }
-});
-
-// Escape key to close admin panel
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        const adminPanel = document.getElementById('adminPanel');
-        if (adminPanel && adminPanel.style.display !== 'none') {
-            adminPanel.style.display = 'none';
-        }
-    }
-});
-
-// Auto-adjust height on window resize
-window.addEventListener('resize', function() {
-    const adminPanel = document.getElementById('adminPanel');
-    if (adminPanel && adminPanel.style.display !== 'none') {
-        adminPanel.style.maxHeight = '80vh';
-    }
-});
-
 function createProjectCard(project, index) {
     const card = document.createElement('div');
     card.className = 'dynamic-project-card';
