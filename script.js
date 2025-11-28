@@ -513,14 +513,13 @@ function createProjectCard(project, index) {
     card.className = 'dynamic-project-card';
     card.style.animationDelay = `${index * 0.1}s`;
     
-    // Get appropriate icon and color based on category
-    const categoryConfig = getCategoryConfig(project.category);
+    // FIX: Use status and priority only (no category)
     const statusConfig = getStatusConfig(project.status);
     const priorityConfig = getPriorityConfig(project.priority);
     
     card.innerHTML = `
-        <div class="card-image" style="background: linear-gradient(135deg, ${categoryConfig.color1}, ${categoryConfig.color2})">
-            <i class="${categoryConfig.icon}"></i>
+        <div class="card-image" style="background: linear-gradient(135deg, #3498db, #2980b9)">
+            <i class="fas fa-project-diagram"></i>
         </div>
         
         <span class="card-status ${statusConfig.class}">${statusConfig.label}</span>
@@ -530,7 +529,7 @@ function createProjectCard(project, index) {
         <p>${project.description}</p>
         
         <div class="card-tags">
-            <span class="card-tag">${categoryConfig.label}</span>
+            <span class="card-tag">${statusConfig.label}</span>
             <span class="card-tag">${priorityConfig.label}</span>
         </div>
         
@@ -562,6 +561,18 @@ function createProjectCard(project, index) {
     `;
     
     return card;
+}
+
+// Add this function if it's missing
+function calculateProgress(status) {
+    const progressMap = {
+        'idea': 10,
+        'planning': 30,
+        'development': 60,
+        'testing': 80,
+        'completed': 100
+    };
+    return progressMap[status] || 0;
 }
 
 // Helper functions for category configurations
