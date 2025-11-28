@@ -1,5 +1,5 @@
 // ===== MAIN SCRIPT FOR INNOVATION EARTH PROJECTS =====
-// Complete rewrite with progress bar and tag management
+// Complete rewrite with simplified functionality
 
 // Firebase configuration
 const firebaseConfig = {
@@ -31,7 +31,7 @@ let currentTags = [];
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing Innovation Earth Projects...');
     
-    // Initialize all functionality in correct order
+    // Initialize all functionality
     initializeSectionManagement();
     initializeMobileMenu();
     initializeBannerSlider();
@@ -353,10 +353,15 @@ function initializeQuickLinkCards() {
     });
 }
 
-function toggleAdminPanel() {
+// ===== ADMIN PANEL FUNCTIONS =====
+function toggleAdmin() {
     const panel = document.getElementById('adminPanel');
     if (panel) {
-        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        const isVisible = panel.style.display === 'block';
+        panel.style.display = isVisible ? 'none' : 'block';
+        console.log('🔧 Admin panel toggled:', !isVisible ? 'visible' : 'hidden');
+    } else {
+        console.error('❌ Admin panel element not found');
     }
 }
 
@@ -480,7 +485,7 @@ function calculateProgress(status) {
     return progressMap[status] || 0;
 }
 
-// ===== ENHANCED ADD CARD FUNCTION =====
+// ===== ADD PROJECT FUNCTION =====
 async function addCard() {
     console.log('💾 Starting to add card...');
     
@@ -719,7 +724,7 @@ function getEmptyState() {
             <i class="fas fa-lightbulb"></i>
             <h3>No Projects Yet</h3>
             <p>Start by adding your first project using the admin panel!</p>
-            <button class="btn btn-primary" onclick="toggleAdminPanel()">
+            <button class="btn btn-primary" onclick="toggleAdmin()">
                 <i class="fas fa-plus"></i> Add Your First Project
             </button>
         </div>
@@ -778,35 +783,5 @@ document.addEventListener('DOMContentLoaded', function() {
         observer.observe(projectsSection, { attributes: true });
     }
 });
-
-// ===== DEBUG FUNCTIONS =====
-async function debugProjects() {
-    try {
-        if (db) {
-            const querySnapshot = await db.collection("projects").get();
-            console.log('🐛 DEBUG - All projects in database:');
-            querySnapshot.forEach((doc) => {
-                console.log('📄 Document ID:', doc.id);
-                console.log('📊 Data:', doc.data());
-                console.log('---');
-            });
-        } else {
-            const projects = JSON.parse(localStorage.getItem('projects') || '[]');
-            console.log('🐛 DEBUG - All projects in local storage:');
-            projects.forEach((project, index) => {
-                console.log(`📄 Project ${index}:`, project);
-                console.log('---');
-            });
-        }
-    } catch (error) {
-        console.error('❌ Debug error:', error);
-    }
-}
-
-function testAddCard() {
-    console.log('🧪 Testing addCard function...');
-    console.log('Current tags:', currentTags);
-    console.log('Progress value:', document.getElementById('cardProgress').value);
-}
 
 console.log("✅ Innovation Earth Projects script loaded successfully!");
