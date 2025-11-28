@@ -49,34 +49,36 @@
     <!-- Simple Admin Button -->
     <button onclick="toggleAdmin()" class="admin-toggle-btn">Admin Panel</button>
 
-<div id="adminPanel" class="admin-panel">
+<div id="adminPanel" class="admin-panel" style="display: none;">
     <h3>Add New Project</h3>
     
     <div class="form-group">
-        <label>Project Title:</label>
-        <input type="text" id="cardTitle" placeholder="Enter project title" class="form-input">
+        <label for="cardTitle">Project Title:</label>
+        <input type="text" id="cardTitle" placeholder="Enter project title" class="form-input" required>
     </div>
     
     <div class="form-group">
-        <label>Description:</label>
-        <textarea id="cardDesc" placeholder="Enter project description" class="form-textarea"></textarea>
+        <label for="cardDesc">Description:</label>
+        <textarea id="cardDesc" placeholder="Enter project description" class="form-textarea" required></textarea>
     </div>
 
-    <div id="adminPanel" class="admin-panel">
-    <h3>Add New Project</h3>
-    
     <div class="form-group">
-        <label>Project Title:</label>
-        <input type="text" id="cardTitle" placeholder="Enter project title" class="form-input">
+        <label for="cardUrl">Project URL (optional):</label>
+        <input type="url" id="cardUrl" placeholder="https://example.com" class="form-input">
     </div>
-    
+
     <div class="form-group">
-        <label>Description:</label>
-        <textarea id="cardDesc" placeholder="Enter project description" class="form-textarea"></textarea>
+        <label for="cardProgress">Progress (%):</label>
+        <div class="progress-input-group">
+            <input type="range" id="cardProgress" min="0" max="100" value="0" class="form-range">
+            <div class="progress-display">
+                <span id="progressValue">0%</span>
+            </div>
+        </div>
     </div>
-    
+
     <div class="form-group">
-        <label>Status:</label>
+        <label for="cardStatus">Status:</label>
         <select id="cardStatus" class="form-select">
             <option value="idea">Idea Phase</option>
             <option value="planning">Planning Phase</option>
@@ -85,9 +87,9 @@
             <option value="completed">Completed</option>
         </select>
     </div>
-    
+
     <div class="form-group">
-        <label>Priority:</label>
+        <label for="cardPriority">Priority:</label>
         <select id="cardPriority" class="form-select">
             <option value="low">Low Priority</option>
             <option value="medium" selected>Medium Priority</option>
@@ -95,22 +97,33 @@
             <option value="critical">Critical</option>
         </select>
     </div>
-    
-    <button onclick="addCard()" class="btn btn-primary">
-        <i class="fas fa-plus"></i> Add Project
-    </button>
-</div>
-    
+
     <div class="form-group">
-        <label>Status:</label>
-        <select id="cardStatus" class="form-select">
-            <option value="planning">Planning</option>
-            <option value="active" selected>Active</option>
-            <option value="completed">Completed</option>
-        </select>
+        <label>Tags:</label>
+        <div class="tags-input-container">
+            <div id="tagsContainer" class="tags-container">
+                <div class="tags-empty">No tags added yet</div>
+            </div>
+            
+            <div class="tag-input-group">
+                <input type="text" id="tagInput" placeholder="Add a tag (press Enter)" class="form-input">
+                <button type="button" id="addTagBtn" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add
+                </button>
+            </div>
+            
+            <div class="tag-suggestions">
+                <small>Quick add: </small>
+                <span class="tag-suggestion" data-tag="web">web</span>
+                <span class="tag-suggestion" data-tag="mobile">mobile</span>
+                <span class="tag-suggestion" data-tag="ai">AI</span>
+                <span class="tag-suggestion" data-tag="iot">IoT</span>
+                <span class="tag-suggestion" data-tag="blockchain">blockchain</span>
+            </div>
+        </div>
     </div>
-    
-    <button onclick="addCard()" class="btn btn-primary">
+
+    <button onclick="addCard()" class="btn btn-primary" style="width: 100%;">
         <i class="fas fa-plus"></i> Add Project
     </button>
 </div>
@@ -368,10 +381,10 @@
 <!-- Single projects container -->
 <div class="projects-content">
     <div id="projects-container" class="projects-grid">
-        <!-- All projects will load here -->
+        <!-- All projects will load here --><
     </div>
 </div>
-
+>
             <!-- Planning Stage Tab -->
             <div id="planning" class="project-category" role="tabpanel" style="display: none;">
                 <div class="category-header">

@@ -585,17 +585,6 @@ function getCategoryConfig(category) {
     return configs[category] || configs.concepts;
 }
 
-function getStatusConfig(status) {
-    const configs = {
-        idea: { label: 'Idea Phase', class: 'status-idea' },
-        planning: { label: 'Planning', class: 'status-planning' },
-        development: { label: 'Development', class: 'status-development' },
-        testing: { label: 'Testing', class: 'status-testing' },
-        completed: { label: 'Completed', class: 'status-completed' }
-    };
-    return configs[status] || configs.idea;
-}
-
 function getPriorityConfig(priority) {
     const configs = {
         low: { label: 'Low Priority', class: 'priority-low' },
