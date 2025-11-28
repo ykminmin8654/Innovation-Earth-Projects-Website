@@ -2393,25 +2393,6 @@ p {
 }
 
 /* Admin panel styles */
-.admin-toggle-btn {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: var(--teal);
-    color: var(--white);
-    border: none;
-    padding: 10px 15px;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    z-index: 10000;
-    box-shadow: var(--shadow);
-    transition: var(--transition);
-}
-
-.admin-toggle-btn:hover {
-    background: var(--blue);
-    transform: translateY(-2px);
-}
 
 .admin-panel {
     display: none;
