@@ -392,14 +392,14 @@ async function addCard() {
         const cardData = {
             title: title,
             description: description,
-            category: category, // Make sure this is being set correctly
+            category: category,
             status: status,
             priority: priority,
             createdAt: new Date(),
-            progress: calculateProgress(status) // Auto-calculate progress based on status
+            progress: calculateProgress(status)
         };
         
-        console.log('📦 Saving card data:', cardData); // Debug
+        console.log('💾 Saving card data:', cardData);
         
         if (db) {
             await db.collection("projects").add(cardData);
@@ -414,7 +414,7 @@ async function addCard() {
             
             // Load projects and switch to correct category
             loadProjects();
-            switchCategory(category); // Switch to the category where the project was added
+            switchCategory(category);
             showSection('#projects');
             
         } else {
