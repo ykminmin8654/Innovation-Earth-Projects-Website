@@ -31,7 +31,7 @@ let currentTags = [];
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing Innovation Earth Projects...');
     
-    // Initialize all functionality
+    // Initialize all functionality in correct order
     initializeSectionManagement();
     initializeMobileMenu();
     initializeBannerSlider();
@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeContactForm();
     initializeSmoothScrolling();
     initializeQuickLinkCards();
+    initializeAdminPanel();
     initializeTagSystem();
     initializeProgressBar();
     initializeImageUpload(); // Add this line
