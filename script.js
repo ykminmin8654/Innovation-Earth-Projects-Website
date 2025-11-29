@@ -378,6 +378,115 @@ function toggleAdminPanel() {
     }
 }
 
+// ===== IMAGE UPLOAD FUNCTIONALITY =====
+function initializeImageUpload() {
+    const imageInput = document.getElementById('cardImage');
+    const imagePreview = document.getElementById('imagePreview');
+    const removeImageBtn = document.getElementById('removeImage');
+    const uploadProgress = document.createElement('div');
+    uploadProgress.className = 'upload-progress';
+    uploadProgress.innerHTML = '<div class="upload-progress-bar"></div>';
+    imagePreview.parentNode.insertBefore(uploadProgress, imagePreview.nextSibling);
+
+    let currentImageFile = null;
+    let currentImageUrl = null;
+
+    // Handle file selection
+    imageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                alert('Image size must be less than 5MB');
+                this.value = '';
+                return;
+            }
+
+            if (!file.type.startsWith('image/')) {
+                alert('Please select a valid image file');
+                this.value = '';
+                return;
+            }
+
+            currentImageFile = file;
+            previewImage(file);
+        }
+    });
+
+    // Handle remove image
+    removeImageBtn.addEventListener('click', function() {
+        removeImage();
+    });
+
+    function previewImage(file) {
+        const reader = new FileReader();
+        
+        // Show upload progress
+        uploadProgress.style.display = 'block';
+        const progressBar = uploadProgress.querySelector('.upload-progress-bar');
+        
+        reader.onloadstart = function() {
+            progressBar.style.width = '10%';
+        };
+        
+        reader.onprogress = function(e) {
+            if (e.lengthComputable) {
+                const percentLoaded = Math.round((e.loaded / e.total) * 100);
+                progressBar.style.width = percentLoaded + '%';
+            }
+        };
+        
+        reader.onload = function(e) {
+            progressBar.style.width = '100%';
+            setTimeout(() => {
+                uploadProgress.style.display = 'none';
+                progressBar.style.width = '0%';
+            }, 500);
+            
+            currentImageUrl = e.target.result;
+            
+            // Update preview
+            imagePreview.classList.add('has-image');
+            let img = imagePreview.querySelector('img');
+            if (!img) {
+                img = document.createElement('img');
+                imagePreview.appendChild(img);
+            }
+            img.src = currentImageUrl;
+            img.alt = 'Project preview image';
+            
+            removeImageBtn.style.display = 'block';
+        };
+        
+        reader.onerror = function() {
+            uploadProgress.style.display = 'none';
+            alert('Error loading image. Please try again.');
+        };
+        
+        reader.readAsDataURL(file);
+    }
+
+    function removeImage() {
+        currentImageFile = null;
+        currentImageUrl = null;
+        imageInput.value = '';
+        imagePreview.classList.remove('has-image');
+        removeImageBtn.style.display = 'none';
+    }
+
+    // Return functions to access from addCard function
+    return {
+        getCurrentImage: () => currentImageUrl,
+        getImageFile: () => currentImageFile,
+        removeImage: removeImage
+    };
+}
+
+// Initialize image upload when DOM is loaded
+let imageUploader;
+document.addEventListener('DOMContentLoaded', function() {
+    imageUploader = initializeImageUpload();
+});
+
 // ===== TAG MANAGEMENT SYSTEM =====
 function initializeTagSystem() {
     console.log('🏷️ Initializing tag system...');
@@ -499,6 +608,7 @@ function calculateProgress(status) {
 }
 
 // ===== ENHANCED ADD CARD FUNCTION =====
+// ===== ENHANCED ADD CARD FUNCTION WITH IMAGE SUPPORT =====
 async function addCard() {
     console.log('💾 Starting to add card...');
     
@@ -509,8 +619,9 @@ async function addCard() {
     const priority = document.getElementById('cardPriority').value;
     const progress = parseInt(document.getElementById('cardProgress').value);
     const tags = getCurrentTags();
+    const imageUrl = imageUploader ? imageUploader.getCurrentImage() : null;
     
-    console.log('📝 Form values:', { title, description, url, status, priority, progress, tags });
+    console.log('📝 Form values:', { title, description, url, status, priority, progress, tags, hasImage: !!imageUrl });
     
     if (!title || !description) {
         alert('Please fill in both title and description');
@@ -526,30 +637,51 @@ async function addCard() {
             priority: priority,
             progress: progress,
             tags: tags,
-            createdAt: new Date()
+            imageUrl: imageUrl, // Add image URL to data
+            createdAt: new Date(),
+            hasCustomImage: !!imageUrl
         };
         
         console.log('💾 Saving project data:', cardData);
         
         if (db) {
+            // If using Firebase, you can upload the image to storage
+            if (imageUploader.getImageFile()) {
+                // Here you would upload to Firebase Storage
+                // For now, we'll store as base64 (not recommended for production)
+                cardData.imageUrl = await uploadImageToStorage(imageUploader.getImageFile());
+            }
+            
             await db.collection("projects").add(cardData);
             alert('✅ Project added successfully!');
             
-            // Clear form
-            clearForm();
-            loadProjects();
-            
         } else {
+            // Local storage fallback
             alert('Firebase not available. Using local storage.');
             const projects = JSON.parse(localStorage.getItem('projects') || '[]');
             projects.push(cardData);
             localStorage.setItem('projects', JSON.stringify(projects));
-            loadProjects();
         }
+        
+        // Clear form and reload projects
+        clearForm();
+        loadProjects();
+        
     } catch (error) {
         console.error('❌ Error adding project:', error);
         alert('Error adding project: ' + error.message);
     }
+}
+
+// Simple image upload function (for demo purposes)
+async function uploadImageToStorage(file) {
+    // In a real application, you would upload to cloud storage here
+    // For demo, we'll return a base64 URL (not suitable for large images)
+    return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.readAsDataURL(file);
+    });
 }
 
 function clearForm() {
@@ -561,6 +693,11 @@ function clearForm() {
     document.getElementById('cardProgress').value = '0';
     document.getElementById('progressValue').textContent = '0%';
     clearTags();
+    
+    // Clear image
+    if (imageUploader) {
+        imageUploader.removeImage();
+    }
 }
 
 // ===== PROJECT LOADING AND DISPLAY =====
@@ -672,10 +809,16 @@ function createProjectCard(project, index) {
     // Generate tags HTML
     const tagsHtml = generateTagsHtml(project.tags, statusConfig, priorityConfig);
     
+    // Use custom image if available, otherwise use default icon
+    const imageContent = project.imageUrl ? 
+        `` :
+        `<i class="fas fa-project-diagram"></i>`;
+    
     card.innerHTML = `
-        <div class="card-image" style="background: linear-gradient(135deg, #3498db, #2980b9)">
-            <i class="fas fa-project-diagram"></i>
+        <div class="card-image" style="${!project.imageUrl ? 'background: linear-gradient(135deg, var(--teal), var(--cyan))' : ''}">
+            ${imageContent}
             ${hasUrl ? '<div class="link-indicator"><i class="fas fa-external-link-alt"></i></div>' : ''}
+            ${project.hasCustomImage ? '<div class="custom-image-badge"><i class="fas fa-camera"></i> Custom Image</div>' : ''}
         </div>
         
         <span class="card-status ${statusConfig.class}">${statusConfig.label}</span>
@@ -735,25 +878,6 @@ function createProjectCard(project, index) {
     }
     
     return card;
-}
-
-function generateTagsHtml(tags, statusConfig, priorityConfig) {
-    let html = '';
-    
-    // Add status tag
-    html += `<span class="card-tag status-tag">${statusConfig.label}</span>`;
-    
-    // Add priority tag
-    html += `<span class="card-tag priority-tag ${priorityConfig.class}">${priorityConfig.label}</span>`;
-    
-    // Add custom tags
-    if (tags && tags.length > 0) {
-        tags.forEach(tag => {
-            html += `<span class="card-tag custom-tag">${tag}</span>`;
-        });
-    }
-    
-    return html;
 }
 
 // ===== HELPER FUNCTIONS =====
