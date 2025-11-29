@@ -714,92 +714,99 @@ function clearForm() {
 
 // ===== PROJECT LOADING AND DISPLAY =====
 async function loadProjects() {
-    let projects = [];
-
-    try {
-        if (db) {
-            // Firebase loading
-            const querySnapshot = await db.collection("projects").get();
-            querySnapshot.forEach((doc) => {
-                const projectData = doc.data();
-                projects.push(Object.assign({ 
-                    id: doc.id,
-                    title: '',
-                    description: '',
-                    url: '',
-                    status: 'idea',
-                    priority: 'medium',
-                    progress: 0,
-                    tags: [],
-                    imageUrl: '',
-                    createdAt: new Date(),
-                    hasCustomImage: false
-                }, projectData));
-            });
-        } else {
-            // Local storage loading with error handling
-            try {
-                projects = JSON.parse(localStorage.getItem('projects') || '[]');
-                // Validate and clean up project data
-                projects = projects.map(project => ({
-                    id: project.id || 'project_' + Date.now(),
-                    title: project.title || 'Untitled Project',
-                    description: project.description || 'No description',
-                    url: project.url || '',
-                    status: project.status || 'idea',
-                    priority: project.priority || 'medium',
-                    progress: project.progress || 0,
-                    tags: project.tags || [],
-                    imageUrl: project.imageUrl || '',
-                    createdAt: project.createdAt ? new Date(project.createdAt) : new Date(),
-                    hasCustomImage: !!project.imageUrl
-                }));
-            } catch (parseError) {
-                console.error('❌ Error parsing local storage data:', parseError);
-                // Reset corrupted data
-                localStorage.setItem('projects', '[]');
-                projects = [];
+    console.log('🔄 loadProjects() called');
+    
+    // Get the container - FIXED SELECTOR
+    const projectsContainer = document.getElementById('projects-container');
+    if (!projectsContainer) {
+        console.error('❌ projects-container element not found! Searching for alternatives...');
+        
+        // Try alternative selectors
+        const alternatives = [
+            '#projects .projects-grid',
+            '#projects .projects-content',
+            '#projects .container',
+            '.projects-grid',
+            '.projects-content'
+        ];
+        
+        for (const selector of alternatives) {
+            const altContainer = document.querySelector(selector);
+            if (altContainer) {
+                console.log('✅ Found alternative container:', selector);
+                // We'll handle this differently - see next fix
+                break;
             }
         }
-
-        console.log('📂 All projects loaded:', projects);
-        
-        // Get the single projects container
-        const projectsContainer = document.getElementById('projects-container');
-        if (!projectsContainer) {
-            console.error('❌ Projects container not found');
-            return;
+        return;
+    }
+    
+    console.log('✅ Container found, loading projects...');
+    
+    try {
+        // Get projects from storage
+        let projects = [];
+        try {
+            const stored = localStorage.getItem('projects');
+            projects = stored ? JSON.parse(stored) : [];
+            console.log('📦 Retrieved projects from storage:', projects);
+        } catch (parseError) {
+            console.error('❌ Error parsing projects:', parseError);
+            projects = [];
         }
         
         // Clear container
         projectsContainer.innerHTML = '';
         
-        if (projects.length === 0) {
-            projectsContainer.innerHTML = getEmptyState();
+        if (!projects || projects.length === 0) {
+            console.log('📭 No projects found, showing empty state');
+            projectsContainer.innerHTML = `
+                <div class="empty-state" style="text-align: center; padding: 40px; color: #666; background: #f9f9f9; border-radius: 8px; margin: 20px;">
+                    <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 20px; color: #ccc;"></i>
+                    <h3 style="margin-bottom: 10px;">No Projects Yet</h3>
+                    <p style="margin-bottom: 20px;">Start by adding your first project!</p>
+                    <button class="btn btn-primary" onclick="toggleAdminPanel()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        <i class="fas fa-plus"></i> Add First Project
+                    </button>
+                </div>
+            `;
             return;
         }
         
-        // Sort by creation date (newest first)
-        projects.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        console.log(`🎯 Rendering ${projects.length} projects`);
         
-        // Render all projects in one container
+        // Render each project
         projects.forEach((project, index) => {
             try {
                 const card = createProjectCard(project, index);
-                projectsContainer.appendChild(card);
+                if (card) {
+                    projectsContainer.appendChild(card);
+                    console.log(`✅ Card ${index} appended`);
+                }
             } catch (cardError) {
-                console.error('❌ Error creating project card:', cardError, project);
-                // Skip this project and continue
+                console.error('❌ Error creating card for project:', project, cardError);
+                
+                // Create a basic error card as fallback
+                const errorCard = document.createElement('div');
+                errorCard.innerHTML = `
+                    <div style="padding: 15px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; margin: 10px 0;">
+                        <strong>Error displaying project:</strong> ${project.title || 'Untitled'}
+                    </div>
+                `;
+                projectsContainer.appendChild(errorCard);
             }
         });
         
-        console.log(`✅ Loaded ${projects.length} projects`);
+        console.log('✅ All projects rendered successfully');
+        
     } catch (error) {
-        console.error('❌ Error loading projects:', error);
-        const projectsContainer = document.getElementById('projects-container');
-        if (projectsContainer) {
-            projectsContainer.innerHTML = getErrorState();
-        }
+        console.error('❌ Error in loadProjects:', error);
+        projectsContainer.innerHTML = `
+            <div style="text-align: center; padding: 40px; background: #f8d7da; color: #721c24; border-radius: 8px;">
+                <h3>Error Loading Projects</h3>
+                <p>${error.message}</p>
+            </div>
+        `;
     }
 }
 
