@@ -372,13 +372,6 @@ function initializeAdminPanel() {
     }
 }
 
-function toggleAdminPanel() {
-    const panel = document.getElementById('adminPanel');
-    if (panel) {
-        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-    }
-}
-
 // ===== IMAGE UPLOAD FUNCTIONALITY =====
 function initializeImageUpload() {
     const imageInput = document.getElementById('cardImage');
