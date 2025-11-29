@@ -31,7 +31,7 @@ let currentTags = [];
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing Innovation Earth Projects...');
     
-    // Initialize all functionality in correct order
+    // Initialize all functionality
     initializeSectionManagement();
     initializeMobileMenu();
     initializeBannerSlider();
@@ -41,9 +41,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeContactForm();
     initializeSmoothScrolling();
     initializeQuickLinkCards();
-    initializeAdminPanel();
     initializeTagSystem();
     initializeProgressBar();
+    initializeImageUpload(); // Add this line
     
     // Load projects if on projects section
     if (window.location.hash === '#projects') {
@@ -632,12 +632,12 @@ async function addCard() {
         const cardData = {
             title: title,
             description: description,
-            url: url,
+            url: url || '',
             status: status,
             priority: priority,
-            progress: progress,
-            tags: tags,
-            imageUrl: imageUrl, // Add image URL to data
+            progress: progress || 0,
+            tags: tags || [],
+            imageUrl: imageUrl || '',
             createdAt: new Date(),
             hasCustomImage: !!imageUrl
         };
@@ -645,22 +645,18 @@ async function addCard() {
         console.log('💾 Saving project data:', cardData);
         
         if (db) {
-            // If using Firebase, you can upload the image to storage
-            if (imageUploader.getImageFile()) {
-                // Here you would upload to Firebase Storage
-                // For now, we'll store as base64 (not recommended for production)
-                cardData.imageUrl = await uploadImageToStorage(imageUploader.getImageFile());
-            }
-            
+            // If using Firebase
             await db.collection("projects").add(cardData);
             alert('✅ Project added successfully!');
             
         } else {
             // Local storage fallback
-            alert('Firebase not available. Using local storage.');
             const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+            // Add a simple ID for local storage
+            cardData.id = 'project_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             projects.push(cardData);
             localStorage.setItem('projects', JSON.stringify(projects));
+            console.log('💾 Saved to local storage:', projects);
         }
         
         // Clear form and reload projects
@@ -706,12 +702,48 @@ async function loadProjects() {
 
     try {
         if (db) {
+            // Firebase loading
             const querySnapshot = await db.collection("projects").get();
             querySnapshot.forEach((doc) => {
-                projects.push(Object.assign({ id: doc.id }, doc.data()));
+                const projectData = doc.data();
+                projects.push(Object.assign({ 
+                    id: doc.id,
+                    title: '',
+                    description: '',
+                    url: '',
+                    status: 'idea',
+                    priority: 'medium',
+                    progress: 0,
+                    tags: [],
+                    imageUrl: '',
+                    createdAt: new Date(),
+                    hasCustomImage: false
+                }, projectData));
             });
         } else {
-            projects = JSON.parse(localStorage.getItem('projects') || '[]');
+            // Local storage loading with error handling
+            try {
+                projects = JSON.parse(localStorage.getItem('projects') || '[]');
+                // Validate and clean up project data
+                projects = projects.map(project => ({
+                    id: project.id || 'project_' + Date.now(),
+                    title: project.title || 'Untitled Project',
+                    description: project.description || 'No description',
+                    url: project.url || '',
+                    status: project.status || 'idea',
+                    priority: project.priority || 'medium',
+                    progress: project.progress || 0,
+                    tags: project.tags || [],
+                    imageUrl: project.imageUrl || '',
+                    createdAt: project.createdAt ? new Date(project.createdAt) : new Date(),
+                    hasCustomImage: !!project.imageUrl
+                }));
+            } catch (parseError) {
+                console.error('❌ Error parsing local storage data:', parseError);
+                // Reset corrupted data
+                localStorage.setItem('projects', '[]');
+                projects = [];
+            }
         }
 
         console.log('📂 All projects loaded:', projects);
@@ -736,8 +768,13 @@ async function loadProjects() {
         
         // Render all projects in one container
         projects.forEach((project, index) => {
-            const card = createProjectCard(project, index);
-            projectsContainer.appendChild(card);
+            try {
+                const card = createProjectCard(project, index);
+                projectsContainer.appendChild(card);
+            } catch (cardError) {
+                console.error('❌ Error creating project card:', cardError, project);
+                // Skip this project and continue
+            }
         });
         
         console.log(`✅ Loaded ${projects.length} projects`);
@@ -747,6 +784,27 @@ async function loadProjects() {
         if (projectsContainer) {
             projectsContainer.innerHTML = getErrorState();
         }
+    }
+}
+
+// ===== EMPTY AND ERROR STATES =====
+function getErrorState() {
+    return `
+        <div class="empty-state">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Error Loading Projects</h3>
+            <p>There was an error loading your projects. Please try refreshing the page.</p>
+            <button class="btn btn-primary" onclick="clearLocalStorageAndReload()">
+                <i class="fas fa-redo"></i> Reset & Reload
+            </button>
+        </div>
+    `;
+}
+
+function clearLocalStorageAndReload() {
+    if (confirm('This will clear all locally stored projects. Are you sure?')) {
+        localStorage.removeItem('projects');
+        location.reload();
     }
 }
 
@@ -803,6 +861,7 @@ function createProjectCard(project, index) {
     card.style.animationDelay = `${index * 0.1}s`;
     
     const hasUrl = project.url && project.url.trim() !== '';
+    const hasImage = project.imageUrl && project.imageUrl.trim() !== '';
     const statusConfig = getStatusConfig(project.status);
     const priorityConfig = getPriorityConfig(project.priority);
     
@@ -810,15 +869,15 @@ function createProjectCard(project, index) {
     const tagsHtml = generateTagsHtml(project.tags, statusConfig, priorityConfig);
     
     // Use custom image if available, otherwise use default icon
-    const imageContent = project.imageUrl ? 
+    const imageContent = hasImage ? 
         `` :
         `<i class="fas fa-project-diagram"></i>`;
     
     card.innerHTML = `
-        <div class="card-image" style="${!project.imageUrl ? 'background: linear-gradient(135deg, var(--teal), var(--cyan))' : ''}">
+        <div class="card-image" style="${!hasImage ? 'background: linear-gradient(135deg, var(--teal), var(--cyan))' : ''}">
             ${imageContent}
             ${hasUrl ? '<div class="link-indicator"><i class="fas fa-external-link-alt"></i></div>' : ''}
-            ${project.hasCustomImage ? '<div class="custom-image-badge"><i class="fas fa-camera"></i> Custom Image</div>' : ''}
+            ${hasImage ? '<div class="custom-image-badge"><i class="fas fa-camera"></i> Custom Image</div>' : ''}
         </div>
         
         <span class="card-status ${statusConfig.class}">${statusConfig.label}</span>
