@@ -140,6 +140,28 @@ function updateNavHighlight(sectionId) {
     }
 }
 
+// Add these missing functions (place them near the top of your file):
+function getStatusConfig(status) {
+    const configs = {
+        'idea': { label: 'Idea Phase', class: 'status-idea' },
+        'planning': { label: 'Planning', class: 'status-planning' },
+        'development': { label: 'Development', class: 'status-development' },
+        'testing': { label: 'Testing', class: 'status-testing' },
+        'completed': { label: 'Completed', class: 'status-completed' }
+    };
+    return configs[status] || configs.idea;
+}
+
+function getPriorityConfig(priority) {
+    const configs = {
+        'low': { label: 'Low Priority', class: 'priority-low' },
+        'medium': { label: 'Medium Priority', class: 'priority-medium' },
+        'high': { label: 'High Priority', class: 'priority-high' },
+        'critical': { label: 'Critical', class: 'priority-critical' }
+    };
+    return configs[priority] || configs.medium;
+}
+
 // ===== MOBILE MENU =====
 function initializeMobileMenu() {
     const mobileMenuToggle = document.getElementById('mobile-menu');
@@ -613,7 +635,7 @@ async function addCard() {
     const priority = document.getElementById('cardPriority').value;
     const progress = parseInt(document.getElementById('cardProgress').value);
     const tags = getCurrentTags();
-    const imageUrl = imageUploader ? imageUploader.getCurrentImage() : null;
+    const imageUrl = window.imageUploader ? window.imageUploader.getCurrentImage() : null;
     
     console.log('📝 Form values:', { title, description, url, status, priority, progress, tags, hasImage: !!imageUrl });
     
@@ -860,7 +882,14 @@ function createProjectCard(project, index) {
     const priorityConfig = getPriorityConfig(project.priority);
     
     // Generate tags HTML
-    const tagsHtml = generateTagsHtml(project.tags, statusConfig, priorityConfig);
+  // Add this function:
+function generateTagsHtml(tags, statusConfig, priorityConfig) {
+    if (!tags || tags.length === 0) return '';
+    
+    return tags.map(tag => 
+        `<span class="tag">${tag}</span>`
+    ).join('');
+}
     
     // Use custom image if available, otherwise use default icon
     const imageContent = hasImage ? 
