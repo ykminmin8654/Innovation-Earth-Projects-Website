@@ -705,7 +705,7 @@ async function loadProjects() {
                 const card = createProjectCard(project, index);
                 if (card) {
                     projectsContainer.appendChild(card);
-                    console.log(`✅ Card ${index} appended`);
+                    console.log(`✅ Card ${index} appended: ${project.title}`);
                 }
             } catch (cardError) {
                 console.error('❌ Error creating card for project:', project, cardError);
@@ -734,8 +734,7 @@ async function loadProjects() {
     }
 }
 
-// ===== CREATE PROJECT CARD FUNCTION =====
-// ===== CREATE PROJECT CARD FUNCTION (FIXED VERSION) =====
+// ===== SIMPLIFIED CREATE PROJECT CARD FUNCTION =====
 function createProjectCard(project, index) {
     const card = document.createElement('div');
     card.className = 'dynamic-project-card';
@@ -744,73 +743,81 @@ function createProjectCard(project, index) {
     const hasUrl = project.url && project.url.trim() !== '';
     const hasImage = project.imageUrl && project.imageUrl.trim() !== '';
     
-    // Generate tags HTML - FIXED: Proper string concatenation
-    const tagsHtml = generateTagsHtml(project.tags || []);
+    // Simple status and priority display
+    const status = project.status || 'idea';
+    const priority = project.priority || 'medium';
+    const progress = project.progress || 0;
     
-    // FIXED: 使用正确的字符串拼接，避免模板字符串语法错误
+    // Generate simple tags HTML
+    const tagsHtml = generateSimpleTagsHtml(project.tags || []);
+    
+    // Use simple string concatenation
     card.innerHTML = 
-        '<div class="card-image" style="' + (hasImage ? '' : 'background: linear-gradient(135deg, var(--teal), var(--cyan)') + '">' +
+        '<div class="card-image">' +
             (hasImage ? 
-                '<img src="' + project.imageUrl + '" alt="' + project.title + '" class="project-custom-image">' : 
-                '<i class="fas fa-project-diagram"></i>'
+                '<img src="' + project.imageUrl + '" alt="' + project.title + '" style="width:100%;height:200px;object-fit:cover;">' : 
+                '<i class="fas fa-project-diagram" style="font-size:3rem;color:white;"></i>'
             ) +
-            (hasUrl ? '<div class="link-indicator"><i class="fas fa-external-link-alt"></i></div>' : '') +
-            (hasImage ? '<div class="custom-image-badge"><i class="fas fa-camera"></i> Custom Image</div>' : '') +
         '</div>' +
         
-        '<span class="card-status">' + (project.status || 'idea') + '</span>' +
-        '<span class="card-priority">' + (project.priority || 'medium') + '</span>' +
-        
-        '<h3>' + project.title + '</h3>' +
-        '<p>' + project.description + '</p>' +
-        
-        (hasUrl ? 
-            '<div class="project-link">' +
-                '<a href="' + project.url + '" target="_blank" class="btn btn-primary">' +
-                    '<i class="fas fa-external-link-alt"></i> Visit Project Website' +
-                '</a>' +
-            '</div>' : 
-            ''
-        ) +
-        
-        '<div class="card-tags">' + tagsHtml + '</div>' +
-        
-        '<div class="card-progress">' +
-            '<div class="progress-bar">' +
-                '<div class="progress-fill" style="width: ' + (project.progress || 0) + '%"></div>' +
+        '<div class="card-content" style="padding:15px;">' +
+            '<div style="display:flex;justify-content:space-between;margin-bottom:10px;">' +
+                '<span class="status-badge" style="background:#007bff;color:white;padding:4px 8px;border-radius:4px;font-size:12px;">' + status + '</span>' +
+                '<span class="priority-badge" style="background:#28a745;color:white;padding:4px 8px;border-radius:4px;font-size:12px;">' + priority + '</span>' +
             '</div>' +
-            '<div class="progress-text">' + (project.progress || 0) + '% Complete</div>' +
-        '</div>' +
-        
-        '<div class="project-meta">' +
-            '<span class="project-date">' +
-                '<i class="fas fa-calendar-plus"></i>' +
-                'Added: ' + new Date(project.createdAt).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'short', 
-                    day: 'numeric' 
-                }) +
-            '</span>' +
-            '<div class="project-actions">' +
-                '<button class="btn-small btn-edit" onclick="editProject(\'' + project.id + '\')">' +
-                    '<i class="fas fa-edit"></i> Edit' +
-                '</button>' +
-                '<button class="btn-small btn-delete" onclick="deleteProject(\'' + project.id + '\')">' +
-                    '<i class="fas fa-trash"></i> Delete' +
-                '</button>' +
+            
+            '<h3 style="margin:0 0 10px 0;color:#333;">' + project.title + '</h3>' +
+            '<p style="margin:0 0 15px 0;color:#666;line-height:1.4;">' + project.description + '</p>' +
+            
+            (hasUrl ? 
+                '<a href="' + project.url + '" target="_blank" class="btn" style="background:#007bff;color:white;padding:8px 16px;text-decoration:none;border-radius:4px;display:inline-block;margin-bottom:10px;">' +
+                    '<i class="fas fa-external-link-alt"></i> Visit Website' +
+                '</a>' : 
+                ''
+            ) +
+            
+            '<div class="tags-container" style="margin-bottom:10px;">' + tagsHtml + '</div>' +
+            
+            '<div class="progress-container" style="margin-bottom:10px;">' +
+                '<div style="display:flex;justify-content:space-between;margin-bottom:5px;">' +
+                    '<span style="font-size:12px;color:#666;">Progress</span>' +
+                    '<span style="font-size:12px;color:#666;">' + progress + '%</span>' +
+                '</div>' +
+                '<div style="background:#f0f0f0;border-radius:10px;height:6px;overflow:hidden;">' +
+                    '<div style="background:#007bff;height:100%;width:' + progress + '%;transition:width 0.3s;"></div>' +
+                '</div>' +
+            '</div>' +
+            
+            '<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#999;">' +
+                '<span><i class="fas fa-calendar"></i> ' + new Date(project.createdAt).toLocaleDateString() + '</span>' +
+                '<div>' +
+                    '<button onclick="editProject(\'' + (project.id || '') + '\')" style="background:#ffc107;border:none;padding:4px 8px;border-radius:3px;margin-right:5px;cursor:pointer;">Edit</button>' +
+                    '<button onclick="deleteProject(\'' + (project.id || '') + '\')" style="background:#dc3545;color:white;border:none;padding:4px 8px;border-radius:3px;cursor:pointer;">Delete</button>' +
+                '</div>' +
             '</div>' +
         '</div>';
     
+    // Add click handler for URLs
     if (hasUrl) {
         card.addEventListener('click', function(e) {
-            if (e.target.closest('button') || e.target.closest('a')) {
-                return;
+            if (!e.target.closest('button') && !e.target.closest('a')) {
+                window.open(project.url, '_blank');
             }
-            window.open(project.url, '_blank');
         });
     }
     
     return card;
+}
+
+// Simple tags generator
+function generateSimpleTagsHtml(tags) {
+    if (!tags || tags.length === 0) {
+        return '<span style="color:#999;font-size:12px;">No tags</span>';
+    }
+    
+    return tags.map(function(tag) {
+        return '<span style="background:#e9ecef;color:#495057;padding:2px 6px;border-radius:3px;font-size:11px;margin-right:5px;display:inline-block;">' + tag + '</span>';
+    }).join('');
 }
 
 // ===== HELPER FUNCTION FOR TAGS GENERATION =====
