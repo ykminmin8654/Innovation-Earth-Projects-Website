@@ -26,6 +26,7 @@ try {
 
 // ===== GLOBAL VARIABLES =====
 let currentTags = [];
+let imageUploader;
 
 // ===== MAIN INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', function() {
@@ -44,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeAdminPanel();
     initializeTagSystem();
     initializeProgressBar();
-    initializeImageUpload(); // Add this line
+    initializeImageUpload();
     
     // Load projects if on projects section
     if (window.location.hash === '#projects') {
@@ -140,7 +141,7 @@ function updateNavHighlight(sectionId) {
     }
 }
 
-// Add these missing functions (place them near the top of your file):
+// ===== HELPER FUNCTIONS =====
 function getStatusConfig(status) {
     const configs = {
         'idea': { label: 'Idea Phase', class: 'status-idea' },
@@ -399,6 +400,9 @@ function initializeImageUpload() {
     const imageInput = document.getElementById('cardImage');
     const imagePreview = document.getElementById('imagePreview');
     const removeImageBtn = document.getElementById('removeImage');
+    
+    if (!imageInput || !imagePreview) return;
+    
     const uploadProgress = document.createElement('div');
     uploadProgress.className = 'upload-progress';
     uploadProgress.innerHTML = '<div class="upload-progress-bar"></div>';
@@ -498,7 +502,6 @@ function initializeImageUpload() {
 }
 
 // Initialize image upload when DOM is loaded
-let imageUploader;
 document.addEventListener('DOMContentLoaded', function() {
     imageUploader = initializeImageUpload();
 });
@@ -624,7 +627,6 @@ function calculateProgress(status) {
 }
 
 // ===== ENHANCED ADD CARD FUNCTION =====
-// ===== ENHANCED ADD CARD FUNCTION WITH IMAGE SUPPORT =====
 async function addCard() {
     console.log('💾 Starting to add card...');
     
@@ -635,7 +637,7 @@ async function addCard() {
     const priority = document.getElementById('cardPriority').value;
     const progress = parseInt(document.getElementById('cardProgress').value);
     const tags = getCurrentTags();
-    const imageUrl = window.imageUploader ? window.imageUploader.getCurrentImage() : null;
+    const imageUrl = imageUploader ? imageUploader.getCurrentImage() : null;
     
     console.log('📝 Form values:', { title, description, url, status, priority, progress, tags, hasImage: !!imageUrl });
     
@@ -664,7 +666,6 @@ async function addCard() {
             // If using Firebase
             await db.collection("projects").add(cardData);
             alert('✅ Project added successfully!');
-            
         } else {
             // Local storage fallback
             const projects = JSON.parse(localStorage.getItem('projects') || '[]');
@@ -683,17 +684,6 @@ async function addCard() {
         console.error('❌ Error adding project:', error);
         alert('Error adding project: ' + error.message);
     }
-}
-
-// Simple image upload function (for demo purposes)
-async function uploadImageToStorage(file) {
-    // In a real application, you would upload to cloud storage here
-    // For demo, we'll return a base64 URL (not suitable for large images)
-    return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target.result);
-        reader.readAsDataURL(file);
-    });
 }
 
 function clearForm() {
@@ -716,28 +706,10 @@ function clearForm() {
 async function loadProjects() {
     console.log('🔄 loadProjects() called');
     
-    // Get the container - FIXED SELECTOR
+    // Get the container
     const projectsContainer = document.getElementById('projects-container');
     if (!projectsContainer) {
-        console.error('❌ projects-container element not found! Searching for alternatives...');
-        
-        // Try alternative selectors
-        const alternatives = [
-            '#projects .projects-grid',
-            '#projects .projects-content',
-            '#projects .container',
-            '.projects-grid',
-            '.projects-content'
-        ];
-        
-        for (const selector of alternatives) {
-            const altContainer = document.querySelector(selector);
-            if (altContainer) {
-                console.log('✅ Found alternative container:', selector);
-                // We'll handle this differently - see next fix
-                break;
-            }
-        }
+        console.error('❌ projects-container element not found!');
         return;
     }
     
@@ -810,7 +782,7 @@ async function loadProjects() {
     }
 }
 
-// ===== CREATE PROJECT CARD FUNCTION (CORRECTED) =====
+// ===== CREATE PROJECT CARD FUNCTION =====
 function createProjectCard(project, index) {
     const card = document.createElement('div');
     card.className = 'dynamic-project-card';
@@ -893,7 +865,7 @@ function createProjectCard(project, index) {
     }
     
     return card;
-} // <-- THIS CLOSING BRACE WAS MISSING
+}
 
 // ===== HELPER FUNCTION FOR TAGS GENERATION =====
 function generateTagsHtml(tags) {
@@ -906,53 +878,7 @@ function generateTagsHtml(tags) {
     ).join('');
 }
 
-// ===== HELPER FUNCTIONS =====
-function getStatusConfig(status) {
-    const configs = {
-        'idea': { label: 'Idea Phase', class: 'status-idea' },
-        'planning': { label: 'Planning', class: 'status-planning' },
-        'development': { label: 'Development', class: 'status-development' },
-        'testing': { label: 'Testing', class: 'status-testing' },
-        'completed': { label: 'Completed', class: 'status-completed' }
-    };
-    return configs[status] || configs.idea;
-}
-
-function getPriorityConfig(priority) {
-    const configs = {
-        'low': { label: 'Low Priority', class: 'priority-low' },
-        'medium': { label: 'Medium Priority', class: 'priority-medium' },
-        'high': { label: 'High Priority', class: 'priority-high' },
-        'critical': { label: 'Critical', class: 'priority-critical' }
-    };
-    return configs[priority] || configs.medium;
-}
-
-// ===== EMPTY AND ERROR STATES =====
-function getEmptyState() {
-    return `
-        <div class="empty-state">
-            <i class="fas fa-lightbulb"></i>
-            <h3>No Projects Yet</h3>
-            <p>Start by adding your first project using the admin panel!</p>
-            <button class="btn btn-primary" onclick="toggleAdminPanel()">
-                <i class="fas fa-plus"></i> Add Your First Project
-            </button>
-        </div>
-    `;
-}
-
-function getErrorState() {
-    return `
-        <div class="empty-state">
-            <i class="fas fa-exclamation-triangle"></i>
-            <h3>Error Loading Projects</h3>
-            <p>Please check your connection and try again.</p>
-        </div>
-    `;
-}
-
-// ===== ENHANCED ADMIN PANEL MANAGEMENT =====
+// ===== ADMIN PANEL MANAGEMENT =====
 function toggleAdminPanel() {
     const panel = document.getElementById('adminPanel');
     if (panel) {
@@ -991,165 +917,6 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
-// Auto-adjust height on window resize
-window.addEventListener('resize', function() {
-    const adminPanel = document.getElementById('adminPanel');
-    if (adminPanel && adminPanel.style.display !== 'none') {
-        adminPanel.style.maxHeight = '80vh';
-    }
-});
-
-function createProjectCard(project, index) {
-    const card = document.createElement('div');
-    card.className = 'dynamic-project-card';
-    card.style.animationDelay = `${index * 0.1}s`;
-    
-    const hasUrl = project.url && project.url.trim() !== '';
-    const hasImage = project.imageUrl && project.imageUrl.trim() !== '';
-    const statusConfig = getStatusConfig(project.status);
-    const priorityConfig = getPriorityConfig(project.priority);
-    
-    // Generate tags HTML - FIXED: Use the project's tags
-    const tagsHtml = generateTagsHtml(project.tags || []);
-    
-    // Use custom image if available, otherwise use default icon
-    const imageContent = hasImage ? 
-        `<img src="${project.imageUrl}" alt="${project.title}" class="project-custom-image">` :
-        `<i class="fas fa-project-diagram"></i>`;
-    
-    card.innerHTML = `
-        <div class="card-image" style="${!hasImage ? 'background: linear-gradient(135deg, var(--teal), var(--cyan))' : ''}">
-            ${imageContent}
-            ${hasUrl ? '<div class="link-indicator"><i class="fas fa-external-link-alt"></i></div>' : ''}
-            ${hasImage ? '<div class="custom-image-badge"><i class="fas fa-camera"></i> Custom Image</div>' : ''}
-        </div>
-        
-        <span class="card-status ${statusConfig.class}">${statusConfig.label}</span>
-        <span class="card-priority ${priorityConfig.class}">${priorityConfig.label}</span>
-        
-        <h3>${project.title}</h3>
-        <p>${project.description}</p>
-        
-        ${hasUrl ? `
-            <div class="project-link">
-                <a href="${project.url}" target="_blank" class="btn btn-primary">
-                    <i class="fas fa-external-link-alt"></i> Visit Project Website
-                </a>
-            </div>
-        ` : ''}
-        
-        <div class="card-tags">
-            ${tagsHtml}
-        </div>
-        
-        <div class="card-progress">
-            <div class="progress-bar">
-                <div class="progress-fill" style="width: ${project.progress || 0}%"></div>
-            </div>
-            <div class="progress-text">${project.progress || 0}% Complete</div>
-        </div>
-        
-        <div class="project-meta">
-            <span class="project-date">
-                <i class="fas fa-calendar-plus"></i>
-                Added: ${new Date(project.createdAt).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'short', 
-                    day: 'numeric' 
-                })}
-            </span>
-            <div class="project-actions">
-                <button class="btn-small btn-edit" onclick="editProject('${project.id}')">
-                    <i class="fas fa-edit"></i> Edit
-                </button>
-                <button class="btn-small btn-delete" onclick="deleteProject('${project.id}')">
-                    <i class="fas fa-trash"></i> Delete
-                </button>
-            </div>
-        </div>
-    `;
-    
-    // Make entire card clickable if URL exists
-    if (hasUrl) {
-        card.addEventListener('click', function(e) {
-            // Don't trigger if user clicked on buttons or links
-            if (e.target.closest('button') || e.target.closest('a')) {
-                return;
-            }
-            window.open(project.url, '_blank');
-        });
-    }
-    
-    return card;
-}
-
-// Add this helper function for generating tags HTML
-function generateTagsHtml(tags) {
-    if (!tags || tags.length === 0) return '<span class="no-tags">No tags</span>';
-    
-    return tags.map(tag => 
-        `<span class="tag">${tag}</span>`
-    ).join('');
-}
-    
-    // Make entire card clickable if URL exists
-    if (hasUrl) {
-        card.addEventListener('click', function(e) {
-            // Don't trigger if user clicked on buttons or links
-            if (e.target.closest('button') || e.target.closest('a')) {
-                return;
-            }
-            window.open(project.url, '_blank');
-        });
-    }
-    
-    return card;
-
-// ===== HELPER FUNCTIONS =====
-function getStatusConfig(status) {
-    const configs = {
-        'idea': { label: 'Idea Phase', class: 'status-idea' },
-        'planning': { label: 'Planning', class: 'status-planning' },
-        'development': { label: 'Development', class: 'status-development' },
-        'testing': { label: 'Testing', class: 'status-testing' },
-        'completed': { label: 'Completed', class: 'status-completed' }
-    };
-    return configs[status] || configs.idea;
-}
-
-function getPriorityConfig(priority) {
-    const configs = {
-        'low': { label: 'Low Priority', class: 'priority-low' },
-        'medium': { label: 'Medium Priority', class: 'priority-medium' },
-        'high': { label: 'High Priority', class: 'priority-high' },
-        'critical': { label: 'Critical', class: 'priority-critical' }
-    };
-    return configs[priority] || configs.medium;
-}
-
-function getEmptyState() {
-    return `
-        <div class="empty-state">
-            <i class="fas fa-lightbulb"></i>
-            <h3>No Projects Yet</h3>
-            <p>Start by adding your first project using the admin panel!</p>
-            <button class="btn btn-primary" onclick="toggleAdminPanel()">
-                <i class="fas fa-plus"></i> Add Your First Project
-            </button>
-        </div>
-    `;
-}
-
-function getErrorState() {
-    return `
-        <div class="empty-state">
-            <i class="fas fa-exclamation-triangle"></i>
-            <h3>Error Loading Projects</h3>
-            <p>Please check your connection and try again.</p>
-        </div>
-    `;
-}
-
 // ===== PROJECT MANAGEMENT =====
 async function deleteProject(projectId) {
     if (confirm('Are you sure you want to delete this project?')) {
@@ -1172,7 +939,6 @@ async function deleteProject(projectId) {
 
 function editProject(projectId) {
     alert('Edit functionality coming soon! Project ID: ' + projectId);
-    // TODO: Implement edit functionality
 }
 
 // ===== AUTO-LOAD PROJECTS WHEN PROJECTS SECTION IS VIEWED =====
