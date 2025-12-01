@@ -366,159 +366,97 @@ function initializeQuickLinkCards() {
     });
 }
 
-// ===== ADMIN PANEL =====
+// ===== ADMIN PANEL MANAGEMENT =====
 function initializeAdminPanel() {
-    console.log('🔧 Setting up admin panel...');
+    console.log('🔧 Initializing admin panel...');
     
-    // Admin toggle button
+    // Fix admin toggle button
     const adminBtn = document.querySelector('.admin-toggle-btn');
     if (adminBtn) {
-        adminBtn.addEventListener('click', toggleAdminPanel);
+        // Remove any existing event listeners
+        const newBtn = adminBtn.cloneNode(true);
+        adminBtn.parentNode.replaceChild(newBtn, adminBtn);
+        
+        // Add click event to the new button
+        const fixedAdminBtn = document.querySelector('.admin-toggle-btn');
+        fixedAdminBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            toggleAdminPanel();
+        });
+        console.log('✅ Admin toggle button initialized');
+    } else {
+        console.error('❌ Admin toggle button not found');
     }
     
-    // Add card button
+    // Fix add card button
     const addCardBtn = document.querySelector('button[onclick="addCard()"]');
     if (addCardBtn) {
         addCardBtn.onclick = addCard;
+        console.log('✅ Add card button initialized');
+    }
+    
+    // Add close functionality
+    setupAdminPanelClose();
+    
+    console.log('✅ Admin panel initialization complete');
+}
+
+function toggleAdminPanel() {
+    console.log('🔄 Toggling admin panel...');
+    
+    const panel = document.getElementById('adminPanel');
+    if (!panel) {
+        console.error('❌ Admin panel element not found');
+        return;
+    }
+    
+    const isVisible = panel.style.display !== 'none';
+    panel.style.display = isVisible ? 'none' : 'block';
+    
+    console.log('📊 Admin panel visibility:', panel.style.display);
+    
+    if (panel.style.display !== 'none') {
+        // Panel is opening - scroll to top and focus first input
+        panel.scrollTop = 0;
+        const firstInput = panel.querySelector('input, textarea, select');
+        if (firstInput) {
+            firstInput.focus();
+        }
     }
 }
 
-// ===== IMAGE UPLOAD FUNCTIONALITY =====
-function initializeImageUpload() {
-    console.log('🖼️ Initializing image upload...');
-    
-    const imageInput = document.getElementById('cardImage');
-    const imagePreview = document.getElementById('imagePreview');
-    const removeImageBtn = document.getElementById('removeImage');
-    
-    if (!imageInput || !imagePreview) {
-        console.warn('⚠️ Image upload elements not found');
-        return null;
-    }
-    
-    // Create upload progress element
-    const uploadProgress = document.createElement('div');
-    uploadProgress.className = 'upload-progress';
-    uploadProgress.innerHTML = '<div class="upload-progress-bar"></div>';
-    imagePreview.parentNode.insertBefore(uploadProgress, imagePreview.nextSibling);
-    
-    let currentImageFile = null;
-    let currentImageUrl = null;
-    
-    // Handle file selection
-    imageInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            // Validate file size (5MB limit)
-            if (file.size > 5 * 1024 * 1024) {
-                alert('❌ Image size must be less than 5MB');
-                this.value = '';
-                return;
+function setupAdminPanelClose() {
+    // Close when clicking outside
+    document.addEventListener('click', function(e) {
+        const adminPanel = document.getElementById('adminPanel');
+        const adminBtn = document.querySelector('.admin-toggle-btn');
+        
+        if (adminPanel && adminPanel.style.display !== 'none') {
+            if (!adminPanel.contains(e.target) && !adminBtn.contains(e.target)) {
+                adminPanel.style.display = 'none';
+                console.log('📪 Admin panel closed (clicked outside)');
             }
-            
-            // Validate file type
-            if (!file.type.startsWith('image/')) {
-                alert('❌ Please select a valid image file');
-                this.value = '';
-                return;
-            }
-            
-            currentImageFile = file;
-            previewImage(file);
         }
     });
     
-    // Handle remove image
-    removeImageBtn.addEventListener('click', function() {
-        removeImage();
+    // Close with ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const adminPanel = document.getElementById('adminPanel');
+            if (adminPanel && adminPanel.style.display !== 'none') {
+                adminPanel.style.display = 'none';
+                console.log('📪 Admin panel closed (ESC key)');
+            }
+        }
     });
-    
-    function previewImage(file) {
-        const reader = new FileReader();
-        
-        // Show upload progress
-        uploadProgress.style.display = 'block';
-        const progressBar = uploadProgress.querySelector('.upload-progress-bar');
-        
-        reader.onloadstart = function() {
-            progressBar.style.width = '10%';
-        };
-        
-        reader.onprogress = function(e) {
-            if (e.lengthComputable) {
-                const percentLoaded = Math.round((e.loaded / e.total) * 100);
-                progressBar.style.width = percentLoaded + '%';
-            }
-        };
-        
-        reader.onload = function(e) {
-            // Complete progress
-            progressBar.style.width = '100%';
-            setTimeout(() => {
-                uploadProgress.style.display = 'none';
-                progressBar.style.width = '0%';
-            }, 500);
-            
-            currentImageUrl = e.target.result;
-            
-            // Update preview
-            imagePreview.classList.add('has-image');
-            let img = imagePreview.querySelector('img');
-            if (!img) {
-                img = document.createElement('img');
-                imagePreview.appendChild(img);
-            }
-            img.src = currentImageUrl;
-            img.alt = 'Project preview image';
-            
-            // Show remove button
-            removeImageBtn.style.display = 'block';
-            
-            console.log('✅ Image preview loaded successfully');
-        };
-        
-        reader.onerror = function() {
-            uploadProgress.style.display = 'none';
-            alert('❌ Error loading image. Please try again.');
-        };
-        
-        reader.readAsDataURL(file);
-    }
-    
-    function removeImage() {
-        currentImageFile = null;
-        currentImageUrl = null;
-        imageInput.value = '';
-        imagePreview.classList.remove('has-image');
-        removeImageBtn.style.display = 'none';
-        
-        // Clear image preview
-        const img = imagePreview.querySelector('img');
-        if (img) {
-            img.remove();
-        }
-        
-        console.log('🗑️ Image removed');
-    }
-    
-    // Return public methods
-    return {
-        getCurrentImage: function() {
-            return currentImageUrl;
-        },
-        getImageFile: function() {
-            return currentImageFile;
-        },
-        removeImage: removeImage,
-        hasImage: function() {
-            return !!currentImageUrl;
-        }
-    };
 }
 
-// Initialize image upload when DOM is loaded
+// Re-initialize admin panel when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    imageUploader = initializeImageUpload();
+    setTimeout(() => {
+        initializeAdminPanel();
+    }, 100);
 });
 
 // ===== TAG MANAGEMENT SYSTEM =====
