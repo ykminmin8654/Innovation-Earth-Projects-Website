@@ -797,80 +797,74 @@ async function loadProjects() {
 }
 
 // ===== CREATE PROJECT CARD FUNCTION =====
+// ===== CREATE PROJECT CARD FUNCTION (FIXED VERSION) =====
 function createProjectCard(project, index) {
     const card = document.createElement('div');
     card.className = 'dynamic-project-card';
-    card.style.animationDelay = `${index * 0.1}s`;
+    card.style.animationDelay = index * 0.1 + 's';
     
     const hasUrl = project.url && project.url.trim() !== '';
     const hasImage = project.imageUrl && project.imageUrl.trim() !== '';
-    const statusConfig = getStatusConfig(project.status);
-    const priorityConfig = getPriorityConfig(project.priority);
     
-    // Generate tags HTML
+    // Generate tags HTML - FIXED: Proper string concatenation
     const tagsHtml = generateTagsHtml(project.tags || []);
     
-    // Use custom image if available, otherwise use default icon
-    const imageContent = hasImage ? 
-        `<img src="${project.imageUrl}" alt="${project.title}" class="project-custom-image">` :
-        `<i class="fas fa-project-diagram"></i>`;
-    
-    card.innerHTML = `
-        <div class="card-image" style="${!hasImage ? 'background: linear-gradient(135deg, var(--teal), var(--cyan))' : ''}">
-            ${imageContent}
-            ${hasUrl ? '<div class="link-indicator"><i class="fas fa-external-link-alt"></i></div>' : ''}
-            ${hasImage ? '<div class="custom-image-badge"><i class="fas fa-camera"></i> Custom Image</div>' : ''}
-        </div>
+    // FIXED: 使用正确的字符串拼接，避免模板字符串语法错误
+    card.innerHTML = 
+        '<div class="card-image" style="' + (hasImage ? '' : 'background: linear-gradient(135deg, var(--teal), var(--cyan)') + '">' +
+            (hasImage ? 
+                '<img src="' + project.imageUrl + '" alt="' + project.title + '" class="project-custom-image">' : 
+                '<i class="fas fa-project-diagram"></i>'
+            ) +
+            (hasUrl ? '<div class="link-indicator"><i class="fas fa-external-link-alt"></i></div>' : '') +
+            (hasImage ? '<div class="custom-image-badge"><i class="fas fa-camera"></i> Custom Image</div>' : '') +
+        '</div>' +
         
-        <span class="card-status ${statusConfig.class}">${statusConfig.label}</span>
-        <span class="card-priority ${priorityConfig.class}">${priorityConfig.label}</span>
+        '<span class="card-status">' + (project.status || 'idea') + '</span>' +
+        '<span class="card-priority">' + (project.priority || 'medium') + '</span>' +
         
-        <h3>${project.title}</h3>
-        <p>${project.description}</p>
+        '<h3>' + project.title + '</h3>' +
+        '<p>' + project.description + '</p>' +
         
-        ${hasUrl ? `
-            <div class="project-link">
-                <a href="${project.url}" target="_blank" class="btn btn-primary">
-                    <i class="fas fa-external-link-alt"></i> Visit Project Website
-                </a>
-            </div>
-        ` : ''}
+        (hasUrl ? 
+            '<div class="project-link">' +
+                '<a href="' + project.url + '" target="_blank" class="btn btn-primary">' +
+                    '<i class="fas fa-external-link-alt"></i> Visit Project Website' +
+                '</a>' +
+            '</div>' : 
+            ''
+        ) +
         
-        <div class="card-tags">
-            ${tagsHtml}
-        </div>
+        '<div class="card-tags">' + tagsHtml + '</div>' +
         
-        <div class="card-progress">
-            <div class="progress-bar">
-                <div class="progress-fill" style="width: ${project.progress || 0}%"></div>
-            </div>
-            <div class="progress-text">${project.progress || 0}% Complete</div>
-        </div>
+        '<div class="card-progress">' +
+            '<div class="progress-bar">' +
+                '<div class="progress-fill" style="width: ' + (project.progress || 0) + '%"></div>' +
+            '</div>' +
+            '<div class="progress-text">' + (project.progress || 0) + '% Complete</div>' +
+        '</div>' +
         
-        <div class="project-meta">
-            <span class="project-date">
-                <i class="fas fa-calendar-plus"></i>
-                Added: ${new Date(project.createdAt).toLocaleDateString('en-US', { 
+        '<div class="project-meta">' +
+            '<span class="project-date">' +
+                '<i class="fas fa-calendar-plus"></i>' +
+                'Added: ' + new Date(project.createdAt).toLocaleDateString('en-US', { 
                     year: 'numeric', 
                     month: 'short', 
                     day: 'numeric' 
-                })}
-            </span>
-            <div class="project-actions">
-                <button class="btn-small btn-edit" onclick="editProject('${project.id}')">
-                    <i class="fas fa-edit"></i> Edit
-                </button>
-                <button class="btn-small btn-delete" onclick="deleteProject('${project.id}')">
-                    <i class="fas fa-trash"></i> Delete
-                </button>
-            </div>
-        </div>
-    `;
+                }) +
+            '</span>' +
+            '<div class="project-actions">' +
+                '<button class="btn-small btn-edit" onclick="editProject(\'' + project.id + '\')">' +
+                    '<i class="fas fa-edit"></i> Edit' +
+                '</button>' +
+                '<button class="btn-small btn-delete" onclick="deleteProject(\'' + project.id + '\')">' +
+                    '<i class="fas fa-trash"></i> Delete' +
+                '</button>' +
+            '</div>' +
+        '</div>';
     
-    // Make entire card clickable if URL exists
     if (hasUrl) {
         card.addEventListener('click', function(e) {
-            // Don't trigger if user clicked on buttons or links
             if (e.target.closest('button') || e.target.closest('a')) {
                 return;
             }
@@ -881,53 +875,15 @@ function createProjectCard(project, index) {
     return card;
 }
 
-// ===== HELPER FUNCTIONS =====
-function getStatusConfig(status) {
-    const configs = {
-        'idea': { label: 'Idea Phase', class: 'status-idea' },
-        'planning': { label: 'Planning', class: 'status-planning' },
-        'development': { label: 'Development', class: 'status-development' },
-        'testing': { label: 'Testing', class: 'status-testing' },
-        'completed': { label: 'Completed', class: 'status-completed' }
-    };
-    return configs[status] || configs.idea;
-}
-
-function getPriorityConfig(priority) {
-    const configs = {
-        'low': { label: 'Low Priority', class: 'priority-low' },
-        'medium': { label: 'Medium Priority', class: 'priority-medium' },
-        'high': { label: 'High Priority', class: 'priority-high' },
-        'critical': { label: 'Critical', class: 'priority-critical' }
-    };
-    return configs[priority] || configs.medium;
-}
-
+// ===== HELPER FUNCTION FOR TAGS GENERATION =====
 function generateTagsHtml(tags) {
     if (!tags || tags.length === 0) {
         return '<span class="no-tags">No tags</span>';
     }
     
-    return tags.map(tag => 
-        `<span class="tag">${tag}</span>`
-    ).join('');
-}
-
-// ===== ADMIN PANEL MANAGEMENT =====
-function toggleAdminPanel() {
-    const panel = document.getElementById('adminPanel');
-    if (panel) {
-        const isVisible = panel.style.display !== 'none';
-        panel.style.display = isVisible ? 'none' : 'block';
-        
-        if (!isVisible) {
-            // Scroll to top when opening
-            panel.scrollTop = 0;
-            // Focus on first input
-            const firstInput = panel.querySelector('input, textarea, select');
-            if (firstInput) firstInput.focus();
-        }
-    }
+    return tags.map(function(tag) {
+        return '<span class="tag">' + tag + '</span>';
+    }).join('');
 }
 
 // Close admin panel when clicking outside
