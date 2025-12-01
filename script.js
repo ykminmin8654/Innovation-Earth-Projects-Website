@@ -1,5 +1,5 @@
 // ===== MAIN SCRIPT FOR INNOVATION EARTH PROJECTS =====
-// Complete rewrite with progress bar and tag management
+// Complete rewrite with all fixes implemented
 
 // Firebase configuration
 const firebaseConfig = {
@@ -32,7 +32,7 @@ let imageUploader;
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing Innovation Earth Projects...');
     
-    // Initialize all functionality in correct order
+    // Initialize all functionality
     initializeSectionManagement();
     initializeMobileMenu();
     initializeBannerSlider();
@@ -141,28 +141,6 @@ function updateNavHighlight(sectionId) {
     }
 }
 
-// ===== HELPER FUNCTIONS =====
-function getStatusConfig(status) {
-    const configs = {
-        'idea': { label: 'Idea Phase', class: 'status-idea' },
-        'planning': { label: 'Planning', class: 'status-planning' },
-        'development': { label: 'Development', class: 'status-development' },
-        'testing': { label: 'Testing', class: 'status-testing' },
-        'completed': { label: 'Completed', class: 'status-completed' }
-    };
-    return configs[status] || configs.idea;
-}
-
-function getPriorityConfig(priority) {
-    const configs = {
-        'low': { label: 'Low Priority', class: 'priority-low' },
-        'medium': { label: 'Medium Priority', class: 'priority-medium' },
-        'high': { label: 'High Priority', class: 'priority-high' },
-        'critical': { label: 'Critical', class: 'priority-critical' }
-    };
-    return configs[priority] || configs.medium;
-}
-
 // ===== MOBILE MENU =====
 function initializeMobileMenu() {
     const mobileMenuToggle = document.getElementById('mobile-menu');
@@ -248,59 +226,69 @@ function initializeScrollAnimations() {
 
 // ===== CATEGORY TABS =====
 function initializeCategoryTabs() {
+    console.log('🔧 Initializing category tabs...');
+    
     // Project category tabs
-    document.querySelectorAll('.category-tab[data-category]').forEach(tab => {
-        tab.addEventListener('click', function() {
-            const category = this.getAttribute('data-category');
-            
-            // Update active tab
-            this.closest('.category-list').querySelectorAll('.category-tab').forEach(t => {
-                t.classList.remove('active');
+    const projectTabs = document.querySelectorAll('#projects .category-tab');
+    const projectCategories = document.querySelectorAll('#projects .project-category');
+    
+    if (projectTabs.length > 0) {
+        projectTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const category = this.getAttribute('data-category');
+                console.log('🔄 Switching to category:', category);
+                
+                // Update active tab
+                projectTabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Show/hide categories
+                projectCategories.forEach(cat => {
+                    cat.classList.remove('active');
+                    cat.style.display = 'none';
+                });
+                
+                const targetCategory = document.getElementById(category);
+                if (targetCategory) {
+                    targetCategory.classList.add('active');
+                    targetCategory.style.display = 'block';
+                }
             });
-            this.classList.add('active');
-            
-            // Show/hide categories
-            const container = this.closest('.container');
-            container.querySelectorAll('.project-category, .competition-category, .role-category').forEach(cat => {
-                cat.classList.remove('active');
-                cat.style.display = 'none';
-            });
-            
-            const targetCategory = document.getElementById(category);
-            if (targetCategory) {
-                targetCategory.classList.add('active');
-                targetCategory.style.display = 'block';
-            }
         });
-    });
+    }
 }
 
 // ===== COMPETITION TABS =====
 function initializeCompetitionTabs() {
+    console.log('🔧 Initializing competition tabs...');
+    
     const competitionTabs = document.querySelectorAll('#competitions .category-tab');
     const competitionCategories = document.querySelectorAll('#competitions .competition-category');
     
-    competitionTabs.forEach(tab => {
-        tab.addEventListener('click', function() {
-            const category = this.getAttribute('data-category');
-            
-            // Update tabs
-            competitionTabs.forEach(t => t.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Update categories
-            competitionCategories.forEach(cat => {
-                cat.classList.remove('active');
-                cat.style.display = 'none';
+    if (competitionTabs.length > 0) {
+        competitionTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const category = this.getAttribute('data-category');
+                console.log('🔄 Switching to competition category:', category);
+                
+                // Update tabs
+                competitionTabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update categories
+                competitionCategories.forEach(cat => {
+                    cat.classList.remove('active');
+                    cat.style.display = 'none';
+                });
+                
+                const targetCategory = document.getElementById(category);
+                if (targetCategory) {
+                    targetCategory.classList.add('active');
+                    targetCategory.style.display = 'block';
+                }
             });
-            
-            const targetCategory = document.getElementById(category);
-            if (targetCategory) {
-                targetCategory.classList.add('active');
-                targetCategory.style.display = 'block';
-            }
         });
-    });
+    }
 }
 
 // ===== SMOOTH SCROLLING =====
@@ -397,46 +385,54 @@ function initializeAdminPanel() {
 
 // ===== IMAGE UPLOAD FUNCTIONALITY =====
 function initializeImageUpload() {
+    console.log('🖼️ Initializing image upload...');
+    
     const imageInput = document.getElementById('cardImage');
     const imagePreview = document.getElementById('imagePreview');
     const removeImageBtn = document.getElementById('removeImage');
     
-    if (!imageInput || !imagePreview) return;
+    if (!imageInput || !imagePreview) {
+        console.warn('⚠️ Image upload elements not found');
+        return null;
+    }
     
+    // Create upload progress element
     const uploadProgress = document.createElement('div');
     uploadProgress.className = 'upload-progress';
     uploadProgress.innerHTML = '<div class="upload-progress-bar"></div>';
     imagePreview.parentNode.insertBefore(uploadProgress, imagePreview.nextSibling);
-
+    
     let currentImageFile = null;
     let currentImageUrl = null;
-
+    
     // Handle file selection
     imageInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
-            if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                alert('Image size must be less than 5MB');
+            // Validate file size (5MB limit)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('❌ Image size must be less than 5MB');
                 this.value = '';
                 return;
             }
-
+            
+            // Validate file type
             if (!file.type.startsWith('image/')) {
-                alert('Please select a valid image file');
+                alert('❌ Please select a valid image file');
                 this.value = '';
                 return;
             }
-
+            
             currentImageFile = file;
             previewImage(file);
         }
     });
-
+    
     // Handle remove image
     removeImageBtn.addEventListener('click', function() {
         removeImage();
     });
-
+    
     function previewImage(file) {
         const reader = new FileReader();
         
@@ -456,6 +452,7 @@ function initializeImageUpload() {
         };
         
         reader.onload = function(e) {
+            // Complete progress
             progressBar.style.width = '100%';
             setTimeout(() => {
                 uploadProgress.style.display = 'none';
@@ -474,30 +471,48 @@ function initializeImageUpload() {
             img.src = currentImageUrl;
             img.alt = 'Project preview image';
             
+            // Show remove button
             removeImageBtn.style.display = 'block';
+            
+            console.log('✅ Image preview loaded successfully');
         };
         
         reader.onerror = function() {
             uploadProgress.style.display = 'none';
-            alert('Error loading image. Please try again.');
+            alert('❌ Error loading image. Please try again.');
         };
         
         reader.readAsDataURL(file);
     }
-
+    
     function removeImage() {
         currentImageFile = null;
         currentImageUrl = null;
         imageInput.value = '';
         imagePreview.classList.remove('has-image');
         removeImageBtn.style.display = 'none';
+        
+        // Clear image preview
+        const img = imagePreview.querySelector('img');
+        if (img) {
+            img.remove();
+        }
+        
+        console.log('🗑️ Image removed');
     }
-
-    // Return functions to access from addCard function
+    
+    // Return public methods
     return {
-        getCurrentImage: () => currentImageUrl,
-        getImageFile: () => currentImageFile,
-        removeImage: removeImage
+        getCurrentImage: function() {
+            return currentImageUrl;
+        },
+        getImageFile: function() {
+            return currentImageFile;
+        },
+        removeImage: removeImage,
+        hasImage: function() {
+            return !!currentImageUrl;
+        }
     };
 }
 
@@ -626,7 +641,7 @@ function calculateProgress(status) {
     return progressMap[status] || 0;
 }
 
-// ===== ENHANCED ADD CARD FUNCTION =====
+// ===== ADD CARD FUNCTION =====
 async function addCard() {
     console.log('💾 Starting to add card...');
     
@@ -642,7 +657,7 @@ async function addCard() {
     console.log('📝 Form values:', { title, description, url, status, priority, progress, tags, hasImage: !!imageUrl });
     
     if (!title || !description) {
-        alert('Please fill in both title and description');
+        alert('❌ Please fill in both title and description');
         return;
     }
     
@@ -657,7 +672,8 @@ async function addCard() {
             tags: tags || [],
             imageUrl: imageUrl || '',
             createdAt: new Date(),
-            hasCustomImage: !!imageUrl
+            hasCustomImage: !!imageUrl,
+            id: 'project_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
         };
         
         console.log('💾 Saving project data:', cardData);
@@ -665,15 +681,13 @@ async function addCard() {
         if (db) {
             // If using Firebase
             await db.collection("projects").add(cardData);
-            alert('✅ Project added successfully!');
+            alert('✅ Project added successfully to Firebase!');
         } else {
             // Local storage fallback
             const projects = JSON.parse(localStorage.getItem('projects') || '[]');
-            // Add a simple ID for local storage
-            cardData.id = 'project_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             projects.push(cardData);
             localStorage.setItem('projects', JSON.stringify(projects));
-            console.log('💾 Saved to local storage:', projects);
+            console.log('💾 Saved to local storage:', projects.length, 'projects total');
         }
         
         // Clear form and reload projects
@@ -682,7 +696,7 @@ async function addCard() {
         
     } catch (error) {
         console.error('❌ Error adding project:', error);
-        alert('Error adding project: ' + error.message);
+        alert('❌ Error adding project: ' + error.message);
     }
 }
 
@@ -721,7 +735,7 @@ async function loadProjects() {
         try {
             const stored = localStorage.getItem('projects');
             projects = stored ? JSON.parse(stored) : [];
-            console.log('📦 Retrieved projects from storage:', projects);
+            console.log('📦 Retrieved projects from storage:', projects.length, 'projects');
         } catch (parseError) {
             console.error('❌ Error parsing projects:', parseError);
             projects = [];
@@ -867,7 +881,28 @@ function createProjectCard(project, index) {
     return card;
 }
 
-// ===== HELPER FUNCTION FOR TAGS GENERATION =====
+// ===== HELPER FUNCTIONS =====
+function getStatusConfig(status) {
+    const configs = {
+        'idea': { label: 'Idea Phase', class: 'status-idea' },
+        'planning': { label: 'Planning', class: 'status-planning' },
+        'development': { label: 'Development', class: 'status-development' },
+        'testing': { label: 'Testing', class: 'status-testing' },
+        'completed': { label: 'Completed', class: 'status-completed' }
+    };
+    return configs[status] || configs.idea;
+}
+
+function getPriorityConfig(priority) {
+    const configs = {
+        'low': { label: 'Low Priority', class: 'priority-low' },
+        'medium': { label: 'Medium Priority', class: 'priority-medium' },
+        'high': { label: 'High Priority', class: 'priority-high' },
+        'critical': { label: 'Critical', class: 'priority-critical' }
+    };
+    return configs[priority] || configs.medium;
+}
+
 function generateTagsHtml(tags) {
     if (!tags || tags.length === 0) {
         return '<span class="no-tags">No tags</span>';
