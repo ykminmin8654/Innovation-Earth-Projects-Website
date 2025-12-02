@@ -655,29 +655,32 @@ function clearForm() {
 }
 
 // ===== PROJECT LOADING AND DISPLAY =====
+// ===== FIXED PROJECT LOADING FUNCTION =====
 async function loadProjects() {
     console.log('🔄 loadProjects() called');
     
-    // Get the container
-    const projectsContainer = document.getElementById('projects-container');
+    // Get the container - FIXED: Try multiple selectors
+    let projectsContainer = document.getElementById('projects-container');
+    
     if (!projectsContainer) {
-        console.error('❌ projects-container element not found!');
+        console.warn('❌ projects-container not found, trying alternatives...');
+        // Try alternative selectors
+        projectsContainer = document.querySelector('#projects .projects-grid') || 
+                           document.querySelector('#projects .container') || 
+                           document.querySelector('#projects');
+    }
+    
+    if (!projectsContainer) {
+        console.error('❌ No projects container found!');
         return;
     }
     
-    console.log('✅ Container found, loading projects...');
+    console.log('✅ Container found:', projectsContainer);
     
     try {
         // Get projects from storage
-        let projects = [];
-        try {
-            const stored = localStorage.getItem('projects');
-            projects = stored ? JSON.parse(stored) : [];
-            console.log('📦 Retrieved projects from storage:', projects.length, 'projects');
-        } catch (parseError) {
-            console.error('❌ Error parsing projects:', parseError);
-            projects = [];
-        }
+        let projects = JSON.parse(localStorage.getItem('projects') || '[]');
+        console.log('📦 Retrieved projects from storage:', projects);
         
         // Clear container
         projectsContainer.innerHTML = '';
@@ -702,21 +705,16 @@ async function loadProjects() {
         // Render each project
         projects.forEach((project, index) => {
             try {
-                const card = createProjectCard(project, index);
+                const card = createSimpleProjectCard(project, index);
                 if (card) {
                     projectsContainer.appendChild(card);
                     console.log(`✅ Card ${index} appended: ${project.title}`);
                 }
             } catch (cardError) {
                 console.error('❌ Error creating card for project:', project, cardError);
-                
-                // Create a basic error card as fallback
+                // Create a basic error card
                 const errorCard = document.createElement('div');
-                errorCard.innerHTML = `
-                    <div style="padding: 15px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; margin: 10px 0;">
-                        <strong>Error displaying project:</strong> ${project.title || 'Untitled'}
-                    </div>
-                `;
+                errorCard.innerHTML = `<div style="padding:15px;background:#fff3cd;border:1px solid #ffeaa7;border-radius:4px;margin:10px 0;">Error displaying: ${project.title || 'Untitled'}</div>`;
                 projectsContainer.appendChild(errorCard);
             }
         });
@@ -725,13 +723,92 @@ async function loadProjects() {
         
     } catch (error) {
         console.error('❌ Error in loadProjects:', error);
-        projectsContainer.innerHTML = `
-            <div style="text-align: center; padding: 40px; background: #f8d7da; color: #721c24; border-radius: 8px;">
-                <h3>Error Loading Projects</h3>
-                <p>${error.message}</p>
-            </div>
-        `;
+        projectsContainer.innerHTML = `<div style="text-align:center;padding:40px;background:#f8d7da;color:#721c24;border-radius:8px;">Error: ${error.message}</div>`;
     }
+}
+
+// ===== SIMPLE PROJECT CARD CREATION =====
+function createSimpleProjectCard(project, index) {
+    const card = document.createElement('div');
+    card.className = 'project-card';
+    card.style.cssText = 'background: white; border-radius: 8px; padding: 20px; margin: 15px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-left: 4px solid #007bff;';
+    
+    const hasUrl = project.url && project.url.trim() !== '';
+    const hasImage = project.imageUrl && project.imageUrl.trim() !== '';
+    
+    // Simple status and priority badges
+    const status = project.status || 'idea';
+    const priority = project.priority || 'medium';
+    const progress = project.progress || 0;
+    
+    // Generate tags
+    const tagsHtml = (project.tags || []).map(tag => 
+        `<span style="background:#e9ecef;color:#495057;padding:2px 6px;border-radius:3px;font-size:11px;margin-right:5px;display:inline-block;">${tag}</span>`
+    ).join('');
+    
+    card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+            <h3 style="margin: 0; color: #333; flex: 1;">${project.title || 'Untitled Project'}</h3>
+            <div style="display: flex; gap: 5px;">
+                <span style="background: ${getStatusColor(status)}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${status}</span>
+                <span style="background: ${getPriorityColor(priority)}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${priority}</span>
+            </div>
+        </div>
+        
+        ${hasImage ? `<div style="margin-bottom: 10px;"><img src="${project.imageUrl}" alt="${project.title}" style="width:100%;height:150px;object-fit:cover;border-radius:4px;"></div>` : ''}
+        
+        <p style="margin: 0 0 15px 0; color: #666; line-height: 1.4;">${project.description || 'No description provided.'}</p>
+        
+        ${project.tags && project.tags.length > 0 ? `
+            <div style="margin-bottom: 15px;">
+                <div style="font-size: 12px; color: #999; margin-bottom: 5px;">Tags:</div>
+                <div>${tagsHtml}</div>
+            </div>
+        ` : ''}
+        
+        <div style="margin-bottom: 15px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span style="font-size: 12px; color: #666;">Progress</span>
+                <span style="font-size: 12px; color: #666;">${progress}%</span>
+            </div>
+            <div style="background: #f0f0f0; border-radius: 10px; height: 8px; overflow: hidden;">
+                <div style="background: #007bff; height: 100%; width: ${progress}%; transition: width 0.3s;"></div>
+            </div>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #999;">
+            <span><i class="fas fa-calendar"></i> ${new Date(project.createdAt).toLocaleDateString()}</span>
+            <div style="display: flex; gap: 5px;">
+                ${hasUrl ? `<a href="${project.url}" target="_blank" style="background: #28a745; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 12px;"><i class="fas fa-external-link-alt"></i> Visit</a>` : ''}
+                <button onclick="editProject('${project.id}')" style="background: #ffc107; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">Edit</button>
+                <button onclick="deleteProject('${project.id}')" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete</button>
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
+
+// Helper functions for colors
+function getStatusColor(status) {
+    const colors = {
+        'idea': '#6c757d',
+        'planning': '#17a2b8', 
+        'development': '#007bff',
+        'testing': '#ffc107',
+        'completed': '#28a745'
+    };
+    return colors[status] || '#6c757d';
+}
+
+function getPriorityColor(priority) {
+    const colors = {
+        'low': '#28a745',
+        'medium': '#ffc107',
+        'high': '#fd7e14',
+        'critical': '#dc3545'
+    };
+    return colors[priority] || '#6c757d';
 }
 
 // ===== SIMPLIFIED CREATE PROJECT CARD FUNCTION =====
