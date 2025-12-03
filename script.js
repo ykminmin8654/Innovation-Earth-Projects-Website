@@ -141,6 +141,114 @@ function updateNavHighlight(sectionId) {
     }
 }
 
+// ===== PERSISTENT SECTION MANAGEMENT =====
+function initializeSectionManagement() {
+    console.log('🔧 Initializing section management...');
+    
+    // Hide all sections except home
+    document.querySelectorAll('.section').forEach(section => {
+        section.style.display = 'none';
+    });
+    
+    // Show home section by default
+    const homeSection = document.getElementById('home');
+    if (homeSection) {
+        homeSection.style.display = 'block';
+        homeSection.classList.add('active');
+    }
+    
+    // Handle navigation clicks
+    document.querySelectorAll('.nav-link[href^="#"]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            showSection(targetId);
+            
+            // Save to localStorage so it persists on refresh
+            localStorage.setItem('lastActiveSection', targetId);
+        });
+    });
+    
+    // Handle URL hash changes
+    window.addEventListener('hashchange', function() {
+        const hash = window.location.hash;
+        if (hash) {
+            showSection(hash);
+            localStorage.setItem('lastActiveSection', hash);
+        }
+    });
+    
+    // On page load, check what section to show (priority order)
+    const savedSection = localStorage.getItem('lastActiveSection');
+    const urlHash = window.location.hash;
+    
+    if (urlHash && document.querySelector(urlHash)) {
+        // Priority 1: URL hash
+        showSection(urlHash);
+        console.log('✅ Showing section from URL hash:', urlHash);
+    } else if (savedSection && document.querySelector(savedSection)) {
+        // Priority 2: Saved section from localStorage
+        showSection(savedSection);
+        console.log('✅ Showing saved section:', savedSection);
+    } else {
+        // Priority 3: Default to home
+        showSection('#home');
+        console.log('✅ Defaulting to home section');
+    }
+}
+
+// Update your existing showSection function to also update the URL hash:
+function showSection(sectionId) {
+    console.log('🔄 Showing section:', sectionId);
+    
+    // Hide all sections
+    document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+        section.style.display = 'none';
+    });
+    
+    // Show target section
+    const targetSection = document.querySelector(sectionId);
+    if (targetSection) {
+        targetSection.classList.add('active');
+        targetSection.style.display = 'block';
+        
+        // Update navigation
+        updateNavHighlight(sectionId);
+        
+        // Update URL hash (without triggering hashchange event)
+        const newUrl = window.location.pathname + sectionId;
+        window.history.replaceState(null, null, newUrl);
+        
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        // Load section-specific content
+        if (sectionId === '#projects') {
+            loadProjects();
+        }
+        
+        console.log('✅ Section activated:', sectionId);
+    } else {
+        console.warn('❌ Section not found:', sectionId);
+        // Fallback to home
+        showSection('#home');
+    }
+}
+
+function updateNavHighlight(sectionId) {
+    // Remove active class from all nav links
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    
+    // Add active class to current nav link
+    const currentNavLink = document.querySelector(`.nav-link[href="${sectionId}"]`);
+    if (currentNavLink) {
+        currentNavLink.classList.add('active');
+    }
+}
+
 // ===== MOBILE MENU =====
 function initializeMobileMenu() {
     const mobileMenuToggle = document.getElementById('mobile-menu');
