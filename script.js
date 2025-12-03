@@ -1,5 +1,5 @@
-// ===== COMPLETE WORKING JAVASCRIPT FILE =====
-// Innovation Earth Projects - Fully Functional Version
+// ===== COMPLETE JAVASCRIPT FILE FOR INNOVATION EARTH PROJECTS =====
+// Fixed version with proper Firebase/localStorage integration
 
 // Firebase configuration
 const firebaseConfig = {
@@ -722,29 +722,35 @@ async function addCard() {
             tags: tags || [],
             imageUrl: imageUrl || '',
             createdAt: new Date(),
-            id: 'project_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+            // Don't add ID for Firebase - it will auto-generate one
         };
         
         console.log('💾 Saving project data:', cardData);
         
+        // ALWAYS save to Firebase if available
         if (db) {
-            // If using Firebase
-            await db.collection("projects").add(cardData);
+            const docRef = await db.collection("projects").add(cardData);
+            console.log('✅ Project added to Firebase with ID:', docRef.id);
             alert('✅ Project added successfully to Firebase!');
         } else {
-            // Local storage fallback
+            // Fallback to localStorage
+            cardData.id = 'project_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             const projects = JSON.parse(localStorage.getItem('projects') || '[]');
             projects.push(cardData);
             localStorage.setItem('projects', JSON.stringify(projects));
             console.log('💾 Saved to local storage:', projects.length, 'projects total');
+            alert('✅ Project added successfully!');
         }
         
         // Clear form and reload projects
         clearForm();
-        loadProjects();
         
-        // Force show projects section
-        showSection('#projects');
+        // Force reload with delay to ensure Firebase has saved
+        setTimeout(() => {
+            console.log('🔄 Forcing reload after save...');
+            loadProjects();
+            showSection('#projects');
+        }, 1000);
         
     } catch (error) {
         console.error('❌ Error adding project:', error);
@@ -782,16 +788,33 @@ async function loadProjects() {
     console.log('✅ Container found, loading projects...');
     
     try {
-        // Get projects from storage
         let projects = [];
-        try {
+        
+        // ALWAYS try Firebase first, then fallback to localStorage
+        if (db) {
+            console.log('📡 Loading from Firebase...');
+            try {
+                const querySnapshot = await db.collection("projects").get();
+                projects = querySnapshot.docs.map(doc => {
+                    return { id: doc.id, ...doc.data() };
+                });
+                console.log('✅ Firebase projects loaded:', projects.length, 'projects');
+            } catch (firebaseError) {
+                console.error('❌ Firebase error:', firebaseError);
+                // Fallback to localStorage
+                console.log('🔄 Falling back to localStorage...');
+                const stored = localStorage.getItem('projects');
+                projects = stored ? JSON.parse(stored) : [];
+            }
+        } else {
+            // No Firebase, use localStorage
+            console.log('💾 Loading from localStorage...');
             const stored = localStorage.getItem('projects');
             projects = stored ? JSON.parse(stored) : [];
-            console.log('📦 Retrieved projects from storage:', projects.length, 'projects');
-        } catch (parseError) {
-            console.error('❌ Error parsing projects:', parseError);
-            projects = [];
         }
+        
+        console.log('📦 Total projects to display:', projects.length);
+        console.log('📊 Projects data:', projects);
         
         // Clear container
         projectsContainer.innerHTML = '';
@@ -910,10 +933,12 @@ async function deleteProject(projectId) {
         try {
             if (db) {
                 await db.collection("projects").doc(projectId).delete();
+                console.log('✅ Project deleted from Firebase');
             } else {
                 let projects = JSON.parse(localStorage.getItem('projects') || '[]');
                 projects = projects.filter(p => p.id !== projectId);
                 localStorage.setItem('projects', JSON.stringify(projects));
+                console.log('✅ Project deleted from localStorage');
             }
             alert('✅ Project deleted successfully!');
             loadProjects();
@@ -926,6 +951,54 @@ async function deleteProject(projectId) {
 
 function editProject(projectId) {
     alert('Edit functionality coming soon! Project ID: ' + projectId);
+}
+
+// ===== AUTO-LOAD PROJECTS WHEN PROJECTS SECTION IS VIEWED =====
+document.addEventListener('DOMContentLoaded', function() {
+    const projectsSection = document.getElementById('projects');
+    if (projectsSection) {
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                    if (projectsSection.style.display !== 'none') {
+                        loadProjects();
+                    }
+                }
+            });
+        });
+        
+        observer.observe(projectsSection, { attributes: true });
+    }
+});
+
+// ===== DEBUG FUNCTIONS =====
+async function debugProjects() {
+    try {
+        if (db) {
+            const querySnapshot = await db.collection("projects").get();
+            console.log('🐛 DEBUG - All projects in database:');
+            querySnapshot.forEach((doc) => {
+                console.log('📄 Document ID:', doc.id);
+                console.log('📊 Data:', doc.data());
+                console.log('---');
+            });
+        } else {
+            const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+            console.log('🐛 DEBUG - All projects in local storage:');
+            projects.forEach((project, index) => {
+                console.log(`📄 Project ${index}:`, project);
+                console.log('---');
+            });
+        }
+    } catch (error) {
+        console.error('❌ Debug error:', error);
+    }
+}
+
+function testAddCard() {
+    console.log('🧪 Testing addCard function...');
+    console.log('Current tags:', currentTags);
+    console.log('Progress value:', document.getElementById('cardProgress').value);
 }
 
 console.log("✅ Innovation Earth Projects script loaded successfully!");
