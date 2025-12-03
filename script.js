@@ -872,7 +872,6 @@ async function loadProjects() {
 }
 
 // ===== CREATE PROJECT CARD FUNCTION =====
-// ===== CREATE PROJECT CARD FUNCTION (WITHOUT DELETE/EDIT BUTTONS) =====
 function createProjectCard(project, index) {
     const card = document.createElement('div');
     card.className = 'project-card';
@@ -917,7 +916,6 @@ function createProjectCard(project, index) {
         '</div>' +
         
         '<div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #999;">' +
-            '<span><i class="fas fa-calendar"></i> ' + new Date(project.createdAt).toLocaleDateString() + '</span>' +
             '<div style="display: flex; gap: 5px;">' +
                 (hasUrl ? '<a href="' + project.url + '" target="_blank" style="background: #28a745; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 12px;"><i class="fas fa-external-link-alt"></i> Visit Project</a>' : '') +
             '</div>' +
