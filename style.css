@@ -3289,6 +3289,24 @@ p {
     background-position: 0 0;
 }
 
+/* Simple bottom positioning */
+.admin-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: 80vh;
+    z-index: 1000;
+}
+
+.admin-toggle-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 999;
+}
+
 /* Competition status indicators */
 .competition-status {
     display: inline-block;
