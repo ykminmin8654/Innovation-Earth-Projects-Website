@@ -1,5 +1,5 @@
-// ===== MAIN SCRIPT FOR INNOVATION EARTH PROJECTS =====
-// Complete rewrite with all fixes implemented
+// ===== COMPLETE WORKING JAVASCRIPT FILE =====
+// Innovation Earth Projects - Fully Functional Version
 
 // Firebase configuration
 const firebaseConfig = {
@@ -226,23 +226,19 @@ function initializeScrollAnimations() {
 
 // ===== CATEGORY TABS =====
 function initializeCategoryTabs() {
-    console.log('🔧 Initializing category tabs...');
-    
-    // Project category tabs
     const projectTabs = document.querySelectorAll('#projects .category-tab');
-    const projectCategories = document.querySelectorAll('#projects .project-category');
     
     if (projectTabs.length > 0) {
         projectTabs.forEach(tab => {
             tab.addEventListener('click', function() {
                 const category = this.getAttribute('data-category');
-                console.log('🔄 Switching to category:', category);
                 
                 // Update active tab
                 projectTabs.forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
                 
                 // Show/hide categories
+                const projectCategories = document.querySelectorAll('#projects .project-category');
                 projectCategories.forEach(cat => {
                     cat.classList.remove('active');
                     cat.style.display = 'none';
@@ -260,22 +256,19 @@ function initializeCategoryTabs() {
 
 // ===== COMPETITION TABS =====
 function initializeCompetitionTabs() {
-    console.log('🔧 Initializing competition tabs...');
-    
     const competitionTabs = document.querySelectorAll('#competitions .category-tab');
-    const competitionCategories = document.querySelectorAll('#competitions .competition-category');
     
     if (competitionTabs.length > 0) {
         competitionTabs.forEach(tab => {
             tab.addEventListener('click', function() {
                 const category = this.getAttribute('data-category');
-                console.log('🔄 Switching to competition category:', category);
                 
                 // Update tabs
                 competitionTabs.forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
                 
                 // Update categories
+                const competitionCategories = document.querySelectorAll('#competitions .competition-category');
                 competitionCategories.forEach(cat => {
                     cat.classList.remove('active');
                     cat.style.display = 'none';
@@ -335,9 +328,6 @@ function initializeContactForm() {
 
 // ===== QUICK LINK CARDS =====
 function initializeQuickLinkCards() {
-    console.log('🔗 Initializing quick link cards...');
-    
-    // Add click handlers to all quick link cards
     document.querySelectorAll('.quick-link-card').forEach(card => {
         card.addEventListener('click', function(e) {
             // Don't trigger if user clicked on the button inside
@@ -366,11 +356,11 @@ function initializeQuickLinkCards() {
     });
 }
 
-// ===== ADMIN PANEL MANAGEMENT =====
+// ===== ADMIN PANEL =====
 function initializeAdminPanel() {
-    console.log('🔧 Initializing admin panel...');
+    console.log('🔧 Setting up admin panel...');
     
-    // Fix admin toggle button
+    // Admin toggle button
     const adminBtn = document.querySelector('.admin-toggle-btn');
     if (adminBtn) {
         // Remove any existing event listeners
@@ -385,11 +375,9 @@ function initializeAdminPanel() {
             toggleAdminPanel();
         });
         console.log('✅ Admin toggle button initialized');
-    } else {
-        console.error('❌ Admin toggle button not found');
     }
     
-    // Fix add card button
+    // Add card button
     const addCardBtn = document.querySelector('button[onclick="addCard()"]');
     if (addCardBtn) {
         addCardBtn.onclick = addCard;
@@ -398,8 +386,6 @@ function initializeAdminPanel() {
     
     // Add close functionality
     setupAdminPanelClose();
-    
-    console.log('✅ Admin panel initialization complete');
 }
 
 function toggleAdminPanel() {
@@ -451,13 +437,6 @@ function setupAdminPanelClose() {
         }
     });
 }
-
-// Re-initialize admin panel when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(() => {
-        initializeAdminPanel();
-    }, 100);
-});
 
 // ===== TAG MANAGEMENT SYSTEM =====
 function initializeTagSystem() {
@@ -525,12 +504,9 @@ function renderTags() {
     currentTags.forEach(tag => {
         const tagElement = document.createElement('div');
         tagElement.className = 'tag-item';
-        tagElement.innerHTML = `
-            ${tag}
-            <button type="button" class="tag-remove" onclick="removeTag('${tag}')">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
+        tagElement.innerHTML = tag + 
+            '<button type="button" class="tag-remove" onclick="removeTag(\'' + tag + '\')">' +
+            '<i class="fas fa-times"></i></button>';
         tagsContainer.appendChild(tagElement);
     });
 }
@@ -579,6 +555,142 @@ function calculateProgress(status) {
     return progressMap[status] || 0;
 }
 
+// ===== IMAGE UPLOAD FUNCTIONALITY =====
+function initializeImageUpload() {
+    console.log('🖼️ Initializing image upload...');
+    
+    const imageInput = document.getElementById('cardImage');
+    const imagePreview = document.getElementById('imagePreview');
+    const removeImageBtn = document.getElementById('removeImage');
+    
+    if (!imageInput || !imagePreview) {
+        console.warn('⚠️ Image upload elements not found');
+        return null;
+    }
+    
+    // Create upload progress element
+    const uploadProgress = document.createElement('div');
+    uploadProgress.className = 'upload-progress';
+    uploadProgress.innerHTML = '<div class="upload-progress-bar"></div>';
+    imagePreview.parentNode.insertBefore(uploadProgress, imagePreview.nextSibling);
+    
+    let currentImageFile = null;
+    let currentImageUrl = null;
+    
+    // Handle file selection
+    imageInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 5 * 1024 * 1024) { // 5MB limit
+                alert('❌ Image size must be less than 5MB');
+                this.value = '';
+                return;
+            }
+            
+            if (!file.type.startsWith('image/')) {
+                alert('❌ Please select a valid image file');
+                this.value = '';
+                return;
+            }
+            
+            currentImageFile = file;
+            previewImage(file);
+        }
+    });
+    
+    // Handle remove image
+    removeImageBtn.addEventListener('click', function() {
+        removeImage();
+    });
+    
+    function previewImage(file) {
+        const reader = new FileReader();
+        
+        // Show upload progress
+        uploadProgress.style.display = 'block';
+        const progressBar = uploadProgress.querySelector('.upload-progress-bar');
+        
+        reader.onloadstart = function() {
+            progressBar.style.width = '10%';
+        };
+        
+        reader.onprogress = function(e) {
+            if (e.lengthComputable) {
+                const percentLoaded = Math.round((e.loaded / e.total) * 100);
+                progressBar.style.width = percentLoaded + '%';
+            }
+        };
+        
+        reader.onload = function(e) {
+            // Complete progress
+            progressBar.style.width = '100%';
+            setTimeout(() => {
+                uploadProgress.style.display = 'none';
+                progressBar.style.width = '0%';
+            }, 500);
+            
+            currentImageUrl = e.target.result;
+            
+            // Update preview
+            imagePreview.classList.add('has-image');
+            let img = imagePreview.querySelector('img');
+            if (!img) {
+                img = document.createElement('img');
+                imagePreview.appendChild(img);
+            }
+            img.src = currentImageUrl;
+            img.alt = 'Project preview image';
+            
+            // Show remove button
+            removeImageBtn.style.display = 'block';
+            
+            console.log('✅ Image preview loaded successfully');
+        };
+        
+        reader.onerror = function() {
+            uploadProgress.style.display = 'none';
+            alert('❌ Error loading image. Please try again.');
+        };
+        
+        reader.readAsDataURL(file);
+    }
+    
+    function removeImage() {
+        currentImageFile = null;
+        currentImageUrl = null;
+        imageInput.value = '';
+        imagePreview.classList.remove('has-image');
+        removeImageBtn.style.display = 'none';
+        
+        // Clear image preview
+        const img = imagePreview.querySelector('img');
+        if (img) {
+            img.remove();
+        }
+        
+        console.log('🗑️ Image removed');
+    }
+    
+    // Return public methods
+    return {
+        getCurrentImage: function() {
+            return currentImageUrl;
+        },
+        getImageFile: function() {
+            return currentImageFile;
+        },
+        removeImage: removeImage,
+        hasImage: function() {
+            return !!currentImageUrl;
+        }
+    };
+}
+
+// Initialize image upload when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    imageUploader = initializeImageUpload();
+});
+
 // ===== ADD CARD FUNCTION =====
 async function addCard() {
     console.log('💾 Starting to add card...');
@@ -610,7 +722,6 @@ async function addCard() {
             tags: tags || [],
             imageUrl: imageUrl || '',
             createdAt: new Date(),
-            hasCustomImage: !!imageUrl,
             id: 'project_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
         };
         
@@ -631,6 +742,9 @@ async function addCard() {
         // Clear form and reload projects
         clearForm();
         loadProjects();
+        
+        // Force show projects section
+        showSection('#projects');
         
     } catch (error) {
         console.error('❌ Error adding project:', error);
@@ -655,32 +769,29 @@ function clearForm() {
 }
 
 // ===== PROJECT LOADING AND DISPLAY =====
-// ===== FIXED PROJECT LOADING FUNCTION =====
 async function loadProjects() {
     console.log('🔄 loadProjects() called');
     
-    // Get the container - FIXED: Try multiple selectors
-    let projectsContainer = document.getElementById('projects-container');
-    
+    // Get the container
+    const projectsContainer = document.getElementById('projects-container');
     if (!projectsContainer) {
-        console.warn('❌ projects-container not found, trying alternatives...');
-        // Try alternative selectors
-        projectsContainer = document.querySelector('#projects .projects-grid') || 
-                           document.querySelector('#projects .container') || 
-                           document.querySelector('#projects');
-    }
-    
-    if (!projectsContainer) {
-        console.error('❌ No projects container found!');
+        console.error('❌ projects-container element not found!');
         return;
     }
     
-    console.log('✅ Container found:', projectsContainer);
+    console.log('✅ Container found, loading projects...');
     
     try {
         // Get projects from storage
-        let projects = JSON.parse(localStorage.getItem('projects') || '[]');
-        console.log('📦 Retrieved projects from storage:', projects);
+        let projects = [];
+        try {
+            const stored = localStorage.getItem('projects');
+            projects = stored ? JSON.parse(stored) : [];
+            console.log('📦 Retrieved projects from storage:', projects.length, 'projects');
+        } catch (parseError) {
+            console.error('❌ Error parsing projects:', parseError);
+            projects = [];
+        }
         
         // Clear container
         projectsContainer.innerHTML = '';
@@ -705,16 +816,21 @@ async function loadProjects() {
         // Render each project
         projects.forEach((project, index) => {
             try {
-                const card = createSimpleProjectCard(project, index);
+                const card = createProjectCard(project, index);
                 if (card) {
                     projectsContainer.appendChild(card);
                     console.log(`✅ Card ${index} appended: ${project.title}`);
                 }
             } catch (cardError) {
                 console.error('❌ Error creating card for project:', project, cardError);
-                // Create a basic error card
+                
+                // Create a basic error card as fallback
                 const errorCard = document.createElement('div');
-                errorCard.innerHTML = `<div style="padding:15px;background:#fff3cd;border:1px solid #ffeaa7;border-radius:4px;margin:10px 0;">Error displaying: ${project.title || 'Untitled'}</div>`;
+                errorCard.innerHTML = `
+                    <div style="padding: 15px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; margin: 10px 0;">
+                        <strong>Error displaying project:</strong> ${project.title || 'Untitled'}
+                    </div>
+                `;
                 projectsContainer.appendChild(errorCard);
             }
         });
@@ -723,212 +839,70 @@ async function loadProjects() {
         
     } catch (error) {
         console.error('❌ Error in loadProjects:', error);
-        projectsContainer.innerHTML = `<div style="text-align:center;padding:40px;background:#f8d7da;color:#721c24;border-radius:8px;">Error: ${error.message}</div>`;
+        projectsContainer.innerHTML = `
+            <div style="text-align: center; padding: 40px; background: #f8d7da; color: #721c24; border-radius: 8px;">
+                <h3>Error Loading Projects</h3>
+                <p>${error.message}</p>
+            </div>
+        `;
     }
 }
 
-// ===== SIMPLE PROJECT CARD CREATION =====
-function createSimpleProjectCard(project, index) {
+// ===== CREATE PROJECT CARD FUNCTION =====
+function createProjectCard(project, index) {
     const card = document.createElement('div');
     card.className = 'project-card';
     card.style.cssText = 'background: white; border-radius: 8px; padding: 20px; margin: 15px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-left: 4px solid #007bff;';
     
     const hasUrl = project.url && project.url.trim() !== '';
     const hasImage = project.imageUrl && project.imageUrl.trim() !== '';
-    
-    // Simple status and priority badges
-    const status = project.status || 'idea';
-    const priority = project.priority || 'medium';
     const progress = project.progress || 0;
     
     // Generate tags
     const tagsHtml = (project.tags || []).map(tag => 
-        `<span style="background:#e9ecef;color:#495057;padding:2px 6px;border-radius:3px;font-size:11px;margin-right:5px;display:inline-block;">${tag}</span>`
+        '<span style="background:#e9ecef;color:#495057;padding:2px 6px;border-radius:3px;font-size:11px;margin-right:5px;display:inline-block;">' + tag + '</span>'
     ).join('');
     
-    card.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-            <h3 style="margin: 0; color: #333; flex: 1;">${project.title || 'Untitled Project'}</h3>
-            <div style="display: flex; gap: 5px;">
-                <span style="background: ${getStatusColor(status)}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${status}</span>
-                <span style="background: ${getPriorityColor(priority)}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">${priority}</span>
-            </div>
-        </div>
-        
-        ${hasImage ? `<div style="margin-bottom: 10px;"><img src="${project.imageUrl}" alt="${project.title}" style="width:100%;height:150px;object-fit:cover;border-radius:4px;"></div>` : ''}
-        
-        <p style="margin: 0 0 15px 0; color: #666; line-height: 1.4;">${project.description || 'No description provided.'}</p>
-        
-        ${project.tags && project.tags.length > 0 ? `
-            <div style="margin-bottom: 15px;">
-                <div style="font-size: 12px; color: #999; margin-bottom: 5px;">Tags:</div>
-                <div>${tagsHtml}</div>
-            </div>
-        ` : ''}
-        
-        <div style="margin-bottom: 15px;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                <span style="font-size: 12px; color: #666;">Progress</span>
-                <span style="font-size: 12px; color: #666;">${progress}%</span>
-            </div>
-            <div style="background: #f0f0f0; border-radius: 10px; height: 8px; overflow: hidden;">
-                <div style="background: #007bff; height: 100%; width: ${progress}%; transition: width 0.3s;"></div>
-            </div>
-        </div>
-        
-        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #999;">
-            <span><i class="fas fa-calendar"></i> ${new Date(project.createdAt).toLocaleDateString()}</span>
-            <div style="display: flex; gap: 5px;">
-                ${hasUrl ? `<a href="${project.url}" target="_blank" style="background: #28a745; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 12px;"><i class="fas fa-external-link-alt"></i> Visit</a>` : ''}
-                <button onclick="editProject('${project.id}')" style="background: #ffc107; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">Edit</button>
-                <button onclick="deleteProject('${project.id}')" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete</button>
-            </div>
-        </div>
-    `;
-    
-    return card;
-}
-
-// Helper functions for colors
-function getStatusColor(status) {
-    const colors = {
-        'idea': '#6c757d',
-        'planning': '#17a2b8', 
-        'development': '#007bff',
-        'testing': '#ffc107',
-        'completed': '#28a745'
-    };
-    return colors[status] || '#6c757d';
-}
-
-function getPriorityColor(priority) {
-    const colors = {
-        'low': '#28a745',
-        'medium': '#ffc107',
-        'high': '#fd7e14',
-        'critical': '#dc3545'
-    };
-    return colors[priority] || '#6c757d';
-}
-
-// ===== SIMPLIFIED CREATE PROJECT CARD FUNCTION =====
-function createProjectCard(project, index) {
-    const card = document.createElement('div');
-    card.className = 'dynamic-project-card';
-    card.style.animationDelay = index * 0.1 + 's';
-    
-    const hasUrl = project.url && project.url.trim() !== '';
-    const hasImage = project.imageUrl && project.imageUrl.trim() !== '';
-    
-    // Simple status and priority display
-    const status = project.status || 'idea';
-    const priority = project.priority || 'medium';
-    const progress = project.progress || 0;
-    
-    // Generate simple tags HTML
-    const tagsHtml = generateSimpleTagsHtml(project.tags || []);
-    
-    // Use simple string concatenation
     card.innerHTML = 
-        '<div class="card-image">' +
-            (hasImage ? 
-                '<img src="' + project.imageUrl + '" alt="' + project.title + '" style="width:100%;height:200px;object-fit:cover;">' : 
-                '<i class="fas fa-project-diagram" style="font-size:3rem;color:white;"></i>'
-            ) +
+        '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">' +
+            '<h3 style="margin: 0; color: #333; flex: 1;">' + (project.title || 'Untitled Project') + '</h3>' +
+            '<div style="display: flex; gap: 5px;">' +
+                '<span style="background: #007bff; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">' + (project.status || 'idea') + '</span>' +
+                '<span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">' + (project.priority || 'medium') + '</span>' +
+            '</div>' +
         '</div>' +
         
-        '<div class="card-content" style="padding:15px;">' +
-            '<div style="display:flex;justify-content:space-between;margin-bottom:10px;">' +
-                '<span class="status-badge" style="background:#007bff;color:white;padding:4px 8px;border-radius:4px;font-size:12px;">' + status + '</span>' +
-                '<span class="priority-badge" style="background:#28a745;color:white;padding:4px 8px;border-radius:4px;font-size:12px;">' + priority + '</span>' +
+        (hasImage ? '<div style="margin-bottom: 10px;"><img src="' + project.imageUrl + '" alt="' + project.title + '" style="width:100%;height:150px;object-fit:cover;border-radius:4px;"></div>' : '') +
+        
+        '<p style="margin: 0 0 15px 0; color: #666; line-height: 1.4;">' + (project.description || 'No description provided.') + '</p>' +
+        
+        (project.tags && project.tags.length > 0 ? 
+            '<div style="margin-bottom: 15px;">' +
+                '<div style="font-size: 12px; color: #999; margin-bottom: 5px;">Tags:</div>' +
+                '<div>' + tagsHtml + '</div>' +
+            '</div>' : '') +
+        
+        '<div style="margin-bottom: 15px;">' +
+            '<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">' +
+                '<span style="font-size: 12px; color: #666;">Progress</span>' +
+                '<span style="font-size: 12px; color: #666;">' + progress + '%</span>' +
             '</div>' +
-            
-            '<h3 style="margin:0 0 10px 0;color:#333;">' + project.title + '</h3>' +
-            '<p style="margin:0 0 15px 0;color:#666;line-height:1.4;">' + project.description + '</p>' +
-            
-            (hasUrl ? 
-                '<a href="' + project.url + '" target="_blank" class="btn" style="background:#007bff;color:white;padding:8px 16px;text-decoration:none;border-radius:4px;display:inline-block;margin-bottom:10px;">' +
-                    '<i class="fas fa-external-link-alt"></i> Visit Website' +
-                '</a>' : 
-                ''
-            ) +
-            
-            '<div class="tags-container" style="margin-bottom:10px;">' + tagsHtml + '</div>' +
-            
-            '<div class="progress-container" style="margin-bottom:10px;">' +
-                '<div style="display:flex;justify-content:space-between;margin-bottom:5px;">' +
-                    '<span style="font-size:12px;color:#666;">Progress</span>' +
-                    '<span style="font-size:12px;color:#666;">' + progress + '%</span>' +
-                '</div>' +
-                '<div style="background:#f0f0f0;border-radius:10px;height:6px;overflow:hidden;">' +
-                    '<div style="background:#007bff;height:100%;width:' + progress + '%;transition:width 0.3s;"></div>' +
-                '</div>' +
+            '<div style="background: #f0f0f0; border-radius: 10px; height: 8px; overflow: hidden;">' +
+                '<div style="background: #007bff; height: 100%; width: ' + progress + '%; transition: width 0.3s;"></div>' +
             '</div>' +
-            
-            '<div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#999;">' +
-                '<span><i class="fas fa-calendar"></i> ' + new Date(project.createdAt).toLocaleDateString() + '</span>' +
-                '<div>' +
-                    '<button onclick="editProject(\'' + (project.id || '') + '\')" style="background:#ffc107;border:none;padding:4px 8px;border-radius:3px;margin-right:5px;cursor:pointer;">Edit</button>' +
-                    '<button onclick="deleteProject(\'' + (project.id || '') + '\')" style="background:#dc3545;color:white;border:none;padding:4px 8px;border-radius:3px;cursor:pointer;">Delete</button>' +
-                '</div>' +
+        '</div>' +
+        
+        '<div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #999;">' +
+            '<span><i class="fas fa-calendar"></i> ' + new Date(project.createdAt).toLocaleDateString() + '</span>' +
+            '<div style="display: flex; gap: 5px;">' +
+                (hasUrl ? '<a href="' + project.url + '" target="_blank" style="background: #28a745; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 12px;"><i class="fas fa-external-link-alt"></i> Visit</a>' : '') +
+                '<button onclick="editProject(\'' + project.id + '\')" style="background: #ffc107; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">Edit</button>' +
+                '<button onclick="deleteProject(\'' + project.id + '\')" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete</button>' +
             '</div>' +
         '</div>';
     
-    // Add click handler for URLs
-    if (hasUrl) {
-        card.addEventListener('click', function(e) {
-            if (!e.target.closest('button') && !e.target.closest('a')) {
-                window.open(project.url, '_blank');
-            }
-        });
-    }
-    
     return card;
 }
-
-// Simple tags generator
-function generateSimpleTagsHtml(tags) {
-    if (!tags || tags.length === 0) {
-        return '<span style="color:#999;font-size:12px;">No tags</span>';
-    }
-    
-    return tags.map(function(tag) {
-        return '<span style="background:#e9ecef;color:#495057;padding:2px 6px;border-radius:3px;font-size:11px;margin-right:5px;display:inline-block;">' + tag + '</span>';
-    }).join('');
-}
-
-// ===== HELPER FUNCTION FOR TAGS GENERATION =====
-function generateTagsHtml(tags) {
-    if (!tags || tags.length === 0) {
-        return '<span class="no-tags">No tags</span>';
-    }
-    
-    return tags.map(function(tag) {
-        return '<span class="tag">' + tag + '</span>';
-    }).join('');
-}
-
-// Close admin panel when clicking outside
-document.addEventListener('click', function(e) {
-    const adminPanel = document.getElementById('adminPanel');
-    const adminBtn = document.querySelector('.admin-toggle-btn');
-    
-    if (adminPanel && adminPanel.style.display !== 'none') {
-        if (!adminPanel.contains(e.target) && !adminBtn.contains(e.target)) {
-            adminPanel.style.display = 'none';
-        }
-    }
-});
-
-// Escape key to close admin panel
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        const adminPanel = document.getElementById('adminPanel');
-        if (adminPanel && adminPanel.style.display !== 'none') {
-            adminPanel.style.display = 'none';
-        }
-    }
-});
 
 // ===== PROJECT MANAGEMENT =====
 async function deleteProject(projectId) {
@@ -945,61 +919,13 @@ async function deleteProject(projectId) {
             loadProjects();
         } catch (error) {
             console.error('❌ Error deleting project:', error);
-            alert('Error deleting project');
+            alert('❌ Error deleting project');
         }
     }
 }
 
 function editProject(projectId) {
     alert('Edit functionality coming soon! Project ID: ' + projectId);
-}
-
-// ===== AUTO-LOAD PROJECTS WHEN PROJECTS SECTION IS VIEWED =====
-document.addEventListener('DOMContentLoaded', function() {
-    const projectsSection = document.getElementById('projects');
-    if (projectsSection) {
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                    if (projectsSection.style.display !== 'none') {
-                        loadProjects();
-                    }
-                }
-            });
-        });
-        
-        observer.observe(projectsSection, { attributes: true });
-    }
-});
-
-// ===== DEBUG FUNCTIONS =====
-async function debugProjects() {
-    try {
-        if (db) {
-            const querySnapshot = await db.collection("projects").get();
-            console.log('🐛 DEBUG - All projects in database:');
-            querySnapshot.forEach((doc) => {
-                console.log('📄 Document ID:', doc.id);
-                console.log('📊 Data:', doc.data());
-                console.log('---');
-            });
-        } else {
-            const projects = JSON.parse(localStorage.getItem('projects') || '[]');
-            console.log('🐛 DEBUG - All projects in local storage:');
-            projects.forEach((project, index) => {
-                console.log(`📄 Project ${index}:`, project);
-                console.log('---');
-            });
-        }
-    } catch (error) {
-        console.error('❌ Debug error:', error);
-    }
-}
-
-function testAddCard() {
-    console.log('🧪 Testing addCard function...');
-    console.log('Current tags:', currentTags);
-    console.log('Progress value:', document.getElementById('cardProgress').value);
 }
 
 console.log("✅ Innovation Earth Projects script loaded successfully!");
