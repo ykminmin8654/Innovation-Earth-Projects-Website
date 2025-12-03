@@ -775,6 +775,7 @@ function clearForm() {
 }
 
 // ===== PROJECT LOADING AND DISPLAY =====
+// ===== PROJECT LOADING AND DISPLAY =====
 async function loadProjects() {
     console.log('🔄 loadProjects() called');
     
@@ -814,7 +815,6 @@ async function loadProjects() {
         }
         
         console.log('📦 Total projects to display:', projects.length);
-        console.log('📊 Projects data:', projects);
         
         // Clear container
         projectsContainer.innerHTML = '';
@@ -872,6 +872,7 @@ async function loadProjects() {
 }
 
 // ===== CREATE PROJECT CARD FUNCTION =====
+// ===== CREATE PROJECT CARD FUNCTION (WITHOUT DELETE/EDIT BUTTONS) =====
 function createProjectCard(project, index) {
     const card = document.createElement('div');
     card.className = 'project-card';
@@ -918,39 +919,11 @@ function createProjectCard(project, index) {
         '<div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #999;">' +
             '<span><i class="fas fa-calendar"></i> ' + new Date(project.createdAt).toLocaleDateString() + '</span>' +
             '<div style="display: flex; gap: 5px;">' +
-                (hasUrl ? '<a href="' + project.url + '" target="_blank" style="background: #28a745; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 12px;"><i class="fas fa-external-link-alt"></i> Visit</a>' : '') +
-                '<button onclick="editProject(\'' + project.id + '\')" style="background: #ffc107; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">Edit</button>' +
-                '<button onclick="deleteProject(\'' + project.id + '\')" style="background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete</button>' +
+                (hasUrl ? '<a href="' + project.url + '" target="_blank" style="background: #28a745; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 12px;"><i class="fas fa-external-link-alt"></i> Visit Project</a>' : '') +
             '</div>' +
         '</div>';
     
     return card;
-}
-
-// ===== PROJECT MANAGEMENT =====
-async function deleteProject(projectId) {
-    if (confirm('Are you sure you want to delete this project?')) {
-        try {
-            if (db) {
-                await db.collection("projects").doc(projectId).delete();
-                console.log('✅ Project deleted from Firebase');
-            } else {
-                let projects = JSON.parse(localStorage.getItem('projects') || '[]');
-                projects = projects.filter(p => p.id !== projectId);
-                localStorage.setItem('projects', JSON.stringify(projects));
-                console.log('✅ Project deleted from localStorage');
-            }
-            alert('✅ Project deleted successfully!');
-            loadProjects();
-        } catch (error) {
-            console.error('❌ Error deleting project:', error);
-            alert('❌ Error deleting project');
-        }
-    }
-}
-
-function editProject(projectId) {
-    alert('Edit functionality coming soon! Project ID: ' + projectId);
 }
 
 // ===== AUTO-LOAD PROJECTS WHEN PROJECTS SECTION IS VIEWED =====
