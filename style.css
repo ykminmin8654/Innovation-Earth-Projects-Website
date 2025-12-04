@@ -3289,54 +3289,96 @@ p {
     background-position: 0 0;
 }
 
-/* Original Admin Panel - Centered Popup */
-/* Compact Centered Popup */
+/* Centered Popup Modal (like in your screenshot) */
+/* ===== CLEAN ADMIN PANEL STYLES ===== */
 .admin-panel {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
     width: 90%;
-    max-width: 450px; /* Smaller width */
-    max-height: 70vh; /* Smaller height */
+    max-width: 500px;
+    max-height: 80vh;
     background: white;
-    border-radius: 10px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     z-index: 1000;
     display: none;
-    overflow-y: auto;
+    overflow: hidden;
 }
 
 .admin-panel-content {
-    padding: 15px; /* Less padding */
+    padding: 25px;
+    max-height: calc(80vh - 50px);
+    overflow-y: auto;
 }
 
-/* Compact Form Styles */
+.admin-panel h3 {
+    margin: 0 0 20px 0;
+    color: #333;
+    font-size: 1.3rem;
+    text-align: center;
+}
+
+/* Form Styles */
 .form-group {
-    margin-bottom: 10px; /* Less spacing */
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #333;
 }
 
 .form-input, .form-textarea, .form-select, .form-range {
-    padding: 6px 10px; /* Smaller padding */
-    font-size: 13px; /* Smaller font */
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
 }
 
 .form-textarea {
-    min-height: 60px; /* Smaller textarea */
+    min-height: 80px;
+    resize: vertical;
 }
 
-/* Compact Image Preview */
-.image-preview {
-    height: 120px; /* Smaller image preview */
+.form-range {
+    padding: 0;
 }
 
-/* Compact Buttons */
+/* Progress Display */
+.progress-display {
+    text-align: center;
+    font-weight: 600;
+    color: #007bff;
+    margin-top: 5px;
+}
+
+/* Buttons */
 .btn {
-    padding: 6px 12px; /* Smaller buttons */
-    font-size: 13px;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 
-/* Keep the button in bottom-right */
+.btn-primary {
+    background: #007bff;
+    color: white;
+    width: 100%;
+}
+
+.btn-primary:hover {
+    background: #0056b3;
+}
+
+/* Admin Toggle Button (Bottom Right) */
 .admin-toggle-btn {
     position: fixed;
     bottom: 20px;
@@ -3345,25 +3387,39 @@ p {
     color: white;
     border: none;
     border-radius: 25px;
-    padding: 10px 16px;
-    font-size: 13px;
+    padding: 12px 20px;
+    font-size: 14px;
     cursor: pointer;
     box-shadow: 0 3px 10px rgba(0, 123, 255, 0.3);
     z-index: 999;
+    transition: all 0.3s ease;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
+}
+
+.admin-toggle-btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
 }
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .admin-panel {
-        max-width: 95%;
-        max-height: 80vh;
+        width: 95%;
+        max-height: 90vh;
     }
     
     .admin-panel-content {
-        padding: 12px;
+        padding: 20px;
+    }
+    
+    .admin-toggle-btn {
+        bottom: 15px;
+        right: 15px;
+        padding: 10px 16px;
+        font-size: 13px;
     }
 }
 

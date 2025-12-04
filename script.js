@@ -497,7 +497,7 @@ function initializeAdminPanel() {
 }
 
 function toggleAdminPanel() {
-    console.log('🔄 Toggling bottom admin panel...');
+    console.log('🔄 Toggling admin panel...');
     
     const panel = document.getElementById('adminPanel');
     if (!panel) {
@@ -505,32 +505,27 @@ function toggleAdminPanel() {
         return;
     }
     
-    const isVisible = panel.style.transform === 'translateY(0)';
+    const isVisible = panel.style.display === 'block';
     
     if (!isVisible) {
-        // Show panel - slide up from bottom
+        // Show panel
         panel.style.display = 'block';
-        // Force reflow
-        void panel.offsetWidth;
-        panel.style.transform = 'translateY(0)';
+        console.log('✅ Centered popup opened');
     } else {
-        // Hide panel - slide down to bottom
-        panel.style.transform = 'translateY(100%)';
-        // Hide after transition completes
-        setTimeout(() => {
-            panel.style.display = 'none';
-        }, 300);
+        // Hide panel
+        panel.style.display = 'none';
+        console.log('📪 Popup closed');
     }
 }
 
 // Close when clicking outside
 document.addEventListener('click', function(e) {
     const panel = document.getElementById('adminPanel');
-    const toggleBtn = document.querySelector('.admin-toggle-btn-bottom');
+    const toggleBtn = document.querySelector('.admin-toggle-btn');
     
-    if (panel && panel.style.transform === 'translateY(0)') {
+    if (panel && panel.style.display === 'block') {
         if (!panel.contains(e.target) && !toggleBtn.contains(e.target)) {
-            toggleAdminPanel();
+            panel.style.display = 'none';
         }
     }
 });
@@ -539,8 +534,8 @@ document.addEventListener('click', function(e) {
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         const panel = document.getElementById('adminPanel');
-        if (panel && panel.style.transform === 'translateY(0)') {
-            toggleAdminPanel();
+        if (panel && panel.style.display === 'block') {
+            panel.style.display = 'none';
         }
     }
 });
