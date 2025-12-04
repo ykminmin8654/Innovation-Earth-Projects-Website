@@ -497,7 +497,7 @@ function initializeAdminPanel() {
 }
 
 function toggleAdminPanel() {
-    console.log('🔄 Toggling admin panel...');
+    console.log('🔄 Toggling bottom admin panel...');
     
     const panel = document.getElementById('adminPanel');
     if (!panel) {
@@ -505,46 +505,45 @@ function toggleAdminPanel() {
         return;
     }
     
-    const isVisible = panel.style.display !== 'none';
-    panel.style.display = isVisible ? 'none' : 'block';
+    const isVisible = panel.style.transform === 'translateY(0)';
     
-    console.log('📊 Admin panel visibility:', panel.style.display);
-    
-    if (panel.style.display !== 'none') {
-        // Panel is opening - scroll to top and focus first input
-        panel.scrollTop = 0;
-        const firstInput = panel.querySelector('input, textarea, select');
-        if (firstInput) {
-            firstInput.focus();
-        }
+    if (!isVisible) {
+        // Show panel - slide up from bottom
+        panel.style.display = 'block';
+        // Force reflow
+        void panel.offsetWidth;
+        panel.style.transform = 'translateY(0)';
+    } else {
+        // Hide panel - slide down to bottom
+        panel.style.transform = 'translateY(100%)';
+        // Hide after transition completes
+        setTimeout(() => {
+            panel.style.display = 'none';
+        }, 300);
     }
 }
 
-function setupAdminPanelClose() {
-    // Close when clicking outside
-    document.addEventListener('click', function(e) {
-        const adminPanel = document.getElementById('adminPanel');
-        const adminBtn = document.querySelector('.admin-toggle-btn');
-        
-        if (adminPanel && adminPanel.style.display !== 'none') {
-            if (!adminPanel.contains(e.target) && !adminBtn.contains(e.target)) {
-                adminPanel.style.display = 'none';
-                console.log('📪 Admin panel closed (clicked outside)');
-            }
-        }
-    });
+// Close when clicking outside
+document.addEventListener('click', function(e) {
+    const panel = document.getElementById('adminPanel');
+    const toggleBtn = document.querySelector('.admin-toggle-btn-bottom');
     
-    // Close with ESC key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            const adminPanel = document.getElementById('adminPanel');
-            if (adminPanel && adminPanel.style.display !== 'none') {
-                adminPanel.style.display = 'none';
-                console.log('📪 Admin panel closed (ESC key)');
-            }
+    if (panel && panel.style.transform === 'translateY(0)') {
+        if (!panel.contains(e.target) && !toggleBtn.contains(e.target)) {
+            toggleAdminPanel();
         }
-    });
-}
+    }
+});
+
+// Close with ESC key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const panel = document.getElementById('adminPanel');
+        if (panel && panel.style.transform === 'translateY(0)') {
+            toggleAdminPanel();
+        }
+    }
+});
 
 // ===== TAG MANAGEMENT SYSTEM =====
 function initializeTagSystem() {
