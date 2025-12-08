@@ -2432,90 +2432,6 @@ p {
     60%, 100% { content: '...'; }
 }
 
-/* Admin panel styles */
-/* ===== ADMIN PANEL STYLES ===== */
-/* ===== ADMIN PANEL STYLES (PERFORMANCE OPTIMIZED) ===== */
-.admin-toggle-btn {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: linear-gradient(135deg, var(--teal), var(--cyan));
-    color: var(--white);
-    border: none;
-    padding: 12px 20px;
-    border-radius: var(--border-radius-lg);
-    cursor: pointer;
-    z-index: 10000;
-    font-weight: 600;
-    font-size: var(--font-size-sm);
-    box-shadow: var(--shadow-lg);
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: var(--space-xs);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.admin-toggle-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-xl);
-    background: linear-gradient(135deg, var(--cyan), var(--blue));
-}
-
-.admin-panel {
-    display: none;
-    position: fixed;
-    top: 80px;
-    right: 20px;
-    background: var(--white);
-    padding: var(--space-xl);
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-xl);
-    z-index: 10000;
-    width: 400px;
-    max-width: 90vw;
-    max-height: 80vh;
-    overflow-y: auto;
-    border: 1px solid var(--border);
-    animation: panelSlideIn 0.3s ease-out;
-}
-
-@keyframes panelSlideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.admin-panel-content {
-    position: relative;
-}
-
-.admin-panel h3 {
-    color: var(--teal);
-    font-size: var(--font-size-lg);
-    margin-bottom: var(--space-lg);
-    text-align: center;
-    position: relative;
-    padding-bottom: var(--space-sm);
-}
-
-.admin-panel h3::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60px;
-    height: 3px;
-    background: linear-gradient(90deg, var(--teal), var(--cyan));
-    border-radius: 2px;
-}
-
 /* Form Styles */
 .form-group {
     margin-bottom: var(--space-lg);
@@ -3133,96 +3049,6 @@ p {
     }
 }
 
-/* ===== ADMIN PANEL SCROLLABLE FIX ===== */
-.admin-panel {
-    display: none;
-    position: fixed;
-    top: 80px;
-    right: 20px;
-    background: white;
-    padding: 20px;
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-xl);
-    z-index: 10000;
-    width: 350px;
-    max-width: 90vw;
-    border: 1px solid var(--border);
-    
-    /* Make it scrollable */
-    max-height: 80vh; /* Limit height to 80% of viewport */
-    overflow-y: auto; /* Enable vertical scrolling */
-    overflow-x: hidden; /* Prevent horizontal scrolling */
-}
-
-/* Ensure the panel content is properly contained */
-.admin-panel-content {
-    min-height: min-content;
-}
-
-/* Style the scrollbar */
-.admin-panel::-webkit-scrollbar {
-    width: 6px;
-}
-
-.admin-panel::-webkit-scrollbar-track {
-    background: var(--gray-light);
-    border-radius: 3px;
-}
-
-.admin-panel::-webkit-scrollbar-thumb {
-    background: var(--teal);
-    border-radius: 3px;
-}
-
-.admin-panel::-webkit-scrollbar-thumb:hover {
-    background: var(--dark-green);
-}
-
-/* Ensure the add button is always visible at the bottom */
-.admin-panel .btn-primary {
-    position: sticky;
-    bottom: 0;
-    background: var(--lime-green);
-    margin-top: 1rem;
-    z-index: 10;
-}
-
-/* Add some padding to the bottom to ensure button is visible */
-.admin-panel::after {
-    content: '';
-    display: block;
-    height: 10px;
-}
-
-/* ===== RESPONSIVE ADMIN PANEL ===== */
-@media (max-width: 768px) {
-    .admin-panel {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 90vw;
-        max-width: 400px;
-        max-height: 85vh;
-        right: auto;
-        margin: 0;
-    }
-    
-    .admin-panel .btn-primary {
-        position: relative;
-        bottom: auto;
-    }
-}
-
-/* ===== FORM GROUP SPACING FIX ===== */
-.admin-panel .form-group {
-    margin-bottom: 1.5rem;
-}
-
-.admin-panel .form-group:last-child {
-    margin-bottom: 0;
-}
-
 /* ===== TAGS CONTAINER HEIGHT FIX ===== */
 .tags-container {
     max-height: 120px;
@@ -3287,37 +3113,6 @@ p {
 
 .competition-highlight:hover {
     background-position: 0 0;
-}
-
-/* Centered Popup Modal (like in your screenshot) */
-/* ===== CLEAN ADMIN PANEL STYLES ===== */
-.admin-panel {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90%;
-    max-width: 500px;
-    max-height: 80vh;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    z-index: 1000;
-    display: none;
-    overflow: hidden;
-}
-
-.admin-panel-content {
-    padding: 25px;
-    max-height: calc(80vh - 50px);
-    overflow-y: auto;
-}
-
-.admin-panel h3 {
-    margin: 0 0 20px 0;
-    color: #333;
-    font-size: 1.3rem;
-    text-align: center;
 }
 
 /* Form Styles */
@@ -3545,6 +3340,68 @@ p {
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+/* ===== CLEAN ADMIN PANEL FIX ===== */
+.admin-toggle-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 12px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0, 123, 255, 0.3);
+    z-index: 999;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-toggle-btn:hover {
+    background: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.4);
+}
+
+#adminPanel {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    display: none;
+    overflow: hidden;
+}
+
+.admin-panel-content {
+    padding: 25px;
+    max-height: calc(80vh - 50px);
+    overflow-y: auto;
+}
+
+@media (max-width: 768px) {
+    .admin-toggle-btn {
+        bottom: 15px;
+        right: 15px;
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+    
+    #adminPanel {
+        width: 95%;
+        max-height: 90vh;
+    }
 }
 
 .admin-toggle-btn:hover {
