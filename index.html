@@ -1246,44 +1246,49 @@
         </section>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <h3>Innovation Earth Projects</h3>
-                    <p>Building a community of innovators from the ground up. Join us in creating meaningful projects and developing real-world skills.</p>
-                </div>
-                
-                <div class="footer-section">
-                    <h3>Quick Links</h3>
-                    <nav>
-                        <ul>
-                            <li><a href="#home">Home</a></li>
-                            <li><a href="#projects">Project Ideas</a></li>
-                            <li><a href="#competitions">Competitions</a></li>
-                            <li><a href="#join">Join Us</a></li>
-                            <li><a href="#about">Our Story</a></li>
-                        </ul>
-                    </nav>
-                </div>
-                
-                <div class="footer-section">
-                    <h3>Join Our Beginning</h3>
-                    <address>
-                        <p><i class="fas fa-envelope"></i> InnovationEarthProjects@gmail.com</p>
-                        <p><i class="fas fa-map-marker-alt"></i> Based in Utah, USA</p>
-                    </address>
-                    <a href="#contact" class="btn btn-secondary">Be a Founder</a>
-                </div>
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Innovation Earth Projects</h3>
+                <p>Building a community of innovators from the ground up. Join us in creating meaningful projects and developing real-world skills.</p>
             </div>
             
-            <div class="footer-bottom">
-                <p>&copy; 2025 Innovation Earth Projects. Building our future together.</p>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <nav>
+                    <ul>
+                        <li><a href="#home">Home</a></li>
+                        <li><a href="#projects">Project Ideas</a></li>
+                        <li><a href="#competitions">Competitions</a></li>
+                        <li><a href="#join">Join Us</a></li>
+                        <li><a href="#about">Our Story</a></li>
+                    </ul>
+                </nav>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Join Our Beginning</h3>
+                <address>
+                    <p><i class="fas fa-envelope"></i> InnovationEarthProjects@gmail.com</p>
+                    <p><i class="fas fa-map-marker-alt"></i> Based in Utah, USA</p>
+                </address>
+                <a href="#contact" class="btn btn-secondary">Be a Founder</a>
             </div>
         </div>
+        
+        <!-- Footer bottom with admin button -->
+        <div class="footer-bottom">
+            <p>&copy; 2025 Innovation Earth Projects. Building our future together.</p>
+            <button onclick="toggleAdminPanel()" class="footer-admin-btn">
+                <i class="fas fa-plus"></i> Add Project
+            </button>
+        </div>
+    </div>
+</footer>
 
-<!-- Original Admin Panel -->
+<!-- Admin Panel (stays outside footer) -->
 <div id="adminPanel" class="admin-panel" style="display: none;">
     <div class="admin-panel-content">
         <h3>Add New Project</h3>
@@ -1298,7 +1303,7 @@
             <textarea id="cardDesc" placeholder="Enter project description" class="form-textarea" required></textarea>
         </div>
 
-        <div class="form-group">
+       form-group">
             <label for="cardImage">Project Image (Optional):</label>
             <div class="image-upload-container">
                 <input type="file" id="cardImage" accept="image/*" class="image-upload-input">
@@ -1317,7 +1322,7 @@
         <div class="form-group">
             <label for="cardUrl">Project URL (optional):</label>
             <input type="url" id="cardUrl" placeholder="https://example.com" class="form-input">
-        </div>
+        >
 
         <div class="form-group">
             <label for="cardProgress">Progress (%):</label>
@@ -1335,7 +1340,7 @@
                 <option value="idea">Idea Phase</option>
                 <option value="planning">Planning Phase</option>
                 <option value="development">Development</option>
-                <option value="testing">Testing</option>
+                ="testing">Testing</option>
                 <option value="completed">Completed</option>
             </select>
         </div>
@@ -1358,7 +1363,7 @@
                 </div>
                 
                 <div class="tag-input-group">
-                    <input type="text" id="tagInput" placeholder="Add a tag (press Enter)" class="form-input">
+                    <input type="text" id="tagInput" placeholder="Add a)" class="form-input">
                     <button type="button" id="addTagBtn" class="btn btn-primary">
                         <i class="fas fa-plus"></i> Add
                     </button>
@@ -1376,17 +1381,9 @@
         </div>
 
         <button onclick="addCard()" class="btn btn-primary" style="width: 100%; margin-top: 20px;">
-            <i class="fas fa-plus"></i> Add Project
-        </button>
+            <i class="fas fa-plus"></i> Add        </button>
     </div>
 </div>
-
-<!-- Original Admin Toggle Button (Bottom Right Corner) -->
-<button onclick="toggleAdminPanel()" class="admin-toggle-btn">
-    <i class="fas fa-plus"></i> Add Project
-</button>
-
-    </footer>
 
     <!-- JavaScript -->
     <script src="script.js"></script>
