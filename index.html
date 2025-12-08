@@ -1383,6 +1383,32 @@
         <button onclick="addCard()" class="btn btn-primary" style="width: 100%; margin-top: 20px;">
             <i class="fas fa-plus"></i> Add        </button>
     </div>
+    
+    <!-- Add this inside your admin panel form -->
+<div class="form-group">
+    <label>Tags:</label>
+    <div class="tags-input-container">
+        <div id="tagsContainer" class="tags-container">
+            <div class="tags-empty">No tags added yet</div>
+        </div>
+        
+        <div class="tag-input-group">
+            <input type="text" id="tagInput" placeholder="Add a tag (press Enter)" class="form-input">
+            <button type="button" id="addTagBtn" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add
+            </button>
+        </div>
+        
+        <div class="tag-suggestions">
+            <small>Quick add: </small>
+            <span class="tag-suggestion" data-tag="web">web</span>
+            <span class="tag-suggestion" data-tag="mobile">mobile</span>
+            <span class="tag-suggestion" data-tag="ai">AI</span>
+            <span class="tag-suggestion" data-tag="iot">IoT</span>
+            <span class="tag-suggestion" data-tag="blockchain">blockchain</span>
+        </div>
+    </div>
+</div>
 </div>
 
     <!-- JavaScript -->

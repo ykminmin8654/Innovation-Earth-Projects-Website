@@ -1,5 +1,5 @@
 // ===== COMPLETE JAVASCRIPT FILE FOR INNOVATION EARTH PROJECTS =====
-// Fixed version with proper Firebase/localStorage integration
+// Fixed version with proper form handling and admin panel functionality
 
 // Firebase configuration
 const firebaseConfig = {
@@ -26,7 +26,7 @@ try {
 
 // ===== GLOBAL VARIABLES =====
 let currentTags = [];
-let imageUploader;
+let imageUploader = null;
 
 // ===== MAIN INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', function() {
@@ -42,6 +42,8 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeContactForm();
     initializeSmoothScrolling();
     initializeQuickLinkCards();
+    
+    // Initialize admin panel and form components
     initializeAdminPanel();
     initializeTagSystem();
     initializeProgressBar();
@@ -49,99 +51,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load projects if on projects section
     if (window.location.hash === '#projects') {
-        loadProjects();
+        setTimeout(() => loadProjects(), 100);
     }
     
     console.log('✅ All functionality loaded successfully!');
 });
 
 // ===== SECTION MANAGEMENT =====
-function initializeSectionManagement() {
-    console.log('🔧 Initializing section management...');
-    
-    // Hide all sections except home
-    document.querySelectorAll('.section').forEach(section => {
-        section.style.display = 'none';
-    });
-    
-    // Show home section by default
-    const homeSection = document.getElementById('home');
-    if (homeSection) {
-        homeSection.style.display = 'block';
-        homeSection.classList.add('active');
-    }
-    
-    // Handle navigation clicks
-    document.querySelectorAll('.nav-link[href^="#"]').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('href');
-            showSection(targetId);
-        });
-    });
-    
-    // Handle URL hash changes
-    window.addEventListener('hashchange', function() {
-        const hash = window.location.hash;
-        if (hash) {
-            showSection(hash);
-        }
-    });
-    
-    // Show section based on current URL hash
-    if (window.location.hash) {
-        showSection(window.location.hash);
-    }
-}
-
-function showSection(sectionId) {
-    console.log('🔄 Showing section:', sectionId);
-    
-    // Hide all sections
-    document.querySelectorAll('.section').forEach(section => {
-        section.classList.remove('active');
-        section.style.display = 'none';
-    });
-    
-    // Show target section
-    const targetSection = document.querySelector(sectionId);
-    if (targetSection) {
-        targetSection.classList.add('active');
-        targetSection.style.display = 'block';
-        
-        // Update navigation
-        updateNavHighlight(sectionId);
-        
-        // Scroll to top
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        
-        // Load section-specific content
-        if (sectionId === '#projects') {
-            loadProjects();
-        }
-        
-        console.log('✅ Section activated:', sectionId);
-    } else {
-        console.warn('❌ Section not found:', sectionId);
-        // Fallback to home
-        showSection('#home');
-    }
-}
-
-function updateNavHighlight(sectionId) {
-    // Remove active class from all nav links
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.classList.remove('active');
-    });
-    
-    // Add active class to current nav link
-    const currentNavLink = document.querySelector(`.nav-link[href="${sectionId}"]`);
-    if (currentNavLink) {
-        currentNavLink.classList.add('active');
-    }
-}
-
-// ===== PERSISTENT SECTION MANAGEMENT =====
 function initializeSectionManagement() {
     console.log('🔧 Initializing section management...');
     
@@ -197,7 +113,6 @@ function initializeSectionManagement() {
     }
 }
 
-// Update your existing showSection function to also update the URL hash:
 function showSection(sectionId) {
     console.log('🔄 Showing section:', sectionId);
     
@@ -505,40 +420,54 @@ function toggleAdminPanel() {
         return;
     }
     
-    const isVisible = panel.style.display === 'block';
+    const isVisible = panel.style.display === 'block' || panel.classList.contains('active');
     
     if (!isVisible) {
         // Show panel
         panel.style.display = 'block';
+        panel.classList.add('active');
         console.log('✅ Centered popup opened');
+        
+        // Add event listener to close when clicking outside
+        setTimeout(() => {
+            document.addEventListener('click', handleClickOutside);
+        }, 10);
     } else {
         // Hide panel
         panel.style.display = 'none';
+        panel.classList.remove('active');
         console.log('📪 Popup closed');
+        
+        // Remove event listener
+        document.removeEventListener('click', handleClickOutside);
     }
 }
 
-// Close when clicking outside
-document.addEventListener('click', function(e) {
+function handleClickOutside(event) {
     const panel = document.getElementById('adminPanel');
-    const toggleBtn = document.querySelector('.admin-toggle-btn');
+    const adminBtn = document.querySelector('.admin-toggle-btn');
     
-    if (panel && panel.style.display === 'block') {
-        if (!panel.contains(e.target) && !toggleBtn.contains(e.target)) {
-            panel.style.display = 'none';
-        }
+    if (panel && 
+        !panel.contains(event.target) && 
+        (!adminBtn || !adminBtn.contains(event.target))) {
+        panel.style.display = 'none';
+        panel.classList.remove('active');
+        document.removeEventListener('click', handleClickOutside);
     }
-});
+}
 
-// Close with ESC key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        const panel = document.getElementById('adminPanel');
-        if (panel && panel.style.display === 'block') {
-            panel.style.display = 'none';
+function setupAdminPanelClose() {
+    // Close with ESC key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const panel = document.getElementById('adminPanel');
+            if (panel && (panel.style.display === 'block' || panel.classList.contains('active'))) {
+                panel.style.display = 'none';
+                panel.classList.remove('active');
+            }
         }
-    }
-});
+    });
+}
 
 // ===== TAG MANAGEMENT SYSTEM =====
 function initializeTagSystem() {
@@ -548,6 +477,7 @@ function initializeTagSystem() {
     const addTagBtn = document.getElementById('addTagBtn');
     
     if (tagInput && addTagBtn) {
+        console.log('✅ Found tag system elements');
         // Add tag on button click
         addTagBtn.addEventListener('click', addTag);
         
@@ -560,23 +490,30 @@ function initializeTagSystem() {
         });
         
         // Quick tag suggestions
-        document.querySelectorAll('.tag-suggestion').forEach(suggestion => {
-            suggestion.addEventListener('click', function() {
-                const tag = this.getAttribute('data-tag');
-                tagInput.value = tag;
-                addTag();
+        const tagSuggestions = document.querySelectorAll('.tag-suggestion');
+        if (tagSuggestions.length > 0) {
+            tagSuggestions.forEach(suggestion => {
+                suggestion.addEventListener('click', function() {
+                    const tag = this.getAttribute('data-tag');
+                    if (tag) {
+                        tagInput.value = tag;
+                        addTag();
+                    }
+                });
             });
-        });
+        }
+    } else {
+        console.warn('⚠️ Tag input elements not found, skipping tag system');
     }
     
     // Clear tags when form is submitted
-    document.addEventListener('DOMContentLoaded', function() {
-        clearTags();
-    });
+    clearTags();
 }
 
 function addTag() {
     const tagInput = document.getElementById('tagInput');
+    if (!tagInput) return;
+    
     const tag = tagInput.value.trim().toLowerCase();
     
     if (tag && !currentTags.includes(tag)) {
@@ -666,8 +603,8 @@ function initializeImageUpload() {
     const removeImageBtn = document.getElementById('removeImage');
     
     if (!imageInput || !imagePreview) {
-        console.warn('⚠️ Image upload elements not found');
-        return null;
+        console.warn('⚠️ Image upload elements not found, skipping image upload');
+        return;
     }
     
     // Create upload progress element
@@ -701,9 +638,9 @@ function initializeImageUpload() {
     });
     
     // Handle remove image
-    removeImageBtn.addEventListener('click', function() {
-        removeImage();
-    });
+    if (removeImageBtn) {
+        removeImageBtn.addEventListener('click', removeImage);
+    }
     
     function previewImage(file) {
         const reader = new FileReader();
@@ -744,7 +681,9 @@ function initializeImageUpload() {
             img.alt = 'Project preview image';
             
             // Show remove button
-            removeImageBtn.style.display = 'block';
+            if (removeImageBtn) {
+                removeImageBtn.style.display = 'block';
+            }
             
             console.log('✅ Image preview loaded successfully');
         };
@@ -760,9 +699,9 @@ function initializeImageUpload() {
     function removeImage() {
         currentImageFile = null;
         currentImageUrl = null;
-        imageInput.value = '';
+        if (imageInput) imageInput.value = '';
         imagePreview.classList.remove('has-image');
-        removeImageBtn.style.display = 'none';
+        if (removeImageBtn) removeImageBtn.style.display = 'none';
         
         // Clear image preview
         const img = imagePreview.querySelector('img');
@@ -774,7 +713,7 @@ function initializeImageUpload() {
     }
     
     // Return public methods
-    return {
+    imageUploader = {
         getCurrentImage: function() {
             return currentImageUrl;
         },
@@ -788,54 +727,61 @@ function initializeImageUpload() {
     };
 }
 
-// Initialize image upload when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    imageUploader = initializeImageUpload();
-});
-
 // ===== ADD CARD FUNCTION =====
 async function addCard() {
     console.log('💾 Starting to add card...');
     
-    const title = document.getElementById('cardTitle').value;
-    const description = document.getElementById('cardDesc').value;
-    const url = document.getElementById('cardUrl').value;
-    const status = document.getElementById('cardStatus').value;
-    const priority = document.getElementById('cardPriority').value;
-    const progress = parseInt(document.getElementById('cardProgress').value);
+    const title = document.getElementById('cardTitle')?.value || '';
+    const description = document.getElementById('cardDesc')?.value || '';
+    const url = document.getElementById('cardUrl')?.value || '';
+    const status = document.getElementById('cardStatus')?.value || 'idea';
+    const priority = document.getElementById('cardPriority')?.value || 'medium';
+    const progress = parseInt(document.getElementById('cardProgress')?.value || '0');
     const tags = getCurrentTags();
     const imageUrl = imageUploader ? imageUploader.getCurrentImage() : null;
     
     console.log('📝 Form values:', { title, description, url, status, priority, progress, tags, hasImage: !!imageUrl });
     
-    if (!title || !description) {
+    if (!title.trim() || !description.trim()) {
         alert('❌ Please fill in both title and description');
         return;
     }
     
     try {
         const cardData = {
-            title: title,
-            description: description,
-            url: url || '',
+            title: title.trim(),
+            description: description.trim(),
+            url: url.trim() || '',
             status: status,
             priority: priority,
             progress: progress || 0,
             tags: tags || [],
             imageUrl: imageUrl || '',
-            createdAt: new Date(),
-            // Don't add ID for Firebase - it will auto-generate one
+            createdAt: new Date().toISOString(),
         };
         
         console.log('💾 Saving project data:', cardData);
         
-        // ALWAYS save to Firebase if available
+        // ALWAYS try Firebase first, then fallback to localStorage
         if (db) {
-            const docRef = await db.collection("projects").add(cardData);
-            console.log('✅ Project added to Firebase with ID:', docRef.id);
-            alert('✅ Project added successfully to Firebase!');
+            try {
+                const docRef = await db.collection("projects").add(cardData);
+                console.log('✅ Project added to Firebase with ID:', docRef.id);
+                alert('✅ Project added successfully to Firebase!');
+            } catch (firebaseError) {
+                console.error('❌ Firebase error:', firebaseError);
+                alert('⚠️ Could not connect to Firebase. Saving locally instead.');
+                
+                // Fallback to localStorage
+                cardData.id = 'project_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+                projects.push(cardData);
+                localStorage.setItem('projects', JSON.stringify(projects));
+                console.log('💾 Saved to local storage:', projects.length, 'projects total');
+                alert('✅ Project added successfully (local storage)!');
+            }
         } else {
-            // Fallback to localStorage
+            // No Firebase, use localStorage
             cardData.id = 'project_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             const projects = JSON.parse(localStorage.getItem('projects') || '[]');
             projects.push(cardData);
@@ -844,39 +790,59 @@ async function addCard() {
             alert('✅ Project added successfully!');
         }
         
-        // Clear form and reload projects
+        // Clear form
         clearForm();
         
-        // Force reload with delay to ensure Firebase has saved
+        // Close admin panel
+        const panel = document.getElementById('adminPanel');
+        if (panel) {
+            panel.style.display = 'none';
+            panel.classList.remove('active');
+        }
+        
+        // Force reload with delay to ensure data is saved
         setTimeout(() => {
-            console.log('🔄 Forcing reload after save...');
+            console.log('🔄 Reloading projects...');
             loadProjects();
-            showSection('#projects');
+            
+            // Navigate to projects section
+            setTimeout(() => {
+                showSection('#projects');
+            }, 500);
         }, 1000);
         
     } catch (error) {
         console.error('❌ Error adding project:', error);
-        alert('❌ Error adding project: ' + error.message);
+        alert('❌ Error adding project: ' + (error.message || 'Unknown error'));
     }
 }
 
 function clearForm() {
-    document.getElementById('cardTitle').value = '';
-    document.getElementById('cardDesc').value = '';
-    document.getElementById('cardUrl').value = '';
-    document.getElementById('cardStatus').value = 'idea';
-    document.getElementById('cardPriority').value = 'medium';
-    document.getElementById('cardProgress').value = '0';
-    document.getElementById('progressValue').textContent = '0%';
+    const title = document.getElementById('cardTitle');
+    const desc = document.getElementById('cardDesc');
+    const url = document.getElementById('cardUrl');
+    const status = document.getElementById('cardStatus');
+    const priority = document.getElementById('cardPriority');
+    const progress = document.getElementById('cardProgress');
+    const progressValue = document.getElementById('progressValue');
+    
+    if (title) title.value = '';
+    if (desc) desc.value = '';
+    if (url) url.value = '';
+    if (status) status.value = 'idea';
+    if (priority) priority.value = 'medium';
+    if (progress) progress.value = '0';
+    if (progressValue) progressValue.textContent = '0%';
+    
+    // Clear tags
     clearTags();
     
     // Clear image
-    if (imageUploader) {
+    if (imageUploader && imageUploader.removeImage) {
         imageUploader.removeImage();
     }
 }
 
-// ===== PROJECT LOADING AND DISPLAY =====
 // ===== PROJECT LOADING AND DISPLAY =====
 async function loadProjects() {
     console.log('🔄 loadProjects() called');
@@ -910,7 +876,7 @@ async function loadProjects() {
                 projects = stored ? JSON.parse(stored) : [];
             }
         } else {
-            // No Firebase, use localStorage
+           // No Firebase, use localStorage
             console.log('💾 Loading from localStorage...');
             const stored = localStorage.getItem('projects');
             projects = stored ? JSON.parse(stored) : [];
@@ -937,6 +903,13 @@ async function loadProjects() {
         }
         
         console.log(`🎯 Rendering ${projects.length} projects`);
+        
+        // Sort projects by creation date (newest first)
+        projects.sort((a, b) => {
+            const dateA = new Date(a.createdAt || a.id || 0);
+            const dateB = new Date(b.createdAt || b.id || 0);
+            return dateB - dateA;
+        });
         
         // Render each project
         projects.forEach((project, index) => {
@@ -976,28 +949,46 @@ async function loadProjects() {
 // ===== CREATE PROJECT CARD FUNCTION =====
 function createProjectCard(project, index) {
     const card = document.createElement('div');
-    card.className = 'project-card';
+    card.className = 'dynamic-project-card';
     card.style.cssText = 'background: white; border-radius: 8px; padding: 20px; margin: 15px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-left: 4px solid #007bff;';
     
     const hasUrl = project.url && project.url.trim() !== '';
     const hasImage = project.imageUrl && project.imageUrl.trim() !== '';
     const progress = project.progress || 0;
+    const status = project.status || 'idea';
+    const priority = project.priority || 'medium';
     
     // Generate tags
     const tagsHtml = (project.tags || []).map(tag => 
         '<span style="background:#e9ecef;color:#495057;padding:2px 6px;border-radius:3px;font-size:11px;margin-right:5px;display:inline-block;">' + tag + '</span>'
     ).join('');
     
+    // Status and priority colors
+    const statusColors = {
+        'idea': '#6c757d',
+        'planning': '#17a2b8', 
+        'development': '#ffc107',
+        'testing': '#fd7e14',
+        'completed': '#28a745'
+    };
+    
+    const priorityColors = {
+        'low': '#28a745',
+        'medium': '#ffc107',
+        'high': '#fd7e14',
+        'critical': '#dc3545'
+    };
+    
     card.innerHTML = 
         '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">' +
             '<h3 style="margin: 0; color: #333; flex: 1;">' + (project.title || 'Untitled Project') + '</h3>' +
             '<div style="display: flex; gap: 5px;">' +
-                '<span style="background: #007bff; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">' + (project.status || 'idea') + '</span>' +
-                '<span style="background: #28a745; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">' + (project.priority || 'medium') + '</span>' +
+                '<span style="background: ' + (statusColors[status] || '#6c757d') + '; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; text-transform: capitalize;">' + status + '</span>' +
+                '<span style="background: ' + (priorityColors[priority] || '#6c757d') + '; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; text-transform: capitalize;">' + priority + '</span>' +
             '</div>' +
         '</div>' +
         
-        (hasImage ? '<div style="margin-bottom: 10px;"><img src="' + project.imageUrl + '" alt="' + project.title + '" style="width:100%;height:150px;object-fit:cover;border-radius:4px;"></div>' : '') +
+        (hasImage ? '<div style="margin-bottom: 10px;"></div>' : '') +
         
         '<p style="margin: 0 0 15px 0; color: #666; line-height: 1.4;">' + (project.description || 'No description provided.') + '</p>' +
         
@@ -1021,9 +1012,25 @@ function createProjectCard(project, index) {
             '<div style="display: flex; gap: 5px;">' +
                 (hasUrl ? '<a href="' + project.url + '" target="_blank" style="background: #28a745; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 12px;"><i class="fas fa-external-link-alt"></i> Visit Project</a>' : '') +
             '</div>' +
+            '<span>Created: ' + formatDate(project.createdAt) + '</span>' +
         '</div>';
     
     return card;
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'Unknown date';
+    
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+        });
+    } catch (error) {
+        return 'Invalid date';
+    }
 }
 
 // ===== AUTO-LOAD PROJECTS WHEN PROJECTS SECTION IS VIEWED =====
@@ -1071,7 +1078,89 @@ async function debugProjects() {
 function testAddCard() {
     console.log('🧪 Testing addCard function...');
     console.log('Current tags:', currentTags);
-    console.log('Progress value:', document.getElementById('cardProgress').value);
+    console.log('Progress value:', document.getElementById('cardProgress')?.value);
 }
+
+function testAdminPanel() {
+    console.log('🔧 Testing admin panel...');
+    
+    // Test if panel exists
+    const panel = document.getElementById('adminPanel');
+    console.log('Admin panel found:', !!panel);
+    
+    if (panel) {
+        console.log('Panel display style:', panel.style.display);
+        console.log('Panel HTML:', panel.innerHTML);
+    }
+    
+    // Test if button exists
+    const button = document.querySelector('.admin-toggle-btn');
+    console.log('Button found:', !!button);
+    
+    // Show the panel
+    toggleAdminPanel();
+}
+
+// ===== UTILITY FUNCTIONS =====
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        border-radius: 4px;
+        color: white;
+        font-weight: 500;
+        z-index: 10000;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: slideIn 0.3s ease;
+    `;
+    
+    if (type === 'success') {
+        notification.style.background = '#28a745';
+    } else if (type === 'error') {
+        notification.style.background = '#dc3545';
+    } else {
+        notification.style.background = '#17a2b8';
+    }
+    
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+}
+
+// Add CSS for notifications
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+
+// ===== EXPORT FUNCTIONS FOR GLOBAL ACCESS =====
+window.toggleAdminPanel = toggleAdminPanel;
+window.addCard = addCard;
+window.removeTag = removeTag;
+window.loadProjects = loadProjects;
+window.debugProjects = debugProjects;
+window.testAddCard = testAddCard;
+window.testAdminPanel = testAdminPanel;
+window.showSection = showSection;
 
 console.log("✅ Innovation Earth Projects script loaded successfully!");
