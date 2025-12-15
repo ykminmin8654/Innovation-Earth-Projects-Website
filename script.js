@@ -126,6 +126,13 @@ function getDefaultStats() {
 }
 
 function updateStatsDisplay(stats) {
+    // Set initial values (no animation)
+    setStatValue('stat-projects-completed', stats.projectsCompleted);
+    setStatValue('stat-active-members', stats.activeMembers);
+    setStatValue('stat-new-organization', stats.newOrganization);
+    setStatValue('stat-opportunities-ahead', stats.opportunitiesAhead);
+    
+    // Animate when they come into view
     animateStatCounter('stat-projects-completed', stats.projectsCompleted);
     animateStatCounter('stat-active-members', stats.activeMembers);
     animateStatCounter('stat-new-organization', stats.newOrganization);
@@ -133,6 +140,15 @@ function updateStatsDisplay(stats) {
     const opportunitiesElement = document.getElementById('stat-opportunities-ahead');
     if (opportunitiesElement) {
         opportunitiesElement.textContent = stats.opportunitiesAhead;
+    }
+}
+
+function setStatValue(statId, value) {
+    const element = document.getElementById(statId);
+    if (element) {
+        element.textContent = value;
+        // Set data-count for animation
+        element.setAttribute('data-count', value);
     }
 }
 
