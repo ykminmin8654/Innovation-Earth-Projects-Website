@@ -123,7 +123,7 @@
 
                     <article class="quick-link-card" onclick="showSection('#contact')" style="cursor: pointer;">
                         <i class="fas fa-lightbulb" aria-hidden="true"></i>
-                        <h3>Message us here</h3>
+                        <h3>Message Us</h3>
                         <p>Send feedback and ideas for new projects</p>
                         <a href="#contact" class="btn btn-secondary" onclick="event.stopPropagation(); showSection('#contact')">Contact Us</a>
                     </article>
@@ -131,58 +131,38 @@
             </div>
 
             <!-- Featured Initiatives Section -->
-            <section class="initiatives-section">
-                <div class="container">
-                    <div class="section-header">
-                        <h2>Our First Initiatives</h2>
-                        <p>Help us launch these exciting new programs and projects</p>
-                    </div>
-                    
-                    <div class="initiatives-grid">
-                        <article class="initiative-card animate-on-scroll" data-animation="fade-up">
-                            <div class="initiative-icon">
-                                <i class="fas fa-seedling"></i>
-                            </div>
-                            <h3>Sustainability Projects</h3>
-                            <p>Environmental initiatives focused on creating sustainable solutions for our community</p>
-                            <div class="initiative-progress">
-                                <div class="progress-bar">
-                                    <div class="progress-fill" style="width: 20%"></div>
-                                </div>
-                                <span>Planning stage - join to help launch</span>
-                            </div>
-                        </article>
-                        
-                        <article class="initiative-card animate-on-scroll" data-animation="fade-up" data-delay="200">
-                            <div class="initiative-icon">
-                                <i class="fas fa-robot"></i>
-                            </div>
-                            <h3>Tech Innovation Hub</h3>
-                            <p>Cutting-edge technology projects exploring AI, robotics, and digital transformation</p>
-                            <div class="initiative-progress">
-                                <div class="progress-bar">
-                                    <div class="progress-fill" style="width: 15%"></div>
-                                </div>
-                                <span>Forming our first teams now</span>
-                            </div>
-                        </article>
-                        
-                        <article class="initiative-card animate-on-scroll" data-animation="fade-up" data-delay="400">
-                            <div class="initiative-icon">
-                                <i class="fas fa-graduation-cap"></i>
-                            </div>
-                            <h3>Learning Programs</h3>
-                            <p>Skill-building workshops and collaborative learning sessions for our members</p>
-                            <div class="initiative-progress">
-                                <div class="progress-bar">
-                                    <div class="progress-fill" style="width: 10%"></div>
-                                </div>
-                                <span>Planning our first workshops</span>
-                            </div>
-                        </article>
-                    </div>
-                </div>
-            </section>
+ <!-- Initiatives Section -->
+<section class="initiatives-section">
+    <div class="container">
+        <div class="section-header">
+            <h2>Our First Initiatives</h2>
+            <p>Help us launch these exciting new programs and projects</p>
+        </div>
+        
+        <div class="initiatives-grid" id="initiatives-container">
+            <!-- Initiatives will be dynamically loaded here -->
+            <div id="initiatives-loading" class="loading-state">
+                <div class="spinner"></div>
+                <p>Loading initiatives...</p>
+            </div>
+            
+            <div id="initiatives-empty" class="empty-state" style="display: none;">
+                <i class="fas fa-inbox"></i>
+                <h3>No Initiatives Yet</h3>
+                <p>Add your first initiative in Firebase Console</p>
+            </div>
+            
+            <div id="initiatives-error" class="error-state" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Error Loading Initiatives</h3>
+                <p>Could not load initiatives. Please try again later.</p>
+                <button onclick="loadInitiatives()" class="btn btn-secondary">
+                    <i class="fas fa-redo"></i> Retry
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
 
 <!-- Impact Stats Section -->
 <section class="stats-section">

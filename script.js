@@ -20,14 +20,16 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeQuickLinkCards();
     initializeRoleTabs();
     
-    // Initialize Firebase FIRST, then initialize journey stats
+    // Initialize Firebase FIRST, then initialize other Firebase-dependent features
     initializeFirebase().then(() => {
-        // Firebase is now ready, so initialize journey stats
+        // Firebase is now ready, so initialize Firebase-dependent features
         initializeJourneyStats();
+        initializeInitiatives(); // Initialize initiatives
     }).catch(error => {
         console.error('❌ Firebase initialization failed:', error);
-        // Still try to initialize journey stats with fallback
+        // Still try to initialize with fallback
         initializeJourneyStats();
+        initializeInitiatives();
     });
     
     // Load projects if on projects section
@@ -39,7 +41,6 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ All functionality loaded successfully!');
 });
 
-// ===== FIREBASE INITIALIZATION =====
 // ===== FIREBASE INITIALIZATION =====
 async function initializeFirebase() {
     console.log('🔥 Initializing Firebase...');
@@ -72,13 +73,13 @@ async function initializeFirebase() {
         // Test connection
         await testFirebaseConnection();
         
-        return true; // ← ADD THIS LINE
+        return true;
         
     } catch (error) {
         console.error('❌ Firebase initialization failed:', error);
         console.warn('⚠️ Falling back to local storage mode');
         showNotification('Firebase connection failed. Using local storage.', 'warning');
-        throw error; // ← ADD THIS LINE to propagate the error
+        throw error;
     }
 }
 
@@ -88,22 +89,6 @@ async function testFirebaseConnection() {
         console.log('✅ Firebase connection test successful');
     } catch (error) {
         console.warn('⚠️ Firebase test failed:', error);
-    }
-}
-
-// ===== FALLBACK FOR WHEN FIREBASE ISN'T READY =====
-function initializeJourneyStatsWithFallback() {
-    console.log('📊 Initializing journey stats with fallback...');
-    
-    // Try Firebase first
-    if (db) {
-        loadJourneyStats();
-    } else {
-        // Fallback to default values after a delay
-        setTimeout(() => {
-            console.log('🔄 Firebase not ready, using default stats after delay');
-            updateStatsDisplay(getDefaultStats());
-        }, 2000);
     }
 }
 
@@ -172,38 +157,6 @@ function updateStatsDisplay(stats) {
     initializeStatsAnimation();
 }
 
-// ===== STATS ANIMATION =====
-function initializeStatsAnimation() {
-    const statObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const statNumber = entry.target.querySelector('.stat-number');
-                if (statNumber) {
-                    const target = statNumber.getAttribute('data-count');
-                    const statId = statNumber.id;
-                    
-                    // Handle infinity symbol
-                    if (target === "∞") {
-                        statNumber.textContent = "∞";
-                        return;
-                    }
-                    
-                    // Convert to number
-                    const targetValue = Number(target);
-                    if (!isNaN(targetValue)) {
-                        animateCounter(statNumber, targetValue);
-                    }
-                }
-            }
-        });
-    }, { threshold: 0.5 });
-    
-    // Observe all stat items
-    document.querySelectorAll('.stat-item').forEach(item => {
-        statObserver.observe(item);
-    });
-}
-
 function setStatValue(statId, value) {
     const element = document.getElementById(statId);
     if (element) {
@@ -211,27 +164,6 @@ function setStatValue(statId, value) {
         // Set data-count for animation
         element.setAttribute('data-count', value);
     }
-}
-
-function animateStatCounter(statId, targetValue) {
-    const element = document.getElementById(statId);
-    if (!element) {
-        console.warn(`Element not found: ${statId}`);
-        return;
-    }
-    
-    // Convert to number safely
-    const targetNumber = Number(targetValue);
-    if (isNaN(targetNumber)) {
-        console.warn(`Invalid number for ${statId}:`, targetValue);
-        element.textContent = targetValue; // Show original value
-        return;
-    }
-    
-    const current = parseInt(element.textContent) || 0;
-    if (current === targetNumber) return;
-    
-    animateCounter(element, targetNumber);
 }
 
 function initializeJourneyStats() {
@@ -255,6 +187,186 @@ function initializeJourneyStats() {
             }
         }, 1000);
     }
+}
+
+// ===== INITIATIVES MANAGEMENT =====
+async function loadInitiatives() {
+    console.log('🚀 Loading initiatives from Firebase...');
+    
+    const container = document.getElementById('initiatives-container');
+    const loadingState = document.getElementById('initiatives-loading');
+    const emptyState = document.getElementById('initiatives-empty');
+    const errorState = document.getElementById('initiatives-error');
+    
+    if (!container) {
+        console.error('❌ Initiatives container not found');
+        return;
+    }
+    
+    // Show loading state
+    if (loadingState) loadingState.style.display = 'block';
+    if (emptyState) emptyState.style.display = 'none';
+    if (errorState) errorState.style.display = 'none';
+    
+    try {
+        let initiatives = [];
+        
+        // Try to load from Firebase first
+        if (db) {
+            try {
+                console.log('📡 Loading from Firebase...');
+                const querySnapshot = await db.collection("initiatives").get();
+                initiatives = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                console.log(`✅ Loaded ${initiatives.length} initiatives from Firebase`);
+            } catch (firebaseError) {
+                console.error('❌ Firebase error:', firebaseError);
+                throw new Error('Firebase connection failed');
+            }
+        } else {
+            // Fallback to local storage
+            console.log('💾 Loading from localStorage...');
+            const stored = localStorage.getItem('initiatives');
+            initiatives = stored ? JSON.parse(stored) : [];
+            console.log(`✅ Loaded ${initiatives.length} initiatives from localStorage`);
+        }
+        
+        // Hide loading state
+        if (loadingState) loadingState.style.display = 'none';
+        
+        // Check if we have initiatives
+        if (!initiatives || initiatives.length === 0) {
+            if (emptyState) emptyState.style.display = 'block';
+            container.innerHTML = '';
+            container.appendChild(emptyState);
+            return;
+        }
+        
+        // Clear container but preserve states
+        container.innerHTML = '';
+        
+        // Sort initiatives by progress (highest first)
+        initiatives.sort((a, b) => (b.progress || 0) - (a.progress || 0));
+        
+        // Render initiatives
+        initiatives.forEach((initiative, index) => {
+            const initiativeCard = createInitiativeCard(initiative, index);
+            if (initiativeCard) {
+                container.appendChild(initiativeCard);
+            }
+        });
+        
+        // Initialize scroll animations for new cards
+        initializeScrollAnimations();
+        
+        console.log(`✅ Successfully rendered ${initiatives.length} initiatives`);
+        
+    } catch (error) {
+        console.error('❌ Error loading initiatives:', error);
+        
+        // Hide loading state
+        if (loadingState) loadingState.style.display = 'none';
+        
+        // Show error state
+        if (errorState) {
+            errorState.style.display = 'block';
+            const errorParagraph = errorState.querySelector('p');
+            if (errorParagraph) {
+                errorParagraph.textContent = `Error: ${error.message}`;
+            }
+        }
+        
+        showNotification('Failed to load initiatives. Please try again.', 'error');
+    }
+}
+
+function createInitiativeCard(initiative, index) {
+    const card = document.createElement('article');
+    card.className = 'initiative-card animate-on-scroll';
+    card.dataset.id = initiative.id;
+    card.dataset.animation = 'fade-up';
+    card.dataset.delay = index * 200;
+    
+    // Get icon class
+    const iconClass = getInitiativeIcon(initiative.icon || 'rocket');
+    
+    // Create progress bar
+    const progress = initiative.progress || 0;
+    const progressBar = progress > 0 ? `
+        <div class="initiative-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: ${progress}%"></div>
+            </div>
+            <span>${initiative.status || `${progress}% Complete`}</span>
+        </div>
+    ` : '';
+    
+    card.innerHTML = `
+        <div class="initiative-icon">
+            <i class="fas fa-${iconClass}"></i>
+        </div>
+        <h3>${initiative.title || 'Untitled Initiative'}</h3>
+        <p>${initiative.description || 'No description available.'}</p>
+        ${progressBar}
+        <div class="initiative-meta">
+            <span><i class="fas fa-sync-alt"></i> Updated ${formatRelativeTime(initiative.lastUpdated)}</span>
+        </div>
+    `;
+    
+    return card;
+}
+
+function getInitiativeIcon(iconName) {
+    const iconMap = {
+        'seedling': 'seedling',
+        'robot': 'robot',
+        'graduation-cap': 'graduation-cap',
+        'rocket': 'rocket',
+        'lightbulb': 'lightbulb',
+        'users': 'users',
+        'code': 'code',
+        'flask': 'flask',
+        'chart-line': 'chart-line',
+        'handshake': 'handshake'
+    };
+    return iconMap[iconName] || 'rocket';
+}
+
+function formatRelativeTime(timestamp) {
+    if (!timestamp) return 'recently';
+    
+    let date;
+    try {
+        // Handle both Firestore timestamp and ISO string
+        if (timestamp.seconds) {
+            date = new Date(timestamp.seconds * 1000);
+        } else {
+            date = new Date(timestamp);
+        }
+    } catch (error) {
+        console.warn('Invalid timestamp:', timestamp);
+        return 'recently';
+    }
+    
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    return date.toLocaleDateString();
+}
+
+function initializeInitiatives() {
+    console.log('📚 Initializing initiatives...');
+    loadInitiatives();
 }
 
 // ===== SECTION MANAGEMENT =====
@@ -453,9 +565,58 @@ function initializeScrollAnimations() {
     document.querySelectorAll('.animate-on-scroll').forEach(el => {
         observer.observe(el);
     });
+}
+
+// ===== STATS ANIMATION =====
+function initializeStatsAnimation() {
+    const statObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const statNumber = entry.target.querySelector('.stat-number');
+                if (statNumber) {
+                    const target = statNumber.getAttribute('data-count');
+                    
+                    // Handle infinity symbol
+                    if (target === "∞") {
+                        statNumber.textContent = "∞";
+                        return;
+                    }
+                    
+                    // Convert to number
+                    const targetValue = Number(target);
+                    if (!isNaN(targetValue)) {
+                        animateCounter(statNumber, targetValue);
+                    }
+                }
+            }
+        });
+    }, { threshold: 0.5 });
     
-    // IMPORTANT: REMOVE the statObserver from here
-    // The stats animation is handled separately in initializeStatsAnimation()
+    // Observe all stat items
+    document.querySelectorAll('.stat-item').forEach(item => {
+        statObserver.observe(item);
+    });
+}
+
+function animateCounter(element, target) {
+    let current = 0;
+    const increment = target / 100;
+    const duration = 2000;
+    const stepTime = duration / 100;
+    
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+            if (element) {
+                element.textContent = target;
+            }
+            clearInterval(timer);
+        } else {
+            if (element) {
+                element.textContent = Math.floor(current);
+            }
+        }
+    }, stepTime);
 }
 
 // ===== COMPETITION TABS =====
@@ -886,25 +1047,6 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
-// Add animation styles
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideInRight {
-        from { transform: translateX(100%); opacity: 0; }
-        to { transform: translateX(0); opacity: 1; }
-    }
-    
-    @keyframes slideOutRight {
-        from { transform: translateX(0); opacity: 1; }
-        to { transform: translateX(100%); opacity: 0; }
-    }
-    
-    .notification {
-        font-family: var(--font-family);
-    }
-`;
-document.head.appendChild(style);
-
 // ===== DEBUG FUNCTIONS =====
 function debugFirebaseConnection() {
     console.log('🔍 Debugging Firebase connection...');
@@ -935,8 +1077,7 @@ function debugLocalStorage() {
 // ===== EXPORT FUNCTIONS =====
 window.showSection = showSection;
 window.loadProjects = loadProjects;
-window.loadDemoProjects = loadDemoProjects;
-window.clearAllProjects = clearAllProjects;
+window.loadInitiatives = loadInitiatives;
 window.debugFirebaseConnection = debugFirebaseConnection;
 window.debugLocalStorage = debugLocalStorage;
 
