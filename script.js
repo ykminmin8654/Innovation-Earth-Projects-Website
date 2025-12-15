@@ -190,6 +190,7 @@ function initializeJourneyStats() {
 }
 
 // ===== INITIATIVES MANAGEMENT =====
+// ===== INITIATIVES MANAGEMENT =====
 async function loadInitiatives() {
     console.log('🚀 Loading initiatives from Firebase...');
     
@@ -214,7 +215,7 @@ async function loadInitiatives() {
         // Try to load from Firebase first
         if (db) {
             try {
-                console.log('📡 Loading from Firebase...');
+                console.log('📡 Loading from Firebase initiatives collection...');
                 const querySnapshot = await db.collection("initiatives").get();
                 initiatives = querySnapshot.docs.map(doc => ({
                     id: doc.id,
@@ -244,7 +245,7 @@ async function loadInitiatives() {
             return;
         }
         
-        // Clear container but preserve states
+        // Clear container
         container.innerHTML = '';
         
         // Sort initiatives by progress (highest first)
