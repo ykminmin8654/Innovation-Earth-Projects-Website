@@ -1,32 +1,10 @@
-// ===== COMPLETE JAVASCRIPT FILE FOR INNOVATION EARTH PROJECTS =====
-// Fixed version with proper form handling and admin panel functionality
-
-// Firebase configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyCgV39r2JAR68jXqt2tSLMoW_2vKtJEFV0",
-    authDomain: "innovation-earth-projects.firebaseapp.com",
-    projectId: "innovation-earth-projects",
-    storageBucket: "innovation-earth-projects.firebasestorage.app",
-    messagingSenderId: "1061525102040",
-    appId: "1:1061525102040:web:737c648bc2a548e90ce6ad",
-    measurementId: "G-GBZCTX7LBL"
-};
-
+// ===== FIREBASE CONFIGURATION =====
 // Initialize Firebase
-let db;
-try {
-    if (typeof firebase !== 'undefined') {
-        firebase.initializeApp(firebaseConfig);
-        db = firebase.firestore();
-        console.log('✅ Firebase initialized successfully');
-    }
-} catch (error) {
-    console.warn('⚠️ Firebase initialization failed:', error);
-}
+let db = null;
+let firebaseApp = null;
 
 // ===== GLOBAL VARIABLES =====
 let currentTags = [];
-let imageUploader = null;
 
 // ===== MAIN INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', function() {
@@ -37,25 +15,70 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeMobileMenu();
     initializeBannerSlider();
     initializeScrollAnimations();
-    initializeCategoryTabs();
     initializeCompetitionTabs();
     initializeContactForm();
-    initializeSmoothScrolling();
     initializeQuickLinkCards();
+    initializeRoleTabs();
     
-    // Initialize admin panel and form components
-    initializeAdminPanel();
-    initializeTagSystem();
-    initializeProgressBar();
-    initializeImageUpload();
+    // Initialize Firebase
+    initializeFirebase();
     
     // Load projects if on projects section
-    if (window.location.hash === '#projects') {
-        setTimeout(() => loadProjects(), 100);
+    if (window.location.hash === '#projects' || document.getElementById('projects').classList.contains('active')) {
+        console.log('📁 Loading projects for projects section...');
+        setTimeout(() => loadProjects(), 300);
     }
     
     console.log('✅ All functionality loaded successfully!');
 });
+
+// ===== FIREBASE INITIALIZATION =====
+async function initializeFirebase() {
+    console.log('🔥 Initializing Firebase...');
+    
+    try {
+        // Your Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCgV39r2JAR68jXqt2tSLMoW_2vKtJEFV0",
+            authDomain: "innovation-earth-projects.firebaseapp.com",
+            projectId: "innovation-earth-projects",
+            storageBucket: "innovation-earth-projects.firebasestorage.app",
+            messagingSenderId: "1061525102040",
+            appId: "1:1061525102040:web:737c648bc2a548e90ce6ad",
+            measurementId: "G-GBZCTX7LBL"
+        };
+        
+        // Initialize Firebase
+        if (firebase.apps.length === 0) {
+            firebaseApp = firebase.initializeApp(firebaseConfig);
+        } else {
+            firebaseApp = firebase.app();
+        }
+        
+        // Initialize Firestore
+        db = firebase.firestore();
+        
+        console.log('✅ Firebase initialized successfully');
+        console.log('📡 Firestore database connected');
+        
+        // Test connection
+        await testFirebaseConnection();
+        
+    } catch (error) {
+        console.error('❌ Firebase initialization failed:', error);
+        console.warn('⚠️ Falling back to local storage mode');
+        showNotification('Firebase connection failed. Using local storage.', 'warning');
+    }
+}
+
+async function testFirebaseConnection() {
+    try {
+        const testDoc = await db.collection('test').doc('connection').get();
+        console.log('✅ Firebase connection test successful');
+    } catch (error) {
+        console.warn('⚠️ Firebase test failed:', error);
+    }
+}
 
 // ===== SECTION MANAGEMENT =====
 function initializeSectionManagement() {
@@ -80,7 +103,7 @@ function initializeSectionManagement() {
             const targetId = this.getAttribute('href');
             showSection(targetId);
             
-            // Save to localStorage so it persists on refresh
+            // Save to localStorage
             localStorage.setItem('lastActiveSection', targetId);
         });
     });
@@ -94,22 +117,16 @@ function initializeSectionManagement() {
         }
     });
     
-    // On page load, check what section to show (priority order)
+    // Check for saved section
     const savedSection = localStorage.getItem('lastActiveSection');
     const urlHash = window.location.hash;
     
     if (urlHash && document.querySelector(urlHash)) {
-        // Priority 1: URL hash
         showSection(urlHash);
-        console.log('✅ Showing section from URL hash:', urlHash);
     } else if (savedSection && document.querySelector(savedSection)) {
-        // Priority 2: Saved section from localStorage
         showSection(savedSection);
-        console.log('✅ Showing saved section:', savedSection);
     } else {
-        // Priority 3: Default to home
         showSection('#home');
-        console.log('✅ Defaulting to home section');
     }
 }
 
@@ -131,7 +148,7 @@ function showSection(sectionId) {
         // Update navigation
         updateNavHighlight(sectionId);
         
-        // Update URL hash (without triggering hashchange event)
+        // Update URL
         const newUrl = window.location.pathname + sectionId;
         window.history.replaceState(null, null, newUrl);
         
@@ -140,13 +157,13 @@ function showSection(sectionId) {
         
         // Load section-specific content
         if (sectionId === '#projects') {
+            console.log('📁 Loading projects for section:', sectionId);
             loadProjects();
         }
         
         console.log('✅ Section activated:', sectionId);
     } else {
         console.warn('❌ Section not found:', sectionId);
-        // Fallback to home
         showSection('#home');
     }
 }
@@ -177,6 +194,15 @@ function initializeMobileMenu() {
             this.innerHTML = isExpanded ? 
                 '<i class="fas fa-times"></i>' : 
                 '<i class="fas fa-bars"></i>';
+        });
+        
+        // Close mobile menu when clicking on a link
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                navList.classList.remove('show');
+                mobileMenuToggle.setAttribute('aria-expanded', 'false');
+                mobileMenuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+            });
         });
     }
 }
@@ -225,7 +251,7 @@ function initializeBannerSlider() {
         });
     }
     
-    // Auto-slide
+    // Auto-slide every 5 seconds
     setInterval(() => {
         currentSlide = (currentSlide + 1) % totalSlides;
         showSlide(currentSlide);
@@ -234,47 +260,53 @@ function initializeBannerSlider() {
 
 // ===== SCROLL ANIMATIONS =====
 function initializeScrollAnimations() {
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
                 entry.target.classList.add('animated');
             }
         });
-    }, { threshold: 0.1 });
+    }, observerOptions);
     
     document.querySelectorAll('.animate-on-scroll').forEach(el => {
         observer.observe(el);
     });
+    
+    // Animate stats numbers
+    const statObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const statNumber = entry.target.querySelector('.stat-number');
+                if (statNumber) {
+                    const target = parseInt(statNumber.getAttribute('data-count'));
+                    animateCounter(statNumber, target);
+                }
+            }
+        });
+    }, { threshold: 0.5 });
+    
+    document.querySelectorAll('.stat-item').forEach(item => {
+        statObserver.observe(item);
+    });
 }
 
-// ===== CATEGORY TABS =====
-function initializeCategoryTabs() {
-    const projectTabs = document.querySelectorAll('#projects .category-tab');
-    
-    if (projectTabs.length > 0) {
-        projectTabs.forEach(tab => {
-            tab.addEventListener('click', function() {
-                const category = this.getAttribute('data-category');
-                
-                // Update active tab
-                projectTabs.forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-                
-                // Show/hide categories
-                const projectCategories = document.querySelectorAll('#projects .project-category');
-                projectCategories.forEach(cat => {
-                    cat.classList.remove('active');
-                    cat.style.display = 'none';
-                });
-                
-                const targetCategory = document.getElementById(category);
-                if (targetCategory) {
-                    targetCategory.classList.add('active');
-                    targetCategory.style.display = 'block';
-                }
-            });
-        });
-    }
+function animateCounter(element, target) {
+    let current = 0;
+    const increment = target / 100;
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+            element.textContent = target;
+            clearInterval(timer);
+        } else {
+            element.textContent = Math.floor(current);
+        }
+    }, 20);
 }
 
 // ===== COMPETITION TABS =====
@@ -286,17 +318,18 @@ function initializeCompetitionTabs() {
             tab.addEventListener('click', function() {
                 const category = this.getAttribute('data-category');
                 
-                // Update tabs
+                // Update active tab
                 competitionTabs.forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
                 
-                // Update categories
+                // Hide all categories
                 const competitionCategories = document.querySelectorAll('#competitions .competition-category');
                 competitionCategories.forEach(cat => {
                     cat.classList.remove('active');
                     cat.style.display = 'none';
                 });
                 
+                // Show selected category
                 const targetCategory = document.getElementById(category);
                 if (targetCategory) {
                     targetCategory.classList.add('active');
@@ -307,22 +340,40 @@ function initializeCompetitionTabs() {
     }
 }
 
-// ===== SMOOTH SCROLLING =====
-function initializeSmoothScrolling() {
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({ behavior: 'smooth' });
-            }
+// ===== ROLE TABS (Join Us Section) =====
+function initializeRoleTabs() {
+    const roleTabs = document.querySelectorAll('#join .category-tab');
+    
+    if (roleTabs.length > 0) {
+        roleTabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const category = this.getAttribute('data-category');
+                
+                // Update active tab
+                roleTabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Hide all role categories
+                const roleCategories = document.querySelectorAll('#join .role-category');
+                roleCategories.forEach(cat => {
+                    cat.classList.remove('active');
+                    cat.style.display = 'none';
+                });
+                
+                // Show selected category
+                const targetCategory = document.getElementById(category);
+                if (targetCategory) {
+                    targetCategory.classList.add('active');
+                    targetCategory.style.display = 'block';
+                }
+            });
         });
-    });
+    }
 }
 
 // ===== CONTACT FORM =====
 function initializeContactForm() {
-    const contactForm = document.querySelector('.contact-form');
+    const contactForm = document.querySelector('#contactForm');
     if (contactForm) {
         contactForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -331,6 +382,14 @@ function initializeContactForm() {
             const formData = new FormData(this);
             const name = formData.get('name');
             const email = formData.get('email');
+            const subject = formData.get('subject');
+            const message = formData.get('message');
+            
+            // Validate form
+            if (!name || !email || !subject || !message) {
+                showNotification('Please fill in all required fields.', 'error');
+                return;
+            }
             
             // Simulate submission
             const submitBtn = this.querySelector('button[type="submit"]');
@@ -339,13 +398,33 @@ function initializeContactForm() {
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
             submitBtn.disabled = true;
             
+            // Simulate API call
             setTimeout(() => {
-                alert(`Thank you, ${name}! Your message has been sent. We'll contact you at ${email}.`);
+                showNotification(`Thank you, ${name}! Your message has been sent. We'll contact you at ${email}.`, 'success');
+                
+                // Reset form
                 contactForm.reset();
+                
+                // Reset button
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
+                
+                // Save to local storage for demo
+                saveContactSubmission({ name, email, subject, message, timestamp: new Date().toISOString() });
+                
             }, 2000);
         });
+    }
+}
+
+function saveContactSubmission(data) {
+    try {
+        const submissions = JSON.parse(localStorage.getItem('contactSubmissions') || '[]');
+        submissions.push(data);
+        localStorage.setItem('contactSubmissions', JSON.stringify(submissions));
+        console.log('💾 Contact submission saved:', data);
+    } catch (error) {
+        console.error('❌ Error saving contact submission:', error);
     }
 }
 
@@ -366,771 +445,296 @@ function initializeQuickLinkCards() {
             }
         });
     });
-
-    // Add specific click handlers for the buttons to prevent event bubbling
-    document.querySelectorAll('.quick-link-card .btn').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.stopPropagation(); // Prevent the card click event
-            const targetSection = this.getAttribute('href');
-            if (targetSection) {
-                showSection(targetSection);
-            }
-        });
-    });
 }
 
-// ===== ADMIN PANEL =====
-function initializeAdminPanel() {
-    console.log('🔧 Setting up admin panel...');
-    
-    // Admin toggle button
-    const adminBtn = document.querySelector('.admin-toggle-btn');
-    if (adminBtn) {
-        // Remove any existing event listeners
-        const newBtn = adminBtn.cloneNode(true);
-        adminBtn.parentNode.replaceChild(newBtn, adminBtn);
-        
-        // Add click event to the new button
-        const fixedAdminBtn = document.querySelector('.admin-toggle-btn');
-        fixedAdminBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            toggleAdminPanel();
-        });
-        console.log('✅ Admin toggle button initialized');
-    }
-    
-    // Add card button
-    const addCardBtn = document.querySelector('button[onclick="addCard()"]');
-    if (addCardBtn) {
-        addCardBtn.onclick = addCard;
-        console.log('✅ Add card button initialized');
-    }
-    
-    // Add close functionality
-    setupAdminPanelClose();
-}
-
-function toggleAdminPanel() {
-    console.log('🔄 Toggling admin panel...');
-    
-    const panel = document.getElementById('adminPanel');
-    if (!panel) {
-        console.error('❌ Admin panel element not found');
-        return;
-    }
-    
-    const isVisible = panel.style.display === 'block' || panel.classList.contains('active');
-    
-    if (!isVisible) {
-        // Show panel
-        panel.style.display = 'block';
-        panel.classList.add('active');
-        console.log('✅ Centered popup opened');
-        
-        // Add event listener to close when clicking outside
-        setTimeout(() => {
-            document.addEventListener('click', handleClickOutside);
-        }, 10);
-    } else {
-        // Hide panel
-        panel.style.display = 'none';
-        panel.classList.remove('active');
-        console.log('📪 Popup closed');
-        
-        // Remove event listener
-        document.removeEventListener('click', handleClickOutside);
-    }
-}
-
-function handleClickOutside(event) {
-    const panel = document.getElementById('adminPanel');
-    const adminBtn = document.querySelector('.admin-toggle-btn');
-    
-    if (panel && 
-        !panel.contains(event.target) && 
-        (!adminBtn || !adminBtn.contains(event.target))) {
-        panel.style.display = 'none';
-        panel.classList.remove('active');
-        document.removeEventListener('click', handleClickOutside);
-    }
-}
-
-function setupAdminPanelClose() {
-    // Close with ESC key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            const panel = document.getElementById('adminPanel');
-            if (panel && (panel.style.display === 'block' || panel.classList.contains('active'))) {
-                panel.style.display = 'none';
-                panel.classList.remove('active');
-            }
-        }
-    });
-}
-
-// ===== TAG MANAGEMENT SYSTEM =====
-function initializeTagSystem() {
-    console.log('🏷️ Initializing tag system...');
-    
-    const tagInput = document.getElementById('tagInput');
-    const addTagBtn = document.getElementById('addTagBtn');
-    
-    if (tagInput && addTagBtn) {
-        console.log('✅ Found tag system elements');
-        // Add tag on button click
-        addTagBtn.addEventListener('click', addTag);
-        
-        // Add tag on Enter key
-        tagInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                addTag();
-            }
-        });
-        
-        // Quick tag suggestions
-        const tagSuggestions = document.querySelectorAll('.tag-suggestion');
-        if (tagSuggestions.length > 0) {
-            tagSuggestions.forEach(suggestion => {
-                suggestion.addEventListener('click', function() {
-                    const tag = this.getAttribute('data-tag');
-                    if (tag) {
-                        tagInput.value = tag;
-                        addTag();
-                    }
-                });
-            });
-        }
-    } else {
-        console.warn('⚠️ Tag input elements not found, skipping tag system');
-    }
-    
-    // Clear tags when form is submitted
-    clearTags();
-}
-
-function addTag() {
-    const tagInput = document.getElementById('tagInput');
-    if (!tagInput) return;
-    
-    const tag = tagInput.value.trim().toLowerCase();
-    
-    if (tag && !currentTags.includes(tag)) {
-        currentTags.push(tag);
-        renderTags();
-        tagInput.value = '';
-        tagInput.focus();
-    }
-}
-
-function removeTag(tagToRemove) {
-    currentTags = currentTags.filter(tag => tag !== tagToRemove);
-    renderTags();
-}
-
-function renderTags() {
-    const tagsContainer = document.getElementById('tagsContainer');
-    if (!tagsContainer) return;
-    
-    tagsContainer.innerHTML = '';
-    
-    if (currentTags.length === 0) {
-        tagsContainer.innerHTML = '<div class="tags-empty">No tags added yet</div>';
-        return;
-    }
-    
-    currentTags.forEach(tag => {
-        const tagElement = document.createElement('div');
-        tagElement.className = 'tag-item';
-        tagElement.innerHTML = tag + 
-            '<button type="button" class="tag-remove" onclick="removeTag(\'' + tag + '\')">' +
-            '<i class="fas fa-times"></i></button>';
-        tagsContainer.appendChild(tagElement);
-    });
-}
-
-function clearTags() {
-    currentTags = [];
-    renderTags();
-}
-
-function getCurrentTags() {
-    return [...currentTags];
-}
-
-// ===== PROGRESS BAR MANAGEMENT =====
-function initializeProgressBar() {
-    console.log('📊 Initializing progress bar...');
-    
-    const progressSlider = document.getElementById('cardProgress');
-    const progressValue = document.getElementById('progressValue');
-    
-    if (progressSlider && progressValue) {
-        progressSlider.addEventListener('input', function() {
-            progressValue.textContent = this.value + '%';
-        });
-        
-        // Update progress when status changes
-        const statusSelect = document.getElementById('cardStatus');
-        if (statusSelect) {
-            statusSelect.addEventListener('change', function() {
-                const progress = calculateProgress(this.value);
-                progressSlider.value = progress;
-                progressValue.textContent = progress + '%';
-            });
-        }
-    }
-}
-
-function calculateProgress(status) {
-    const progressMap = {
-        'idea': 10,
-        'planning': 30,
-        'development': 60,
-        'testing': 80,
-        'completed': 100
-    };
-    return progressMap[status] || 0;
-}
-
-// ===== IMAGE UPLOAD FUNCTIONALITY =====
-function initializeImageUpload() {
-    console.log('🖼️ Initializing image upload...');
-    
-    const imageInput = document.getElementById('cardImage');
-    const imagePreview = document.getElementById('imagePreview');
-    const removeImageBtn = document.getElementById('removeImage');
-    
-    if (!imageInput || !imagePreview) {
-        console.warn('⚠️ Image upload elements not found, skipping image upload');
-        return;
-    }
-    
-    // Create upload progress element
-    const uploadProgress = document.createElement('div');
-    uploadProgress.className = 'upload-progress';
-    uploadProgress.innerHTML = '<div class="upload-progress-bar"></div>';
-    imagePreview.parentNode.insertBefore(uploadProgress, imagePreview.nextSibling);
-    
-    let currentImageFile = null;
-    let currentImageUrl = null;
-    
-    // Handle file selection
-    imageInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                alert('❌ Image size must be less than 5MB');
-                this.value = '';
-                return;
-            }
-            
-            if (!file.type.startsWith('image/')) {
-                alert('❌ Please select a valid image file');
-                this.value = '';
-                return;
-            }
-            
-            currentImageFile = file;
-            previewImage(file);
-        }
-    });
-    
-    // Handle remove image
-    if (removeImageBtn) {
-        removeImageBtn.addEventListener('click', removeImage);
-    }
-    
-    function previewImage(file) {
-        const reader = new FileReader();
-        
-        // Show upload progress
-        uploadProgress.style.display = 'block';
-        const progressBar = uploadProgress.querySelector('.upload-progress-bar');
-        
-        reader.onloadstart = function() {
-            progressBar.style.width = '10%';
-        };
-        
-        reader.onprogress = function(e) {
-            if (e.lengthComputable) {
-                const percentLoaded = Math.round((e.loaded / e.total) * 100);
-                progressBar.style.width = percentLoaded + '%';
-            }
-        };
-        
-        reader.onload = function(e) {
-            // Complete progress
-            progressBar.style.width = '100%';
-            setTimeout(() => {
-                uploadProgress.style.display = 'none';
-                progressBar.style.width = '0%';
-            }, 500);
-            
-            currentImageUrl = e.target.result;
-            
-            // Update preview
-            imagePreview.classList.add('has-image');
-            let img = imagePreview.querySelector('img');
-            if (!img) {
-                img = document.createElement('img');
-                imagePreview.appendChild(img);
-            }
-            img.src = currentImageUrl;
-            img.alt = 'Project preview image';
-            
-            // Show remove button
-            if (removeImageBtn) {
-                removeImageBtn.style.display = 'block';
-            }
-            
-            console.log('✅ Image preview loaded successfully');
-        };
-        
-        reader.onerror = function() {
-            uploadProgress.style.display = 'none';
-            alert('❌ Error loading image. Please try again.');
-        };
-        
-        reader.readAsDataURL(file);
-    }
-    
-    function removeImage() {
-        currentImageFile = null;
-        currentImageUrl = null;
-        if (imageInput) imageInput.value = '';
-        imagePreview.classList.remove('has-image');
-        if (removeImageBtn) removeImageBtn.style.display = 'none';
-        
-        // Clear image preview
-        const img = imagePreview.querySelector('img');
-        if (img) {
-            img.remove();
-        }
-        
-        console.log('🗑️ Image removed');
-    }
-    
-    // Return public methods
-    imageUploader = {
-        getCurrentImage: function() {
-            return currentImageUrl;
-        },
-        getImageFile: function() {
-            return currentImageFile;
-        },
-        removeImage: removeImage,
-        hasImage: function() {
-            return !!currentImageUrl;
-        }
-    };
-}
-
-// ===== ADD CARD FUNCTION =====
-async function addCard() {
-    console.log('💾 Starting to add card...');
-    
-    const title = document.getElementById('cardTitle')?.value || '';
-    const description = document.getElementById('cardDesc')?.value || '';
-    const url = document.getElementById('cardUrl')?.value || '';
-    const status = document.getElementById('cardStatus')?.value || 'idea';
-    const priority = document.getElementById('cardPriority')?.value || 'medium';
-    const progress = parseInt(document.getElementById('cardProgress')?.value || '0');
-    const tags = getCurrentTags();
-    const imageUrl = imageUploader ? imageUploader.getCurrentImage() : null;
-    
-    console.log('📝 Form values:', { title, description, url, status, priority, progress, tags, hasImage: !!imageUrl });
-    
-    if (!title.trim() || !description.trim()) {
-        alert('❌ Please fill in both title and description');
-        return;
-    }
-    
-    try {
-        const cardData = {
-            title: title.trim(),
-            description: description.trim(),
-            url: url.trim() || '',
-            status: status,
-            priority: priority,
-            progress: progress || 0,
-            tags: tags || [],
-            imageUrl: imageUrl || '',
-            createdAt: new Date().toISOString(),
-        };
-        
-        console.log('💾 Saving project data:', cardData);
-        
-        // ALWAYS try Firebase first, then fallback to localStorage
-        if (db) {
-            try {
-                const docRef = await db.collection("projects").add(cardData);
-                console.log('✅ Project added to Firebase with ID:', docRef.id);
-                alert('✅ Project added successfully to Firebase!');
-            } catch (firebaseError) {
-                console.error('❌ Firebase error:', firebaseError);
-                alert('⚠️ Could not connect to Firebase. Saving locally instead.');
-                
-                // Fallback to localStorage
-                cardData.id = 'project_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                const projects = JSON.parse(localStorage.getItem('projects') || '[]');
-                projects.push(cardData);
-                localStorage.setItem('projects', JSON.stringify(projects));
-                console.log('💾 Saved to local storage:', projects.length, 'projects total');
-                alert('✅ Project added successfully (local storage)!');
-            }
-        } else {
-            // No Firebase, use localStorage
-            cardData.id = 'project_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-            const projects = JSON.parse(localStorage.getItem('projects') || '[]');
-            projects.push(cardData);
-            localStorage.setItem('projects', JSON.stringify(projects));
-            console.log('💾 Saved to local storage:', projects.length, 'projects total');
-            alert('✅ Project added successfully!');
-        }
-        
-        // Clear form
-        clearForm();
-        
-        // Close admin panel
-        const panel = document.getElementById('adminPanel');
-        if (panel) {
-            panel.style.display = 'none';
-            panel.classList.remove('active');
-        }
-        
-        // Force reload with delay to ensure data is saved
-        setTimeout(() => {
-            console.log('🔄 Reloading projects...');
-            loadProjects();
-            
-            // Navigate to projects section
-            setTimeout(() => {
-                showSection('#projects');
-            }, 500);
-        }, 1000);
-        
-    } catch (error) {
-        console.error('❌ Error adding project:', error);
-        alert('❌ Error adding project: ' + (error.message || 'Unknown error'));
-    }
-}
-
-function clearForm() {
-    const title = document.getElementById('cardTitle');
-    const desc = document.getElementById('cardDesc');
-    const url = document.getElementById('cardUrl');
-    const status = document.getElementById('cardStatus');
-    const priority = document.getElementById('cardPriority');
-    const progress = document.getElementById('cardProgress');
-    const progressValue = document.getElementById('progressValue');
-    
-    if (title) title.value = '';
-    if (desc) desc.value = '';
-    if (url) url.value = '';
-    if (status) status.value = 'idea';
-    if (priority) priority.value = 'medium';
-    if (progress) progress.value = '0';
-    if (progressValue) progressValue.textContent = '0%';
-    
-    // Clear tags
-    clearTags();
-    
-    // Clear image
-    if (imageUploader && imageUploader.removeImage) {
-        imageUploader.removeImage();
-    }
-}
-
-// ===== PROJECT LOADING AND DISPLAY =====
+// ===== PROJECT MANAGEMENT =====
 async function loadProjects() {
-    console.log('🔄 loadProjects() called');
+    console.log('📁 Loading projects...');
     
-    // Get the container
     const projectsContainer = document.getElementById('projects-container');
+    const loadingState = document.getElementById('projects-loading');
+    const emptyState = document.getElementById('projects-empty');
+    const errorState = document.getElementById('projects-error');
+    
     if (!projectsContainer) {
-        console.error('❌ projects-container element not found!');
+        console.error('❌ Projects container not found');
         return;
     }
     
-    console.log('✅ Container found, loading projects...');
+    // Show loading state
+    if (loadingState) loadingState.style.display = 'block';
+    if (emptyState) emptyState.style.display = 'none';
+    if (errorState) errorState.style.display = 'none';
     
     try {
         let projects = [];
         
-        // ALWAYS try Firebase first, then fallback to localStorage
+        // Try to load from Firebase first
         if (db) {
-            console.log('📡 Loading from Firebase...');
             try {
+                console.log('📡 Loading from Firebase...');
                 const querySnapshot = await db.collection("projects").get();
-                projects = querySnapshot.docs.map(doc => {
-                    return { id: doc.id, ...doc.data() };
-                });
-                console.log('✅ Firebase projects loaded:', projects.length, 'projects');
+                projects = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                console.log(`✅ Loaded ${projects.length} projects from Firebase`);
             } catch (firebaseError) {
                 console.error('❌ Firebase error:', firebaseError);
-                // Fallback to localStorage
-                console.log('🔄 Falling back to localStorage...');
-                const stored = localStorage.getItem('projects');
-                projects = stored ? JSON.parse(stored) : [];
+                throw new Error('Firebase connection failed');
             }
         } else {
-           // No Firebase, use localStorage
+            // Fallback to local storage
             console.log('💾 Loading from localStorage...');
             const stored = localStorage.getItem('projects');
             projects = stored ? JSON.parse(stored) : [];
+            console.log(`✅ Loaded ${projects.length} projects from localStorage`);
         }
         
-        console.log('📦 Total projects to display:', projects.length);
+        // Hide loading state
+        if (loadingState) loadingState.style.display = 'none';
+        
+        // Check if we have projects
+        if (!projects || projects.length === 0) {
+            if (emptyState) emptyState.style.display = 'block';
+            projectsContainer.innerHTML = '';
+            updateProjectStats(0);
+            return;
+        }
         
         // Clear container
         projectsContainer.innerHTML = '';
         
-        if (!projects || projects.length === 0) {
-            console.log('📭 No projects found, showing empty state');
-            projectsContainer.innerHTML = `
-                <div class="empty-state" style="text-align: center; padding: 40px; color: #666; background: #f9f9f9; border-radius: 8px; margin: 20px;">
-                    <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 20px; color: #ccc;"></i>
-                    <h3 style="margin-bottom: 10px;">No Projects Yet</h3>
-                    <p style="margin-bottom: 20px;">Start by adding your first project!</p>
-                    <button class="btn btn-primary" onclick="toggleAdminPanel()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                        <i class="fas fa-plus"></i> Add First Project
-                    </button>
-                </div>
-            `;
-            return;
-        }
-        
-        console.log(`🎯 Rendering ${projects.length} projects`);
-        
-        // Sort projects by creation date (newest first)
+        // Sort projects by date (newest first)
         projects.sort((a, b) => {
             const dateA = new Date(a.createdAt || a.id || 0);
             const dateB = new Date(b.createdAt || b.id || 0);
             return dateB - dateA;
         });
         
-        // Render each project
+        // Render projects
         projects.forEach((project, index) => {
-            try {
-                const card = createProjectCard(project, index);
-                if (card) {
-                    projectsContainer.appendChild(card);
-                    console.log(`✅ Card ${index} appended: ${project.title}`);
-                }
-            } catch (cardError) {
-                console.error('❌ Error creating card for project:', project, cardError);
-                
-                // Create a basic error card as fallback
-                const errorCard = document.createElement('div');
-                errorCard.innerHTML = `
-                    <div style="padding: 15px; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px; margin: 10px 0;">
-                        <strong>Error displaying project:</strong> ${project.title || 'Untitled'}
-                    </div>
-                `;
-                projectsContainer.appendChild(errorCard);
+            const projectCard = createProjectCard(project, index);
+            if (projectCard) {
+                projectsContainer.appendChild(projectCard);
             }
         });
         
-        console.log('✅ All projects rendered successfully');
+        // Update stats
+        updateProjectStats(projects.length);
+        
+        // Initialize scroll animations for new cards
+        initializeScrollAnimations();
+        
+        console.log(`✅ Successfully rendered ${projects.length} projects`);
         
     } catch (error) {
-        console.error('❌ Error in loadProjects:', error);
-        projectsContainer.innerHTML = `
-            <div style="text-align: center; padding: 40px; background: #f8d7da; color: #721c24; border-radius: 8px;">
-                <h3>Error Loading Projects</h3>
-                <p>${error.message}</p>
-            </div>
-        `;
+        console.error('❌ Error loading projects:', error);
+        
+        // Hide loading state
+        if (loadingState) loadingState.style.display = 'none';
+        
+        // Show error state
+        if (errorState) {
+            errorState.style.display = 'block';
+            errorState.querySelector('p').textContent = `Error: ${error.message}`;
+        }
+        
+        showNotification('Failed to load projects. Please try again.', 'error');
     }
 }
 
-// ===== CREATE PROJECT CARD FUNCTION =====
 function createProjectCard(project, index) {
-    const card = document.createElement('div');
-    card.className = 'dynamic-project-card';
-    card.style.cssText = 'background: white; border-radius: 8px; padding: 20px; margin: 15px 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-left: 4px solid #007bff;';
+    const card = document.createElement('article');
+    card.className = 'project-card animate-on-scroll';
+    card.dataset.id = project.id;
     
-    const hasUrl = project.url && project.url.trim() !== '';
-    const hasImage = project.imageUrl && project.imageUrl.trim() !== '';
-    const progress = project.progress || 0;
-    const status = project.status || 'idea';
-    const priority = project.priority || 'medium';
+    // Format date
+    const date = project.createdAt ? 
+        new Date(project.createdAt.seconds * 1000 || project.createdAt).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        }) : 'Recently added';
     
-    // Generate tags
+    // Create status badge
+    const statusClass = getStatusClass(project.status || 'idea');
+    const statusText = getStatusText(project.status || 'idea');
+    
+    // Create priority badge
+    const priorityClass = getPriorityClass(project.priority || 'medium');
+    const priorityText = getPriorityText(project.priority || 'medium');
+    
+    // Create image HTML
+    let imageHtml = '';
+    if (project.imageUrl) {
+        imageHtml = `
+            <div class="project-image">
+                <img src="${project.imageUrl}" alt="${project.title}" loading="lazy" 
+                     onerror="this.style.display='none'; this.parentNode.innerHTML='<div class=\"project-image-placeholder\"><i class=\"fas fa-project-diagram\"></i></div>';">
+            </div>
+        `;
+    } else {
+        imageHtml = `
+            <div class="project-image-placeholder">
+                <i class="fas fa-project-diagram"></i>
+            </div>
+        `;
+    }
+    
+    // Create tags HTML
     const tagsHtml = (project.tags || []).map(tag => 
-        '<span style="background:#e9ecef;color:#495057;padding:2px 6px;border-radius:3px;font-size:11px;margin-right:5px;display:inline-block;">' + tag + '</span>'
+        `<span class="project-tag">${tag}</span>`
     ).join('');
     
-    // Status and priority colors
-    const statusColors = {
-        'idea': '#6c757d',
-        'planning': '#17a2b8', 
-        'development': '#ffc107',
-        'testing': '#fd7e14',
-        'completed': '#28a745'
-    };
+    // Progress bar
+    const progress = project.progress || 0;
+    const progressBar = progress > 0 ? `
+        <div class="project-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: ${progress}%"></div>
+            </div>
+            <span>${progress}% Complete</span>
+        </div>
+    ` : '';
     
-    const priorityColors = {
-        'low': '#28a745',
-        'medium': '#ffc107',
-        'high': '#fd7e14',
-        'critical': '#dc3545'
-    };
+    // Links
+    const linksHtml = project.url ? `
+        <div class="project-links">
+            <a href="${project.url}" target="_blank" class="btn btn-secondary">
+                <i class="fas fa-external-link-alt"></i> View Project
+            </a>
+        </div>
+    ` : '';
     
-    card.innerHTML = 
-        '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">' +
-            '<h3 style="margin: 0; color: #333; flex: 1;">' + (project.title || 'Untitled Project') + '</h3>' +
-            '<div style="display: flex; gap: 5px;">' +
-                '<span style="background: ' + (statusColors[status] || '#6c757d') + '; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; text-transform: capitalize;">' + status + '</span>' +
-                '<span style="background: ' + (priorityColors[priority] || '#6c757d') + '; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; text-transform: capitalize;">' + priority + '</span>' +
-            '</div>' +
-        '</div>' +
-        
-        (hasImage ? '<div style="margin-bottom: 10px;"></div>' : '') +
-        
-        '<p style="margin: 0 0 15px 0; color: #666; line-height: 1.4;">' + (project.description || 'No description provided.') + '</p>' +
-        
-        (project.tags && project.tags.length > 0 ? 
-            '<div style="margin-bottom: 15px;">' +
-                '<div style="font-size: 12px; color: #999; margin-bottom: 5px;">Tags:</div>' +
-                '<div>' + tagsHtml + '</div>' +
-            '</div>' : '') +
-        
-        '<div style="margin-bottom: 15px;">' +
-            '<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">' +
-                '<span style="font-size: 12px; color: #666;">Progress</span>' +
-                '<span style="font-size: 12px; color: #666;">' + progress + '%</span>' +
-            '</div>' +
-            '<div style="background: #f0f0f0; border-radius: 10px; height: 8px; overflow: hidden;">' +
-                '<div style="background: #007bff; height: 100%; width: ' + progress + '%; transition: width 0.3s;"></div>' +
-            '</div>' +
-        '</div>' +
-        
-        '<div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #999;">' +
-            '<div style="display: flex; gap: 5px;">' +
-                (hasUrl ? '<a href="' + project.url + '" target="_blank" style="background: #28a745; color: white; padding: 6px 12px; text-decoration: none; border-radius: 4px; font-size: 12px;"><i class="fas fa-external-link-alt"></i> Visit Project</a>' : '') +
-            '</div>' +
-            '<span>Created: ' + formatDate(project.createdAt) + '</span>' +
-        '</div>';
+    card.innerHTML = `
+        <div class="project-header">
+            ${imageHtml}
+            <div class="project-badge ${priorityClass}">${priorityText}</div>
+            <div class="project-badge ${statusClass}" style="top: 3.5rem;">${statusText}</div>
+        </div>
+        <div class="project-content">
+            <h3>${project.title || 'Untitled Project'}</h3>
+            <p>${project.description || 'No description available.'}</p>
+            <div class="project-meta">
+                <span><i class="fas fa-calendar"></i> ${date}</span>
+                <span><i class="fas fa-user"></i> ${project.author || 'Team'}</span>
+            </div>
+            ${progressBar}
+            ${linksHtml}
+        </div>
+        ${tagsHtml ? `<div class="project-footer">${tagsHtml}</div>` : ''}
+    `;
     
     return card;
 }
 
-function formatDate(dateString) {
-    if (!dateString) return 'Unknown date';
-    
-    try {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric' 
-        });
-    } catch (error) {
-        return 'Invalid date';
-    }
+function getStatusClass(status) {
+    const statusClasses = {
+        'idea': 'status-idea',
+        'planning': 'status-planning',
+        'development': 'status-development',
+        'testing': 'status-testing',
+        'completed': 'status-completed'
+    };
+    return statusClasses[status] || 'status-idea';
 }
 
-// ===== AUTO-LOAD PROJECTS WHEN PROJECTS SECTION IS VIEWED =====
-document.addEventListener('DOMContentLoaded', function() {
-    const projectsSection = document.getElementById('projects');
-    if (projectsSection) {
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
-                    if (projectsSection.style.display !== 'none') {
-                        loadProjects();
-                    }
-                }
-            });
-        });
-        
-        observer.observe(projectsSection, { attributes: true });
-    }
-});
+function getStatusText(status) {
+    const statusTexts = {
+        'idea': 'Idea Phase',
+        'planning': 'Planning',
+        'development': 'In Development',
+        'testing': 'Testing',
+        'completed': 'Completed'
+    };
+    return statusTexts[status] || 'Idea Phase';
+}
 
-// ===== DEBUG FUNCTIONS =====
-async function debugProjects() {
-    try {
-        if (db) {
-            const querySnapshot = await db.collection("projects").get();
-            console.log('🐛 DEBUG - All projects in database:');
-            querySnapshot.forEach((doc) => {
-                console.log('📄 Document ID:', doc.id);
-                console.log('📊 Data:', doc.data());
-                console.log('---');
-            });
-        } else {
-            const projects = JSON.parse(localStorage.getItem('projects') || '[]');
-            console.log('🐛 DEBUG - All projects in local storage:');
-            projects.forEach((project, index) => {
-                console.log(`📄 Project ${index}:`, project);
-                console.log('---');
-            });
+function getPriorityClass(priority) {
+    const priorityClasses = {
+        'low': 'priority-low',
+        'medium': 'priority-medium',
+        'high': 'priority-high',
+        'critical': 'priority-critical'
+    };
+    return priorityClasses[priority] || 'priority-medium';
+}
+
+function getPriorityText(priority) {
+    const priorityTexts = {
+        'low': 'Low Priority',
+        'medium': 'Medium Priority',
+        'high': 'High Priority',
+        'critical': 'Critical'
+    };
+    return priorityTexts[priority] || 'Medium Priority';
+}
+
+function updateProjectStats(count) {
+    const statElement = document.querySelector('.stat-number[data-count]');
+    if (statElement) {
+        // Only animate if the number has changed
+        const currentCount = parseInt(statElement.textContent) || 0;
+        if (currentCount !== count) {
+            animateCounter(statElement, count);
         }
-    } catch (error) {
-        console.error('❌ Debug error:', error);
     }
 }
 
-function testAddCard() {
-    console.log('🧪 Testing addCard function...');
-    console.log('Current tags:', currentTags);
-    console.log('Progress value:', document.getElementById('cardProgress')?.value);
-}
-
-function testAdminPanel() {
-    console.log('🔧 Testing admin panel...');
-    
-    // Test if panel exists
-    const panel = document.getElementById('adminPanel');
-    console.log('Admin panel found:', !!panel);
-    
-    if (panel) {
-        console.log('Panel display style:', panel.style.display);
-        console.log('Panel HTML:', panel.innerHTML);
-    }
-    
-    // Test if button exists
-    const button = document.querySelector('.admin-toggle-btn');
-    console.log('Button found:', !!button);
-    
-    // Show the panel
-    toggleAdminPanel();
-}
-
-// ===== UTILITY FUNCTIONS =====
-function showNotification(message, type = 'success') {
+// ===== NOTIFICATION SYSTEM =====
+function showNotification(message, type = 'info') {
+    // Create notification element
     const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    
+    // Set styles
     notification.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
         padding: 15px 20px;
-        border-radius: 4px;
+        border-radius: 8px;
         color: white;
         font-weight: 500;
         z-index: 10000;
         max-width: 300px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        animation: slideIn 0.3s ease;
+        animation: slideInRight 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     `;
     
-    if (type === 'success') {
-        notification.style.background = '#28a745';
-    } else if (type === 'error') {
-        notification.style.background = '#dc3545';
-    } else {
-        notification.style.background = '#17a2b8';
-    }
+    // Set background color based on type
+    const colors = {
+        'success': '#28a745',
+        'error': '#dc3545',
+        'warning': '#ffc107',
+        'info': '#17a2b8'
+    };
     
-    notification.textContent = message;
+    notification.style.background = colors[type] || colors.info;
+    
+    // Add icon
+    const icons = {
+        'success': 'check-circle',
+        'error': 'exclamation-triangle',
+        'warning': 'exclamation-circle',
+        'info': 'info-circle'
+    };
+    
+    notification.innerHTML = `
+        <i class="fas fa-${icons[type] || 'info-circle'}"></i>
+        <span>${message}</span>
+    `;
+    
+    // Add to page
     document.body.appendChild(notification);
     
+    // Remove after 3 seconds
     setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease';
+        notification.style.animation = 'slideOutRight 0.3s ease';
         setTimeout(() => {
             if (notification.parentNode) {
                 notification.parentNode.removeChild(notification);
@@ -1139,28 +743,149 @@ function showNotification(message, type = 'success') {
     }, 3000);
 }
 
-// Add CSS for notifications
+// Add animation styles
 const style = document.createElement('style');
 style.textContent = `
-    @keyframes slideIn {
+    @keyframes slideInRight {
         from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
     }
-    @keyframes slideOut {
+    
+    @keyframes slideOutRight {
         from { transform: translateX(0); opacity: 1; }
         to { transform: translateX(100%); opacity: 0; }
+    }
+    
+    .notification {
+        font-family: var(--font-family);
     }
 `;
 document.head.appendChild(style);
 
-// ===== EXPORT FUNCTIONS FOR GLOBAL ACCESS =====
-window.toggleAdminPanel = toggleAdminPanel;
-window.addCard = addCard;
-window.removeTag = removeTag;
-window.loadProjects = loadProjects;
-window.debugProjects = debugProjects;
-window.testAddCard = testAddCard;
-window.testAdminPanel = testAdminPanel;
-window.showSection = showSection;
+// ===== DEMO DATA FUNCTIONS =====
+function loadDemoProjects() {
+    console.log('📁 Loading demo projects...');
+    
+    const demoProjects = [
+        {
+            id: 'demo-1',
+            title: 'Community Garden Initiative',
+            description: 'Developing urban gardening spaces in local communities to promote sustainability and food security.',
+            status: 'development',
+            priority: 'high',
+            progress: 65,
+            tags: ['sustainability', 'community', 'food security'],
+            author: 'Green Team',
+            createdAt: new Date('2024-01-15').toISOString(),
+            imageUrl: 'https://images.unsplash.com/photo-1417733403748-83bbc7c05140?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'
+        },
+        {
+            id: 'demo-2',
+            title: 'Educational App for STEM',
+            description: 'Creating an interactive mobile application to make STEM education more accessible to underprivileged students.',
+            status: 'planning',
+            priority: 'medium',
+            progress: 30,
+            tags: ['education', 'technology', 'STEM', 'mobile'],
+            author: 'Tech Education Team',
+            createdAt: new Date('2024-02-10').toISOString(),
+            url: 'https://example.com/stem-app'
+        },
+        {
+            id: 'demo-3',
+            title: 'Renewable Energy Workshop',
+            description: 'Organizing workshops to teach community members about solar panel installation and maintenance.',
+            status: 'completed',
+            priority: 'high',
+            progress: 100,
+            tags: ['renewable energy', 'workshop', 'education'],
+            author: 'Energy Team',
+            createdAt: new Date('2023-11-20').toISOString(),
+            imageUrl: 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'
+        },
+        {
+            id: 'demo-4',
+            title: 'Waste Management App',
+            description: 'Developing an application to help communities track and optimize their waste management processes.',
+            status: 'idea',
+            priority: 'medium',
+            progress: 10,
+            tags: ['sustainability', 'technology', 'mobile', 'community'],
+            author: 'Innovation Team',
+            createdAt: new Date('2024-03-01').toISOString()
+        }
+    ];
+    
+    // Save demo projects to localStorage
+    try {
+        localStorage.setItem('projects', JSON.stringify(demoProjects));
+        console.log('✅ Demo projects saved to localStorage');
+        
+        // Reload projects
+        loadProjects();
+        
+        showNotification('Demo projects loaded successfully!', 'success');
+    } catch (error) {
+        console.error('❌ Error saving demo projects:', error);
+        showNotification('Failed to load demo projects', 'error');
+    }
+}
 
-console.log("✅ Innovation Earth Projects script loaded successfully!");
+function clearAllProjects() {
+    if (confirm('Are you sure you want to clear all projects? This action cannot be undone.')) {
+        try {
+            localStorage.removeItem('projects');
+            console.log('🗑️ All projects cleared from localStorage');
+            
+            // If Firebase is connected, we can't clear it from the client side
+            if (db) {
+                showNotification('Local projects cleared. Firebase projects remain.', 'warning');
+            } else {
+                showNotification('All projects cleared successfully.', 'success');
+            }
+            
+            // Reload projects
+            loadProjects();
+        } catch (error) {
+            console.error('❌ Error clearing projects:', error);
+            showNotification('Failed to clear projects', 'error');
+        }
+    }
+}
+
+// ===== DEBUG FUNCTIONS =====
+function debugFirebaseConnection() {
+    console.log('🔍 Debugging Firebase connection...');
+    console.log('Firebase app:', firebaseApp ? '✅ Initialized' : '❌ Not initialized');
+    console.log('Firestore database:', db ? '✅ Connected' : '❌ Not connected');
+    
+    if (db) {
+        // Test a simple query
+        db.collection('test').limit(1).get()
+            .then(() => console.log('✅ Firestore query successful'))
+            .catch(error => console.error('❌ Firestore query failed:', error));
+    }
+}
+
+function debugLocalStorage() {
+    console.log('🔍 Debugging localStorage...');
+    
+    const projects = JSON.parse(localStorage.getItem('projects') || '[]');
+    console.log(`📁 Projects in localStorage: ${projects.length}`);
+    projects.forEach((project, index) => {
+        console.log(`  ${index + 1}. ${project.title} (${project.status})`);
+    });
+    
+    const contacts = JSON.parse(localStorage.getItem('contactSubmissions') || '[]');
+    console.log(`📧 Contact submissions: ${contacts.length}`);
+}
+
+// ===== EXPORT FUNCTIONS =====
+window.showSection = showSection;
+window.loadProjects = loadProjects;
+window.loadDemoProjects = loadDemoProjects;
+window.clearAllProjects = clearAllProjects;
+window.debugFirebaseConnection = debugFirebaseConnection;
+window.debugLocalStorage = debugLocalStorage;
+
+console.log("🎉 Innovation Earth Projects JavaScript loaded successfully!");
