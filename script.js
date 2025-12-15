@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeContactForm();
     initializeQuickLinkCards();
     initializeRoleTabs();
+    initializeJourneyStats();
     
     // Initialize Firebase
     initializeFirebase();
@@ -78,6 +79,81 @@ async function testFirebaseConnection() {
     } catch (error) {
         console.warn('⚠️ Firebase test failed:', error);
     }
+}
+
+// ===== JOURNEY STATS MANAGEMENT =====
+async function loadJourneyStats() {
+    try {
+        if (!db) {
+            console.log('Firebase not available, using default stats');
+            return;
+        }
+
+        const statsDoc = await db.collection('siteStats').doc('journeyStats').get();
+        
+        if (statsDoc.exists) {
+            const stats = statsDoc.data();
+            updateStatsDisplay(stats);
+            console.log('✅ Journey stats loaded from Firebase');
+        } else {
+            await createDefaultStats();
+        }
+    } catch (error) {
+        console.error('❌ Error loading journey stats:', error);
+        updateStatsDisplay(getDefaultStats());
+    }
+}
+
+async function createDefaultStats() {
+    const defaultStats = getDefaultStats();
+    try {
+        await db.collection('siteStats').doc('journeyStats').set(defaultStats);
+        updateStatsDisplay(defaultStats);
+        console.log('✅ Default journey stats created in Firebase');
+    } catch (error) {
+        console.error('❌ Error creating default stats:', error);
+    }
+}
+
+function getDefaultStats() {
+    return {
+        projectsCompleted: 0,
+        activeMembers: 3,
+        newOrganization: 1,
+        opportunitiesAhead: "∞",
+        lastUpdated: new Date().toISOString()
+    };
+}
+
+function updateStatsDisplay(stats) {
+    animateStatCounter('stat-projects-completed', stats.projectsCompleted);
+    animateStatCounter('stat-active-members', stats.activeMembers);
+    animateStatCounter('stat-new-organization', stats.newOrganization);
+    
+    const opportunitiesElement = document.getElementById('stat-opportunities-ahead');
+    if (opportunitiesElement) {
+        opportunitiesElement.textContent = stats.opportunitiesAhead;
+    }
+}
+
+function animateStatCounter(statId, targetValue) {
+    const element = document.getElementById(statId);
+    if (!element) return;
+    
+    if (targetValue === "∞") {
+        element.textContent = "∞";
+        return;
+    }
+    
+    const current = parseInt(element.textContent) || 0;
+    if (current === targetValue) return;
+    
+    animateCounter(element, targetValue);
+}
+
+function initializeJourneyStats() {
+    console.log('📊 Initializing journey stats...');
+    loadJourneyStats();
 }
 
 // ===== SECTION MANAGEMENT =====
@@ -672,14 +748,8 @@ function getPriorityText(priority) {
 }
 
 function updateProjectStats(count) {
-    const statElement = document.querySelector('.stat-number[data-count]');
-    if (statElement) {
-        // Only animate if the number has changed
-        const currentCount = parseInt(statElement.textContent) || 0;
-        if (currentCount !== count) {
-            animateCounter(statElement, count);
-        }
-    }
+    // This function is now handled by updateStatsDisplay
+    console.log('Projects count updated:', count);
 }
 
 // ===== NOTIFICATION SYSTEM =====
@@ -761,97 +831,6 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
-
-// ===== DEMO DATA FUNCTIONS =====
-function loadDemoProjects() {
-    console.log('📁 Loading demo projects...');
-    
-    const demoProjects = [
-        {
-            id: 'demo-1',
-            title: 'Community Garden Initiative',
-            description: 'Developing urban gardening spaces in local communities to promote sustainability and food security.',
-            status: 'development',
-            priority: 'high',
-            progress: 65,
-            tags: ['sustainability', 'community', 'food security'],
-            author: 'Green Team',
-            createdAt: new Date('2024-01-15').toISOString(),
-            imageUrl: 'https://images.unsplash.com/photo-1417733403748-83bbc7c05140?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'
-        },
-        {
-            id: 'demo-2',
-            title: 'Educational App for STEM',
-            description: 'Creating an interactive mobile application to make STEM education more accessible to underprivileged students.',
-            status: 'planning',
-            priority: 'medium',
-            progress: 30,
-            tags: ['education', 'technology', 'STEM', 'mobile'],
-            author: 'Tech Education Team',
-            createdAt: new Date('2024-02-10').toISOString(),
-            url: 'https://example.com/stem-app'
-        },
-        {
-            id: 'demo-3',
-            title: 'Renewable Energy Workshop',
-            description: 'Organizing workshops to teach community members about solar panel installation and maintenance.',
-            status: 'completed',
-            priority: 'high',
-            progress: 100,
-            tags: ['renewable energy', 'workshop', 'education'],
-            author: 'Energy Team',
-            createdAt: new Date('2023-11-20').toISOString(),
-            imageUrl: 'https://images.unsplash.com/photo-1466611653911-95081537e5b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'
-        },
-        {
-            id: 'demo-4',
-            title: 'Waste Management App',
-            description: 'Developing an application to help communities track and optimize their waste management processes.',
-            status: 'idea',
-            priority: 'medium',
-            progress: 10,
-            tags: ['sustainability', 'technology', 'mobile', 'community'],
-            author: 'Innovation Team',
-            createdAt: new Date('2024-03-01').toISOString()
-        }
-    ];
-    
-    // Save demo projects to localStorage
-    try {
-        localStorage.setItem('projects', JSON.stringify(demoProjects));
-        console.log('✅ Demo projects saved to localStorage');
-        
-        // Reload projects
-        loadProjects();
-        
-        showNotification('Demo projects loaded successfully!', 'success');
-    } catch (error) {
-        console.error('❌ Error saving demo projects:', error);
-        showNotification('Failed to load demo projects', 'error');
-    }
-}
-
-function clearAllProjects() {
-    if (confirm('Are you sure you want to clear all projects? This action cannot be undone.')) {
-        try {
-            localStorage.removeItem('projects');
-            console.log('🗑️ All projects cleared from localStorage');
-            
-            // If Firebase is connected, we can't clear it from the client side
-            if (db) {
-                showNotification('Local projects cleared. Firebase projects remain.', 'warning');
-            } else {
-                showNotification('All projects cleared successfully.', 'success');
-            }
-            
-            // Reload projects
-            loadProjects();
-        } catch (error) {
-            console.error('❌ Error clearing projects:', error);
-            showNotification('Failed to clear projects', 'error');
-        }
-    }
-}
 
 // ===== DEBUG FUNCTIONS =====
 function debugFirebaseConnection() {
