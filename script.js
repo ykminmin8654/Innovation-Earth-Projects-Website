@@ -126,21 +126,56 @@ function getDefaultStats() {
 }
 
 function updateStatsDisplay(stats) {
-    // Set initial values (no animation)
-    setStatValue('stat-projects-completed', stats.projectsCompleted);
-    setStatValue('stat-active-members', stats.activeMembers);
-    setStatValue('stat-new-organization', stats.newOrganization);
-    setStatValue('stat-opportunities-ahead', stats.opportunitiesAhead);
+    console.log('📊 updateStatsDisplay called with:', stats);
     
-    // Animate when they come into view
-    animateStatCounter('stat-projects-completed', stats.projectsCompleted);
-    animateStatCounter('stat-active-members', stats.activeMembers);
-    animateStatCounter('stat-new-organization', stats.newOrganization);
+    // Safely convert and validate numbers
+    const projects = Number(stats.projectsCompleted) || 0;
+    const members = Number(stats.activeMembers) || 0;
+    const organization = Number(stats.newOrganization) || 0;
+    const opportunities = stats.opportunitiesAhead || "∞";
     
-    const opportunitiesElement = document.getElementById('stat-opportunities-ahead');
-    if (opportunitiesElement) {
-        opportunitiesElement.textContent = stats.opportunitiesAhead;
-    }
+    console.log('✅ Validated stats:', { projects, members, organization, opportunities });
+    
+    // Set initial values
+    setStatValue('stat-projects-completed', projects);
+    setStatValue('stat-active-members', members);
+    setStatValue('stat-new-organization', organization);
+    setStatValue('stat-opportunities-ahead', opportunities);
+    
+    // Initialize stats animation
+    initializeStatsAnimation();
+}
+
+// ===== STATS ANIMATION =====
+function initializeStatsAnimation() {
+    const statObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const statNumber = entry.target.querySelector('.stat-number');
+                if (statNumber) {
+                    const target = statNumber.getAttribute('data-count');
+                    const statId = statNumber.id;
+                    
+                    // Handle infinity symbol
+                    if (target === "∞") {
+                        statNumber.textContent = "∞";
+                        return;
+                    }
+                    
+                    // Convert to number
+                    const targetValue = Number(target);
+                    if (!isNaN(targetValue)) {
+                        animateCounter(statNumber, targetValue);
+                    }
+                }
+            }
+        });
+    }, { threshold: 0.5 });
+    
+    // Observe all stat items
+    document.querySelectorAll('.stat-item').forEach(item => {
+        statObserver.observe(item);
+    });
 }
 
 function setStatValue(statId, value) {
@@ -154,17 +189,23 @@ function setStatValue(statId, value) {
 
 function animateStatCounter(statId, targetValue) {
     const element = document.getElementById(statId);
-    if (!element) return;
+    if (!element) {
+        console.warn(`Element not found: ${statId}`);
+        return;
+    }
     
-    if (targetValue === "∞") {
-        element.textContent = "∞";
+    // Convert to number safely
+    const targetNumber = Number(targetValue);
+    if (isNaN(targetNumber)) {
+        console.warn(`Invalid number for ${statId}:`, targetValue);
+        element.textContent = targetValue; // Show original value
         return;
     }
     
     const current = parseInt(element.textContent) || 0;
-    if (current === targetValue) return;
+    if (current === targetNumber) return;
     
-    animateCounter(element, targetValue);
+    animateCounter(element, targetNumber);
 }
 
 function initializeJourneyStats() {
@@ -369,36 +410,8 @@ function initializeScrollAnimations() {
         observer.observe(el);
     });
     
-    // Animate stats numbers
-    const statObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const statNumber = entry.target.querySelector('.stat-number');
-                if (statNumber) {
-                    const target = parseInt(statNumber.getAttribute('data-count'));
-                    animateCounter(statNumber, target);
-                }
-            }
-        });
-    }, { threshold: 0.5 });
-    
-    document.querySelectorAll('.stat-item').forEach(item => {
-        statObserver.observe(item);
-    });
-}
-
-function animateCounter(element, target) {
-    let current = 0;
-    const increment = target / 100;
-    const timer = setInterval(() => {
-        current += increment;
-        if (current >= target) {
-            element.textContent = target;
-            clearInterval(timer);
-        } else {
-            element.textContent = Math.floor(current);
-        }
-    }, 20);
+    // IMPORTANT: REMOVE the statObserver from here
+    // The stats animation is handled separately in initializeStatsAnimation()
 }
 
 // ===== COMPETITION TABS =====
