@@ -10,7 +10,7 @@ let currentTags = [];
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing Innovation Earth Projects...');
     
-    // Initialize all functionality
+    // Initialize all functionality EXCEPT journey stats
     initializeSectionManagement();
     initializeMobileMenu();
     initializeBannerSlider();
@@ -19,10 +19,16 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeContactForm();
     initializeQuickLinkCards();
     initializeRoleTabs();
-    initializeJourneyStats();
     
-    // Initialize Firebase
-    initializeFirebase();
+    // Initialize Firebase FIRST, then initialize journey stats
+    initializeFirebase().then(() => {
+        // Firebase is now ready, so initialize journey stats
+        initializeJourneyStats();
+    }).catch(error => {
+        console.error('❌ Firebase initialization failed:', error);
+        // Still try to initialize journey stats with fallback
+        initializeJourneyStats();
+    });
     
     // Load projects if on projects section
     if (window.location.hash === '#projects' || document.getElementById('projects').classList.contains('active')) {
@@ -33,6 +39,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ All functionality loaded successfully!');
 });
 
+// ===== FIREBASE INITIALIZATION =====
 // ===== FIREBASE INITIALIZATION =====
 async function initializeFirebase() {
     console.log('🔥 Initializing Firebase...');
@@ -65,10 +72,13 @@ async function initializeFirebase() {
         // Test connection
         await testFirebaseConnection();
         
+        return true; // ← ADD THIS LINE
+        
     } catch (error) {
         console.error('❌ Firebase initialization failed:', error);
         console.warn('⚠️ Falling back to local storage mode');
         showNotification('Firebase connection failed. Using local storage.', 'warning');
+        throw error; // ← ADD THIS LINE to propagate the error
     }
 }
 
@@ -78,6 +88,22 @@ async function testFirebaseConnection() {
         console.log('✅ Firebase connection test successful');
     } catch (error) {
         console.warn('⚠️ Firebase test failed:', error);
+    }
+}
+
+// ===== FALLBACK FOR WHEN FIREBASE ISN'T READY =====
+function initializeJourneyStatsWithFallback() {
+    console.log('📊 Initializing journey stats with fallback...');
+    
+    // Try Firebase first
+    if (db) {
+        loadJourneyStats();
+    } else {
+        // Fallback to default values after a delay
+        setTimeout(() => {
+            console.log('🔄 Firebase not ready, using default stats after delay');
+            updateStatsDisplay(getDefaultStats());
+        }, 2000);
     }
 }
 
@@ -210,7 +236,25 @@ function animateStatCounter(statId, targetValue) {
 
 function initializeJourneyStats() {
     console.log('📊 Initializing journey stats...');
-    loadJourneyStats();
+    
+    // Check if Firebase is ready
+    if (db) {
+        console.log('✅ Firebase is ready, loading stats...');
+        loadJourneyStats();
+    } else {
+        console.log('⏳ Firebase not ready yet, waiting...');
+        
+        // Try again after a short delay
+        setTimeout(() => {
+            if (db) {
+                console.log('✅ Firebase is now ready, loading stats...');
+                loadJourneyStats();
+            } else {
+                console.log('❌ Firebase still not ready, using defaults');
+                updateStatsDisplay(getDefaultStats());
+            }
+        }, 1000);
+    }
 }
 
 // ===== SECTION MANAGEMENT =====
