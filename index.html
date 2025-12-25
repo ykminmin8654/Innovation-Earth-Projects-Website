@@ -37,6 +37,7 @@
 <li class="nav-item"><a href="/" class="nav-link active" data-section="home"><i class="fas fa-home"></i> Home</a></li>
 <li class="nav-item"><a href="/projects" class="nav-link" data-section="projects"><i class="fas fa-project-diagram"></i> Projects</a></li>
 <li class="nav-item"><a href="/competitions" class="nav-link" data-section="competitions"><i class="fas fa-trophy"></i> Competitions</a></li>
+<li class="nav-item"><a href="/initiatives" class="nav-link" data-section="initiatives"><i class="fas fa-seedling"></i> Initiatives</a></li>
 <li class="nav-item"><a href="/join" class="nav-link" data-section="join"><i class="fas fa-users"></i> Join Us</a></li>
 <li class="nav-item"><a href="/about" class="nav-link" data-section="about"><i class="fas fa-info-circle"></i> About</a></li>
 <li class="nav-item"><a href="/contact" class="nav-link" data-section="contact"><i class="fas fa-envelope"></i> Contact</a></li>
@@ -100,32 +101,32 @@
                 </div>
                 
                 <div class="quick-links-grid">
-                    <article class="quick-link-card" onclick="showSection('/projects')" style="cursor: pointer;">
+                    <article class="quick-link-card" onclick="navigateTo('projects')" style="cursor: pointer;">
                         <i class="fas fa-project-diagram" aria-hidden="true"></i>
                         <h3>Project Ideas</h3>
                         <p>Explore our first project concepts and share your own ideas</p>
-                        <a href="/projects" class="btn btn-secondary" onclick="event.stopPropagation(); showSection('/projects')">Explore</a>
+                        <a href="/projects" class="btn btn-secondary" onclick="event.stopPropagation(); navigateTo('projects')">Explore</a>
                     </article>
 
-                    <article class="quick-link-card" onclick="showSection('/competitions')" style="cursor: pointer;">
+                    <article class="quick-link-card" onclick="navigateTo('competitions')" style="cursor: pointer;">
                         <i class="fas fa-trophy" aria-hidden="true"></i>
                         <h3>Competition Resources</h3>
                         <p>Resources for FBLA, DECA, HOSA, SkillsUSA and more</p>
-                        <a href="/competitions" class="btn btn-secondary" onclick="event.stopPropagation(); showSection('/competitions')">Explore Resources</a>
+                        <a href="/competitions" class="btn btn-secondary" onclick="event.stopPropagation(); navigateTo('competitions')">Explore Resources</a>
                     </article>
 
-                    <article class="quick-link-card" onclick="showSection('/about')" style="cursor: pointer;">
+                    <article class="quick-link-card" onclick="navigateTo('about')" style="cursor: pointer;">
                         <i class="fas fa-info-circle" aria-hidden="true"></i>
                         <h3>Our Mission</h3>
                         <p>Learn about what drives us and our vision</p>
-                        <a href="/about" class="btn btn-secondary" onclick="event.stopPropagation(); showSection('/about')">Learn More</a>
+                        <a href="/about" class="btn btn-secondary" onclick="event.stopPropagation(); navigateTo('about')">Learn More</a>
                     </article>
 
-                    <article class="quick-link-card" onclick="showSection('/contact')" style="cursor: pointer;">
+                    <article class="quick-link-card" onclick="navigateTo('contact')" style="cursor: pointer;">
                         <i class="fas fa-lightbulb" aria-hidden="true"></i>
                         <h3>Message Us</h3>
                         <p>Send feedback and ideas for new projects</p>
-                        <a href="/contact" class="btn btn-secondary" onclick="event.stopPropagation(); showSection('/contact')">Contact Us</a>
+                        <a href="/contact" class="btn btn-secondary" onclick="event.stopPropagation(); navigateTo('contact')">Contact Us</a>
                     </article>
                 </div>
             </div>
@@ -217,7 +218,7 @@
                                     <span><i class="fas fa-map-marker-alt"></i> Virtual Event</span>
                                     <span><i class="fas fa-clock"></i> Date TBD</span>
                                 </div>
-                                <a href="/contact" class="btn btn-secondary">Express Interest</a>
+                                    <a href="/contact" class="btn btn-secondary" onclick="navigateTo('contact')">Express Interest</a>
                             </div>
                         </article>
                         
@@ -233,7 +234,7 @@
                                     <span><i class="fas fa-map-marker-alt"></i> Virtual Event</span>
                                     <span><i class="fas fa-clock"></i> Date TBD</span>
                                 </div>
-                                <a href="/projects" class="btn btn-secondary">Share Ideas</a>
+                                    <a href="/projects" class="btn btn-secondary" onclick="navigateTo('projects')">Share Ideas</a>
                             </div>
                         </article>
                         
@@ -249,7 +250,7 @@
                                     <span><i class="fas fa-map-marker-alt"></i> Location TBD</span>
                                     <span><i class="fas fa-clock"></i> When we're ready</span>
                                 </div>
-                                <a href="/join" class="btn btn-secondary">Help Build This</a>
+                                    <a href="/join" class="btn btn-secondary" onclick="navigateTo('join')">Help Build This</a>
                             </div>
                         </article>
                     </div>
@@ -263,8 +264,8 @@
                         <h2>Be a Founding Member</h2>
                         <p>Join from the very beginning and help build something amazing with us</p>
                         <div class="cta-buttons">
-                            <a href="/join" class="btn btn-primary">Help Us Grow</a>
-                            <a href="/contact" class="btn btn-secondary">Share Your Ideas</a>
+                        <a href="/join" class="btn btn-primary" onclick="navigateTo('join')">Help Us Grow</a>
+                        <a href="/contact" class="btn btn-secondary" onclick="navigateTo('contact')">Share Your Ideas</a>
                         </div>
                     </div>
                 </div>
@@ -1305,11 +1306,11 @@
                     <h3>Quick Links</h3>
                     <nav>
                         <ul>
-                            <li><a href="/">Home</a></li>
-                            <li><a href="/projects">Project Ideas</a></li>
-                            <li><a href="/competitions">Competitions</a></li>
-                            <li><a href="/join">Join Us</a></li>
-                            <li><a href="/about">Our Story</a></li>
+                            <li><a href="/" onclick="navigateTo('home')">Home</a></li>
+                            <li><a href="/projects" onclick="navigateTo('projects')">Project Ideas</a></li>
+                            <li><a href="/competitions" onclick="navigateTo('competitions')">Competitions</a></li>
+                            <li><a href="/join" onclick="navigateTo('join')">Join Us</a></li>
+                            <li><a href="/about" onclick="navigateTo('about')">Our Story</a></li>
                         </ul>
                     </nav>
                 </div>
@@ -1320,7 +1321,7 @@
                         <p><i class="fas fa-envelope"></i> InnovationEarthProjects@gmail.com</p>
                         <p><i class="fas fa-map-marker-alt"></i> Based in Utah, USA</p>
                     </address>
-                    <a href="/contact" class="btn btn-secondary">Be a Founder</a>
+                    <a href="/contact" class="btn btn-secondary" onclick="navigateTo('contact')">Be a Founder</a>
                 </div>
             </div>
 

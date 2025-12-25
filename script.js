@@ -11,7 +11,6 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing Innovation Earth Projects...');
     
     // Initialize all functionality EXCEPT journey stats
-    initializeSectionManagement();
     initializeMobileMenu();
     initializeBannerSlider();
     initializeScrollAnimations();
@@ -266,7 +265,6 @@ function closeMobileMenu() {
 
 // Make functions available globally
 window.navigateTo = navigateTo;
-window.showSection = showSection; // Keep for backward compatibility
 
 // Update your DOMContentLoaded initialization
 document.addEventListener('DOMContentLoaded', function() {
@@ -574,107 +572,6 @@ function formatRelativeTime(timestamp) {
 function initializeInitiatives() {
     console.log('📚 Initializing initiatives...');
     loadInitiatives();
-}
-
-// ===== SECTION MANAGEMENT =====
-function initializeSectionManagement() {
-    console.log('🔧 Initializing section management...');
-    
-    // Hide all sections except home
-    document.querySelectorAll('.section').forEach(section => {
-        section.style.display = 'none';
-    });
-    
-    // Show home section by default
-    const homeSection = document.getElementById('home');
-    if (homeSection) {
-        homeSection.style.display = 'block';
-        homeSection.classList.add('active');
-    }
-    
-    // Handle navigation clicks
-    document.querySelectorAll('.nav-link[href^="#"]').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const targetId = this.getAttribute('href');
-            showSection(targetId);
-            
-            // Save to localStorage
-            localStorage.setItem('lastActiveSection', targetId);
-        });
-    });
-    
-    // Handle URL hash changes
-    window.addEventListener('hashchange', function() {
-        const hash = window.location.hash;
-        if (hash) {
-            showSection(hash);
-            localStorage.setItem('lastActiveSection', hash);
-        }
-    });
-    
-    // Check for saved section
-    const savedSection = localStorage.getItem('lastActiveSection');
-    const urlHash = window.location.hash;
-    
-    if (urlHash && document.querySelector(urlHash)) {
-        showSection(urlHash);
-    } else if (savedSection && document.querySelector(savedSection)) {
-        showSection(savedSection);
-    } else {
-        showSection('#home');
-    }
-}
-
-function showSection(sectionId) {
-    console.log('🔄 Showing section:', sectionId);
-    
-    // Hide all sections
-    document.querySelectorAll('.section').forEach(section => {
-        section.classList.remove('active');
-        section.style.display = 'none';
-    });
-    
-    // Show target section
-    const targetSection = document.querySelector(sectionId);
-    if (targetSection) {
-        targetSection.classList.add('active');
-        targetSection.style.display = 'block';
-        
-        // Update navigation
-        updateNavHighlight(sectionId);
-        
-        // Update URL
-        const newUrl = window.location.pathname + sectionId;
-        window.history.replaceState(null, null, newUrl);
-        
-        // Scroll to top
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        
-        // Load section-specific content
-        if (sectionId === '#projects') {
-            console.log('📁 Loading projects for section:', sectionId);
-            loadProjects();
-        }
-        
-        console.log('✅ Section activated:', sectionId);
-    } else {
-        console.warn('❌ Section not found:', sectionId);
-        showSection('#home');
-    }
-}
-
-function updateNavHighlight(sectionId) {
-    // Remove active class from all nav links
-    document.querySelectorAll('.nav-link').forEach(link => {
-        link.classList.remove('active');
-    });
-    
-    // Add active class to current nav link
-    const currentNavLink = document.querySelector(`.nav-link[href="${sectionId}"]`);
-    if (currentNavLink) {
-        currentNavLink.classList.add('active');
-    }
 }
 
 // ===== MOBILE MENU =====
@@ -1425,7 +1322,6 @@ function debugLocalStorage() {
 }
 
 // ===== EXPORT FUNCTIONS =====
-window.showSection = showSection;
 window.loadProjects = loadProjects;
 window.loadInitiatives = loadInitiatives;
 window.debugFirebaseConnection = debugFirebaseConnection;
