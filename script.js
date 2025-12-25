@@ -1,4 +1,73 @@
 // ===== FIREBASE CONFIGURATION =====
+// ===== HANDLE 404 REDIRECTS (GitHub Pages Fix) =====
+(function handle404Redirect() {
+    // Only run if we have a 404.html redirect
+    if (sessionStorage.redirect) {
+        const redirectPath = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        
+        console.log('🔄 Handling 404 redirect from:', redirectPath);
+        
+        // Define valid sections
+        const validSections = ['home', 'about', 'projects', 'competitions', 'join', 'contact'];
+        
+        // Extract section from path
+        let section = redirectPath === '/' ? 'home' : redirectPath.substring(1);
+        
+        // Validate section
+        if (!validSections.includes(section)) {
+            section = 'home';
+        }
+        
+        // Update URL to clean version
+        const cleanPath = section === 'home' ? '/' : `/${section}`;
+        window.history.replaceState({ section: section }, '', cleanPath);
+        
+        // Wait for DOM to be ready, then navigate
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(() => handleRedirectNavigation(section), 100);
+            });
+        } else {
+            setTimeout(() => handleRedirectNavigation(section), 100);
+        }
+    }
+    
+    function handleRedirectNavigation(section) {
+        console.log('📍 Navigating to section after redirect:', section);
+        
+        // Hide all sections
+        document.querySelectorAll('.section').forEach(sectionEl => {
+            sectionEl.classList.remove('active');
+            sectionEl.style.display = 'none';
+        });
+        
+        // Show target section
+        const targetSection = document.getElementById(section);
+        if (targetSection) {
+            targetSection.classList.add('active');
+            targetSection.style.display = 'block';
+            
+            // Update navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            const activeLink = document.querySelector(`.nav-link[data-section="${section}"]`);
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+            
+            // Load content if needed
+            if (section === 'projects' && typeof loadProjects === 'function') {
+                setTimeout(() => loadProjects(), 200);
+            }
+            
+            console.log(`✅ Redirected to: ${section}`);
+        }
+    }
+})();
+
 // Initialize Firebase
 let db = null;
 let firebaseApp = null;
