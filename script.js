@@ -1,4 +1,24 @@
 // ===== FIREBASE CONFIGURATION =====
+// Handle 404 redirects
+if (window.location.search.includes('redirect=')) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirectPath = urlParams.get('redirect');
+    
+    if (redirectPath && redirectPath !== '/') {
+        // Remove the query parameter
+        const cleanUrl = redirectPath;
+        window.history.replaceState({}, '', cleanUrl);
+        
+        // Show the correct section
+        const section = redirectPath.substring(1); // Remove leading slash
+        setTimeout(() => {
+            if (typeof navigateTo === 'function') {
+                navigateTo(section);
+            }
+        }, 100);
+    }
+}
+
 // ===== HANDLE 404 REDIRECTS (GitHub Pages Fix) =====
 (function handle404Redirect() {
     // Only run if we have a 404.html redirect

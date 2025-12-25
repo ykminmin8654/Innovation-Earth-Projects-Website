@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script>
+        // This catches 404 errors and redirects to index.html
+        // with the original path in a query parameter
+        const path = window.location.pathname;
+        window.location.href = '/index.html?redirect=' + encodeURIComponent(path);
+    </script>
+</head>
+<body>
+    Redirecting...
+</body>
+</html>
