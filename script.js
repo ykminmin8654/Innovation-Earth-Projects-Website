@@ -190,7 +190,6 @@ function initializeJourneyStats() {
 }
 
 // ===== INITIATIVES MANAGEMENT =====
-// ===== INITIATIVES MANAGEMENT =====
 async function loadInitiatives() {
     console.log('🚀 Loading initiatives from Firebase...');
     
@@ -1047,6 +1046,149 @@ function showNotification(message, type = 'info') {
         }, 300);
     }, 3000);
 }
+
+// Social media analytics and interaction tracking
+function setupSocialAnalytics() {
+    const socialButtons = document.querySelectorAll('.social-btn');
+    
+    socialButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            const platform = this.classList[1]; // instagram, youtube, tiktok, etc.
+            const url = this.href;
+            
+            console.log(`📱 Social click: ${platform} - ${url}`);
+            
+            // Track in Firebase if you want
+            if (db) {
+                db.collection('socialClicks').add({
+                    platform: platform,
+                    url: url,
+                    timestamp: new Date().toISOString(),
+                    userAgent: navigator.userAgent
+                });
+            }
+            
+            // Optional: Track with Google Analytics
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'social_click', {
+                    'event_category': 'Social Media',
+                    'event_label': platform,
+                    'transport_type': 'beacon'
+                });
+            }
+        });
+    });
+}
+
+// Add follower count display (if you want to show counts)
+async function displayFollowerCounts() {
+    // This is a placeholder - you'd need to implement API calls
+    // to get actual follower counts from each platform
+    
+    const followerData = {
+        instagram: 0,
+        youtube: 0,
+        tiktok: 0
+    };
+    
+    // You could:
+    // 1. Use platform APIs (requires authentication)
+    // 2. Store counts manually in Firebase
+    // 3. Skip this feature if it's too complex
+    
+    // For now, let's just show a simple message
+    const followerElement = document.querySelector('.social-followers');
+    if (followerElement) {
+        followerElement.innerHTML = 'Join our growing community of innovators and changemakers';
+    }
+}
+
+// Add share functionality to initiative cards
+function addSocialShareToCards() {
+    const initiativeCards = document.querySelectorAll('.initiative-card');
+    
+    initiativeCards.forEach(card => {
+        const shareContainer = document.createElement('div');
+        shareContainer.className = 'card-social-share';
+        shareContainer.style.cssText = `
+            display: flex;
+            gap: 8px;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        `;
+        
+        shareContainer.innerHTML = `
+            <button class="share-btn-small instagram" onclick="shareToInstagram(this)">
+                <i class="fab fa-instagram"></i>
+            </button>
+            <button class="share-btn-small tiktok" onclick="shareToTikTok(this)">
+                <i class="fab fa-tiktok"></i>
+            </button>
+            <button class="share-btn-small email" onclick="shareByEmail(this)">
+                <i class="fas fa-envelope"></i>
+            </button>
+        `;
+        
+        card.appendChild(shareContainer);
+    });
+}
+
+// Share functions
+function shareToInstagram(button) {
+    const card = button.closest('.initiative-card');
+    const title = card.querySelector('h3').textContent;
+    const description = card.querySelector('p').textContent;
+    
+    const shareText = `Check out this initiative: ${title}\n${description}\n\nLearn more at ${window.location.href}`;
+    
+    navigator.clipboard.writeText(shareText)
+        .then(() => {
+            showNotification('Copied to clipboard! Paste on Instagram', 'success');
+        })
+        .catch(err => {
+            console.error('Copy failed:', err);
+            showNotification('Could not copy to clipboard', 'error');
+        });
+}
+
+function shareToTikTok(button) {
+    const card = button.closest('.initiative-card');
+    const title = card.querySelector('h3').textContent;
+    
+    const shareText = `Innovation Earth: ${title}\n${window.location.href}`;
+    
+    navigator.clipboard.writeText(shareText)
+        .then(() => {
+            showNotification('Copied to clipboard! Paste on TikTok', 'success');
+        })
+        .catch(err => {
+            console.error('Copy failed:', err);
+            showNotification('Could not copy to clipboard', 'error');
+        });
+}
+
+function shareByEmail(button) {
+    const card = button.closest('.initiative-card');
+    const title = card.querySelector('h3').textContent;
+    const description = card.querySelector('p').textContent;
+    
+    const subject = `Check this out: ${title}`;
+    const body = `I found this interesting initiative from Innovation Earth:\n\n${title}\n${description}\n\nLearn more: ${window.location.href}`;
+    
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+// Initialize social features
+document.addEventListener('DOMContentLoaded', function() {
+    setupSocialAnalytics();
+    displayFollowerCounts();
+    
+    // Wait for initiatives to load, then add share buttons
+    setTimeout(() => {
+        addSocialShareToCards();
+    }, 2000);
+});
 
 // ===== DEBUG FUNCTIONS =====
 function debugFirebaseConnection() {
