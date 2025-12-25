@@ -92,6 +92,213 @@ async function testFirebaseConnection() {
     }
 }
 
+// ===== CLEAN URL ROUTING =====
+let currentSection = 'home';
+
+function initializeCleanRouting() {
+    console.log('🚀 Setting up clean URL routing...');
+    
+    // Handle navigation clicks
+    document.addEventListener('click', function(e) {
+        const link = e.target.closest('a[data-section], a[href^="/"]');
+        if (link && link.getAttribute('href') !== '#') {
+            e.preventDefault();
+            
+            let section = link.getAttribute('data-section');
+            
+            // If no data-section, extract from href
+            if (!section && link.getAttribute('href')) {
+                const href = link.getAttribute('href');
+                section = href === '/' ? 'home' : href.substring(1);
+            }
+            
+            if (section) {
+                navigateTo(section);
+            }
+        }
+    });
+    
+    // Handle browser back/forward
+    window.addEventListener('popstate', function(e) {
+        if (e.state && e.state.section) {
+            showSection(e.state.section, false);
+        } else {
+            const path = window.location.pathname;
+            const section = path === '/' ? 'home' : path.substring(1);
+            showSection(section, false);
+        }
+    });
+    
+    // Handle initial load
+    handleInitialRoute();
+    
+    console.log('✅ Clean routing initialized');
+}
+
+function handleInitialRoute() {
+    const path = window.location.pathname;
+    const hash = window.location.hash;
+    
+    console.log('📍 Initial route - Path:', path, 'Hash:', hash);
+    
+    let section = 'home';
+    
+    if (path && path !== '/') {
+        // Clean URL
+        section = path.substring(1);
+    } else if (hash && hash !== '#') {
+        // Hash URL (fallback for old bookmarks)
+        section = hash.substring(1);
+    }
+    
+    // Validate section
+    const validSections = ['home', 'about', 'projects', 'initiatives', 'competitions', 'join', 'contact'];
+    if (!validSections.includes(section)) {
+        section = 'home';
+    }
+    
+    // Update URL to clean version
+    const cleanPath = section === 'home' ? '/' : `/${section}`;
+    window.history.replaceState({ section: section }, '', cleanPath);
+    
+    // Show the section
+    showSection(section, false);
+}
+
+function navigateTo(section) {
+    console.log(`➡️ Navigating to: ${section}`);
+    
+    // Update URL
+    const path = section === 'home' ? '/' : `/${section}`;
+    window.history.pushState({ section: section }, '', path);
+    
+    // Show section
+    showSection(section, false);
+    
+    // Close mobile menu if open
+    closeMobileMenu();
+}
+
+function showSection(section, updateHistory = true) {
+    console.log(`📂 Showing section: ${section}`);
+    
+    // Update current section
+    currentSection = section;
+    
+    // Hide all sections
+    document.querySelectorAll('.section').forEach(sectionEl => {
+        sectionEl.classList.remove('active');
+        sectionEl.style.display = 'none';
+    });
+    
+    // Show target section
+    const targetSection = document.getElementById(section);
+    if (targetSection) {
+        targetSection.classList.add('active');
+        targetSection.style.display = 'block';
+        
+        // Update navigation highlight
+        updateActiveNav(section);
+        
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+        // Load section content
+        loadSectionContent(section);
+        
+        console.log(`✅ Section shown: ${section}`);
+    } else {
+        console.error(`❌ Section not found: ${section}`);
+        // Fallback to home
+        if (section !== 'home') {
+            navigateTo('home');
+        }
+    }
+}
+
+function updateActiveNav(activeSection) {
+    // Remove active from all nav links
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('active');
+    });
+    
+    // Add active class to current nav link
+    const currentNavLink = document.querySelector(`.nav-link[data-section="${activeSection}"]`);
+    if (currentNavLink) {
+        currentNavLink.classList.add('active');
+    }
+}
+
+function loadSectionContent(section) {
+    switch(section) {
+        case 'projects':
+            console.log('📁 Loading projects...');
+            if (typeof loadProjects === 'function') {
+                setTimeout(() => loadProjects(), 100);
+            }
+            break;
+            
+        case 'initiatives':
+            console.log('📚 Loading initiatives...');
+            if (typeof loadInitiatives === 'function') {
+                setTimeout(() => loadInitiatives(), 100);
+            }
+            break;
+            
+        default:
+            // No special content to load
+            break;
+    }
+}
+
+function closeMobileMenu() {
+    const navList = document.querySelector('.nav-list');
+    const mobileToggle = document.getElementById('mobile-menu');
+    
+    if (navList && navList.classList.contains('show')) {
+        navList.classList.remove('show');
+        if (mobileToggle) {
+            mobileToggle.setAttribute('aria-expanded', 'false');
+            mobileToggle.innerHTML = '<i class="fas fa-bars"></i>';
+        }
+    }
+}
+
+// Make functions available globally
+window.navigateTo = navigateTo;
+window.showSection = showSection; // Keep for backward compatibility
+
+// Update your DOMContentLoaded initialization
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 Initializing Innovation Earth Projects...');
+    
+    // Initialize clean routing FIRST
+    initializeCleanRouting();
+    
+    // Initialize other functionality
+    initializeMobileMenu();
+    initializeBannerSlider();
+    initializeScrollAnimations();
+    initializeCompetitionTabs();
+    initializeContactForm();
+    initializeQuickLinkCards();
+    initializeRoleTabs();
+    
+    // Initialize Firebase
+    initializeFirebase().then(() => {
+        // Firebase is now ready
+        initializeJourneyStats();
+        initializeInitiatives();
+    }).catch(error => {
+        console.error('❌ Firebase initialization failed:', error);
+        // Still try to initialize with fallback
+        initializeJourneyStats();
+        initializeInitiatives();
+    });
+    
+    console.log('✅ All functionality loaded successfully!');
+});
+
 // ===== JOURNEY STATS MANAGEMENT =====
 async function loadJourneyStats() {
     try {
