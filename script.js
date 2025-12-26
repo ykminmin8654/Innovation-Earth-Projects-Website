@@ -104,7 +104,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeBannerSlider();
     initializeScrollAnimations();
     initializeCompetitionTabs();
-    initializeContactForm();
     initializeQuickLinkCards();
     initializeRoleTabs();
     
@@ -367,7 +366,6 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeBannerSlider();
     initializeScrollAnimations();
     initializeCompetitionTabs();
-    initializeContactForm();
     initializeQuickLinkCards();
     initializeRoleTabs();
     
@@ -870,52 +868,6 @@ function initializeRoleTabs() {
                     targetCategory.style.display = 'block';
                 }
             });
-        });
-    }
-}
-
-// ===== CONTACT FORM =====
-function initializeContactForm() {
-    const contactForm = document.querySelector('#contactForm');
-    if (contactForm) {
-        contactForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Get form data
-            const formData = new FormData(this);
-            const name = formData.get('name');
-            const email = formData.get('email');
-            const subject = formData.get('subject');
-            const message = formData.get('message');
-            
-            // Validate form
-            if (!name || !email || !subject || !message) {
-                showNotification('Please fill in all required fields.', 'error');
-                return;
-            }
-            
-            // Simulate submission
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-            submitBtn.disabled = true;
-            
-            // Simulate API call
-            setTimeout(() => {
-                showNotification(`Thank you, ${name}! Your message has been sent. We'll contact you at ${email}.`, 'success');
-                
-                // Reset form
-                contactForm.reset();
-                
-                // Reset button
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-                
-                // Save to local storage for demo
-                saveContactSubmission({ name, email, subject, message, timestamp: new Date().toISOString() });
-                
-            }, 2000);
         });
     }
 }
