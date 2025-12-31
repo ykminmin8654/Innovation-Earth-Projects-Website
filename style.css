@@ -182,13 +182,6 @@ p {
     transform: scale(1.05);
 }
 
-/* Fallback if image fails to load */
-.logo-image:before {
-    content: "🚀";
-    display: block;
-    font-size: 2rem;
-}
-
 /* ===== NAVIGATION ===== */
 .navigation {
     position: relative;
