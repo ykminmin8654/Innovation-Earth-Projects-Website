@@ -95,6 +95,23 @@ let firebaseApp = null;
 // ===== GLOBAL VARIABLES =====
 let currentTags = [];
 
+// Add this to your JavaScript
+const journeySection = document.getElementById('journey');
+if (journeySection) {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                // Trigger animations once
+                animateNumbers();
+                // Stop observing after animation plays
+                observer.unobserve(journeySection);
+            }
+        });
+    }, { threshold: 0.5 }); // Trigger when 50% visible
+    
+    observer.observe(journeySection);
+}
+
 // ===== MAIN INITIALIZATION =====
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing Innovation Earth Projects...');
