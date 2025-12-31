@@ -182,16 +182,17 @@ p {
     transform: scale(1.05);
 }
 
+/* Add this to your CSS file */
 h1 {
-    font-size: 1.5rem;  /* Control text size */
+    font-size: 1.5rem;  /* Control overall text size */
     font-weight: 700;
-    color: #203f23;
+    color: #ffffff;  /* Or your preferred color */
     margin: 0;
     line-height: 1.2;
 }
 
 h1 span {
-    color: #00ffff;  /* Teal color for "Earth" */
+    color: #32CD32;  /* Bright green for visibility */
     font-weight: 600;
 }
 
