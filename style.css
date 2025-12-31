@@ -164,24 +164,29 @@ p {
     align-items: center;
 }
 
+/* Logo styling */
 .logo {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
+    gap: 12px;
 }
 
-.logo i {
-    font-size: var(--font-size-xl);
+.logo-image {
+    height: 40px;
+    width: auto;
+    transition: transform 0.3s ease;
+    border-radius: 4px;
 }
 
-.logo h1 {
-    font-size: var(--font-size-lg);
-    margin: 0;
-    color: var(--white);
+.logo:hover .logo-image {
+    transform: scale(1.05);
 }
 
-.logo span {
-    color: var(--lime-green);
+/* Fallback if image fails to load */
+.logo-image:before {
+    content: "🚀";
+    display: block;
+    font-size: 2rem;
 }
 
 /* ===== NAVIGATION ===== */
