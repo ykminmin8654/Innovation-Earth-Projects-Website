@@ -1,0 +1,5 @@
+# Ignore gametest1 folder
+gametest1/
+
+# Also ignore any files inside it
+/gametest1/*
