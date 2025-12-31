@@ -620,6 +620,12 @@ h1 span {
     margin-top: var(--space-md);
 }
 
+/* Remove social media tags from initiative cards */
+.initiative-card .card-social-share,
+.initiative-card .share-btn-small {
+    display: none !important;
+}
+
 .progress-bar {
     background: var(--gray-light);
     border-radius: 10px;

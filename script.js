@@ -826,6 +826,43 @@ function animateCounter(element, target) {
     }, stepTime);
 }
 
+function createInitiativeCard(initiative, index) {
+    const card = document.createElement('article');
+    card.className = 'initiative-card animate-on-scroll';
+    card.dataset.id = initiative.id;
+    card.dataset.animation = 'fade-up';
+    card.dataset.delay = index * 200;
+    
+    // Get icon class
+    const iconClass = getInitiativeIcon(initiative.icon || 'rocket');
+    
+    // Create progress bar
+    const progress = initiative.progress || 0;
+    const progressBar = progress > 0 ? `
+        <div class="initiative-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: ${progress}%"></div>
+            </div>
+            <span>${initiative.status || `${progress}% Complete`}</span>
+        </div>
+    ` : '';
+    
+    // REMOVED: Social share buttons section
+    card.innerHTML = `
+        <div class="initiative-icon">
+            <i class="fas fa-${iconClass}"></i>
+        </div>
+        <h3>${initiative.title || 'Untitled Initiative'}</h3>
+        <p>${initiative.description || 'No description available.'}</p>
+        ${progressBar}
+        <div class="initiative-meta">
+            <span><i class="fas fa-sync-alt"></i> Updated ${formatRelativeTime(initiative.lastUpdated)}</span>
+        </div>
+    `;
+    
+    return card;
+}
+
 // ===== COMPETITION TABS =====
 function initializeCompetitionTabs() {
     const competitionTabs = document.querySelectorAll('#competitions .category-tab');
@@ -1263,93 +1300,6 @@ async function displayFollowerCounts() {
         followerElement.innerHTML = 'Join our growing community of innovators and changemakers';
     }
 }
-
-// Add share functionality to initiative cards
-function addSocialShareToCards() {
-    const initiativeCards = document.querySelectorAll('.initiative-card');
-    
-    initiativeCards.forEach(card => {
-        const shareContainer = document.createElement('div');
-        shareContainer.className = 'card-social-share';
-        shareContainer.style.cssText = `
-            display: flex;
-            gap: 8px;
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid #eee;
-        `;
-        
-        shareContainer.innerHTML = `
-            <button class="share-btn-small instagram" onclick="shareToInstagram(this)">
-                <i class="fab fa-instagram"></i>
-            </button>
-            <button class="share-btn-small tiktok" onclick="shareToTikTok(this)">
-                <i class="fab fa-tiktok"></i>
-            </button>
-            <button class="share-btn-small email" onclick="shareByEmail(this)">
-                <i class="fas fa-envelope"></i>
-            </button>
-        `;
-        
-        card.appendChild(shareContainer);
-    });
-}
-
-// Share functions
-function shareToInstagram(button) {
-    const card = button.closest('.initiative-card');
-    const title = card.querySelector('h3').textContent;
-    const description = card.querySelector('p').textContent;
-    
-    const shareText = `Check out this initiative: ${title}\n${description}\n\nLearn more at ${window.location.href}`;
-    
-    navigator.clipboard.writeText(shareText)
-        .then(() => {
-            showNotification('Copied to clipboard! Paste on Instagram', 'success');
-        })
-        .catch(err => {
-            console.error('Copy failed:', err);
-            showNotification('Could not copy to clipboard', 'error');
-        });
-}
-
-function shareToTikTok(button) {
-    const card = button.closest('.initiative-card');
-    const title = card.querySelector('h3').textContent;
-    
-    const shareText = `Innovation Earth: ${title}\n${window.location.href}`;
-    
-    navigator.clipboard.writeText(shareText)
-        .then(() => {
-            showNotification('Copied to clipboard! Paste on TikTok', 'success');
-        })
-        .catch(err => {
-            console.error('Copy failed:', err);
-            showNotification('Could not copy to clipboard', 'error');
-        });
-}
-
-function shareByEmail(button) {
-    const card = button.closest('.initiative-card');
-    const title = card.querySelector('h3').textContent;
-    const description = card.querySelector('p').textContent;
-    
-    const subject = `Check this out: ${title}`;
-    const body = `I found this interesting initiative from Innovation Earth:\n\n${title}\n${description}\n\nLearn more: ${window.location.href}`;
-    
-    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-}
-
-// Initialize social features
-document.addEventListener('DOMContentLoaded', function() {
-    setupSocialAnalytics();
-    displayFollowerCounts();
-    
-    // Wait for initiatives to load, then add share buttons
-    setTimeout(() => {
-        addSocialShareToCards();
-    }, 2000);
-});
 
 // ===== DEBUG FUNCTIONS =====
 function debugFirebaseConnection() {
