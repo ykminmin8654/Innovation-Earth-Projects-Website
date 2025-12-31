@@ -78,7 +78,7 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--dark);
 }
 
-h1 { font-size: var(--font-size-xl); }
+h1 { font-size: var(--font-size-xxl); }
 h2 { font-size: var(--font-size-xl); }
 h3 { font-size: var(--font-size-lg); }
 h4 { font-size: var(--font-size-md); }
@@ -172,7 +172,7 @@ p {
 }
 
 .logo-image {
-    height: 100px;
+    height: 40px;
     width: auto;
     transition: transform 0.3s ease;
     border-radius: 4px;
@@ -180,6 +180,19 @@ p {
 
 .logo:hover .logo-image {
     transform: scale(1.05);
+}
+
+h1 {
+    font-size: 1.5rem;  /* Control text size */
+    font-weight: 700;
+    color: #2c5530;
+    margin: 0;
+    line-height: 1.2;
+}
+
+h1 span {
+    color: #008080;  /* Teal color for "Earth" */
+    font-weight: 600;
 }
 
 /* ===== NAVIGATION ===== */
