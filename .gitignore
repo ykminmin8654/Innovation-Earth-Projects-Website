@@ -1,7 +1,7 @@
 # Ignore gametest1 folder
 gametest1/
 
-Payment-Simulator(Android-Apps)
+Payment-Simulator(Android-Apps)/
 
 # Also ignore any files inside it
 /gametest1/*
