@@ -1106,15 +1106,14 @@ function createProjectCard(project, index) {
         </div>
     ` : '';
     
-    // Create the View Project button
-    let viewProjectButton = '';
-    if (project.url && project.url.trim() !== '') {
-        viewProjectButton = `
-            <a href="${project.url}" target="_blank" class="btn btn-primary" style="margin-top: 15px; display: inline-block; text-align: center; width: 100%;">
-                <i class="fas fa-external-link-alt"></i> View Project
-            </a>
-        `;
-    }
+    // Create the View Project button - ALWAYS SHOWS
+    const viewProjectButton = `
+        <button class="btn btn-primary view-project-btn" 
+                style="margin-top: 15px; display: block; width: 100%; text-align: center;"
+                data-url="${project.url || ''}">
+            <i class="fas fa-external-link-alt"></i> View Project
+        </button>
+    `;
     
     // Create card HTML
     const cardHTML = `
@@ -1139,6 +1138,20 @@ function createProjectCard(project, index) {
     `;
     
     card.innerHTML = cardHTML;
+    
+    // Add click event to the button
+    const button = card.querySelector('.view-project-btn');
+    if (button) {
+        button.addEventListener('click', function() {
+            const url = this.getAttribute('data-url');
+            if (url && url.trim() !== '') {
+                window.open(url, '_blank');
+            } else {
+                alert('This project does not have a link available.');
+            }
+        });
+    }
+    
     return card;
 }
 
