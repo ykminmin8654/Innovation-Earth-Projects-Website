@@ -1057,21 +1057,6 @@ function createProjectCard(project, index) {
     card.className = 'project-card animate-on-scroll';
     card.dataset.id = project.id;
     
-    // Make card clickable if it has a URL
-    if (project.url && project.url.trim() !== '') {
-        card.style.cursor = 'pointer';
-        
-        card.addEventListener('click', function(e) {
-            // Don't trigger if user clicked on the button
-            if (e.target.closest('a') || e.target.closest('button')) {
-                return;
-            }
-            
-            // Open the project URL in new tab
-            window.open(project.url, '_blank');
-        });
-    }
-    
     // Format date
     const date = project.createdAt ? 
         new Date(project.createdAt.seconds * 1000 || project.createdAt).toLocaleDateString('en-US', {
@@ -1121,10 +1106,10 @@ function createProjectCard(project, index) {
         </div>
     ` : '';
     
-    // Update the button to prevent event bubbling
+    // Links - with stopPropagation
     const linksHtml = project.url ? `
         <div class="project-links">
-            <a href="${project.url}" target="_blank" class="btn btn-secondary" onclick="event.stopPropagation();">
+            <a href="${project.url}" target="_blank" class="btn btn-secondary" onclick="event.stopPropagation(); return false;">
                 <i class="fas fa-external-link-alt"></i> View Project
             </a>
         </div>
@@ -1148,6 +1133,21 @@ function createProjectCard(project, index) {
         </div>
         ${tagsHtml ? `<div class="project-footer">${tagsHtml}</div>` : ''}
     `;
+    
+    // Add click handler AFTER setting innerHTML
+    if (project.url && project.url.trim() !== '') {
+        card.style.cursor = 'pointer';
+        
+        card.addEventListener('click', function(e) {
+            // Don't trigger if user clicked on button or link
+            if (e.target.closest('a') || e.target.closest('button')) {
+                return;
+            }
+            
+            // Open the URL
+            window.open(project.url, '_blank');
+        });
+    }
     
     return card;
 }
