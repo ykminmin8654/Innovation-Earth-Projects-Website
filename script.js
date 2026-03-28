@@ -1107,7 +1107,7 @@ function createProjectCard(project, index) {
     ` : '';
     
     // Create card HTML
-    let cardHTML = `
+    const cardHTML = `
         <div class="project-header">
             ${imageHtml}
             <div class="project-badge ${priorityClass}">${priorityText}</div>
@@ -1122,32 +1122,27 @@ function createProjectCard(project, index) {
             </div>
             ${progressBar}
         </div>
+        <div class="project-footer">
+            ${tagsHtml}
+            ${project.url ? `
+            <div style="text-align: center; margin-top: 15px;">
+                <a href="${project.url}" target="_blank" style="
+                    display: inline-block;
+                    background: #32CD32;
+                    color: white;
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    text-decoration: none;
+                    font-weight: bold;
+                ">
+                    <i class="fas fa-external-link-alt"></i> View Project
+                </a>
+            </div>
+            ` : ''}
+        </div>
     `;
     
-    // Add View Project button inside the project-footer
-    let buttonHtml = '';
-    if (project.url && project.url.trim() !== '') {
-        buttonHtml = `
-        <div class="project-actions">
-            <a href="${project.url}" target="_blank" class="btn-view-project">
-                <i class="fas fa-external-link-alt"></i> View Project
-            </a>
-        </div>
-        `;
-    }
-    
-    // Add footer with tags and button
-    if (tagsHtml || buttonHtml) {
-        cardHTML += `
-        <div class="project-footer">
-            ${tagsHtml ? `<div class="project-tags">${tagsHtml}</div>` : ''}
-            ${buttonHtml}
-        </div>
-        `;
-    }
-    
     card.innerHTML = cardHTML;
-    
     return card;
 }
 
