@@ -1107,7 +1107,7 @@ function createProjectCard(project, index) {
     ` : '';
     
     // Create card HTML
-    const cardHTML = `
+    let cardHTML = `
         <div class="project-header">
             ${imageHtml}
             <div class="project-badge ${priorityClass}">${priorityText}</div>
@@ -1124,29 +1124,27 @@ function createProjectCard(project, index) {
         </div>
     `;
     
-    // Add footer with tags and view button
-    let footerHTML = '';
-    if (project.url || tagsHtml) {
-        footerHTML = `<div class="project-footer">`;
-        
-        if (tagsHtml) {
-            footerHTML += `<div class="project-tags">${tagsHtml}</div>`;
-        }
-        
-        if (project.url && project.url.trim() !== '') {
-            footerHTML += `
-            <div class="project-actions">
-                <a href="${project.url}" target="_blank" class="btn btn-view-project">
-                    <i class="fas fa-external-link-alt"></i> View Project
-                </a>
-            </div>
-            `;
-        }
-        
-        footerHTML += `</div>`;
+    // Add footer with tags
+    if (tagsHtml) {
+        cardHTML += `
+        <div class="project-footer">
+            ${tagsHtml}
+        </div>
+        `;
     }
     
-    card.innerHTML = cardHTML + footerHTML;
+    // Add View Project button at the bottom (after tags)
+    if (project.url && project.url.trim() !== '') {
+        cardHTML += `
+        <div class="project-actions">
+            <a href="${project.url}" target="_blank" class="btn btn-view-project">
+                <i class="fas fa-external-link-alt"></i> View Project
+            </a>
+        </div>
+        `;
+    }
+    
+    card.innerHTML = cardHTML;
     
     return card;
 }

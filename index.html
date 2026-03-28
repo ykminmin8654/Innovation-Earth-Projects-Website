@@ -281,57 +281,94 @@
             </section>
         </section>
 
-        <!-- Projects Section -->
-        <section id="projects" class="section">
-            <div class="container">
-                <div class="section-header">
-                    <h2>Our Projects</h2>
-                    <p>Explore our innovation pipeline from concept to completion</p>
-                </div>
+<!-- Projects Section -->
+<section id="projects" class="section">
+    <div class="container">
+        <div class="section-header">
+            <h2>Our Projects</h2>
+            <p>Explore our innovation pipeline from concept to completion</p>
+        </div>
 
-                <!-- Category Navigation -->
-                <nav class="category-nav" aria-label="Project categories">
-                    <ul class="category-list" role="tablist">
-                        <li role="presentation">
-                            <button class="category-tab active" data-category="all" role="tab" aria-selected="true">
-                                <i class="fas fa-th" aria-hidden="true"></i> All Projects
-                            </button>
-                        </li>
-                    </ul>
-                </nav>
-
-                <!-- Projects Container -->
-                <div id="projects-container" class="projects-grid">
-                    <!-- Projects will load here dynamically from Firebase -->
-                </div>
-
-                <!-- Loading State -->
-                <div id="projects-loading" class="loading-state" style="display: none;">
-                    <div class="spinner"></div>
-                    <p>Loading projects...</p>
-                </div>
-
-                <!-- Empty State -->
-                <div id="projects-empty" class="empty-state" style="display: none;">
-                    <i class="fas fa-inbox"></i>
-                    <h3>No Projects Yet</h3>
-                    <p>Be the first to add a project!</p>
-                    <button onclick="toggleAdminPanel()" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Add First Project
+        <!-- Category Navigation -->
+        <nav class="category-nav" aria-label="Project categories">
+            <ul class="category-list" role="tablist">
+                <li role="presentation">
+                    <button class="category-tab active" data-category="all" role="tab" aria-selected="true">
+                        <i class="fas fa-th" aria-hidden="true"></i> All Projects
                     </button>
-                </div>
+                </li>
+            </ul>
+        </nav>
 
-                <!-- Error State -->
-                <div id="projects-error" class="error-state" style="display: none;">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <h3>Error Loading Projects</h3>
-                    <p>Could not load projects. Please try again later.</p>
-                    <button onclick="loadProjects()" class="btn btn-secondary">
-                        <i class="fas fa-redo"></i> Retry
-                    </button>
-                </div>
-            </div>
-        </section>
+        <!-- Projects Container -->
+        <div id="projects-container" class="projects-grid">
+            <!-- Projects will load here dynamically from Firebase -->
+        </div>
+
+        <!-- Loading State -->
+        <div id="projects-loading" class="loading-state" style="display: none;">
+            <div class="spinner"></div>
+            <p>Loading projects...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="projects-empty" class="empty-state" style="display: none;">
+            <i class="fas fa-inbox"></i>
+            <h3>No Projects Yet</h3>
+            <p>Be the first to add a project!</p>
+            <button onclick="toggleAdminPanel()" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add First Project
+            </button>
+        </div>
+
+        <!-- Error State -->
+        <div id="projects-error" class="error-state" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h3>Error Loading Projects</h3>
+            <p>Could not load projects. Please try again later.</p>
+            <button onclick="loadProjects()" class="btn btn-secondary">
+                <i class="fas fa-redo"></i> Retry
+            </button>
+        </div>
+
+        <!-- Add View Project button to the existing button styles in the page -->
+        <style>
+            .btn-view-project {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                background: var(--lime-green);
+                color: var(--white);
+                padding: 0.6rem 1.2rem;
+                border-radius: var(--border-radius);
+                text-decoration: none;
+                font-size: 0.9rem;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                border: none;
+                cursor: pointer;
+                width: 100%;
+                max-width: 200px;
+                margin: 10px auto 0;
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .btn-view-project:hover {
+                background: var(--dark-green);
+                transform: translateY(-2px);
+                box-shadow: var(--shadow);
+            }
+            
+            .project-actions {
+                width: 100%;
+                text-align: center;
+                margin-top: 15px;
+            }
+        </style>
+    </div>
+</section>
 
         <!-- Competitions Section -->
         <section id="competitions" class="section section-alt">
