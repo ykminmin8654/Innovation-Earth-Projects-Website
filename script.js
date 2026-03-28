@@ -1106,15 +1106,7 @@ function createProjectCard(project, index) {
         </div>
     ` : '';
     
-    // Links - with stopPropagation
-    const linksHtml = project.url ? `
-        <div class="project-links">
-            <a href="${project.url}" target="_blank" class="btn btn-secondary" onclick="event.stopPropagation(); return false;">
-                <i class="fas fa-external-link-alt"></i> View Project
-            </a>
-        </div>
-    ` : '';
-    
+    // Create card HTML
     card.innerHTML = `
         <div class="project-header">
             ${imageHtml}
@@ -1129,24 +1121,35 @@ function createProjectCard(project, index) {
                 <span><i class="fas fa-user"></i> ${project.author || 'Team'}</span>
             </div>
             ${progressBar}
-            ${linksHtml}
+            ${project.url ? `
+            <div class="project-links">
+                <a href="${project.url}" target="_blank" class="btn btn-secondary">
+                    <i class="fas fa-external-link-alt"></i> View Project
+                </a>
+            </div>
+            ` : ''}
         </div>
         ${tagsHtml ? `<div class="project-footer">${tagsHtml}</div>` : ''}
     `;
     
-    // Add click handler AFTER setting innerHTML
+    // Make entire card clickable if it has a URL
     if (project.url && project.url.trim() !== '') {
+        // Make cursor look clickable
         card.style.cursor = 'pointer';
         
+        // When you click the card, open the URL
         card.addEventListener('click', function(e) {
-            // Don't trigger if user clicked on button or link
-            if (e.target.closest('a') || e.target.closest('button')) {
-                return;
-            }
-            
-            // Open the URL
+            // Open in new tab
             window.open(project.url, '_blank');
         });
+        
+        // Stop the button from also triggering the card click
+        const button = card.querySelector('.btn.btn-secondary');
+        if (button) {
+            button.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        }
     }
     
     return card;
