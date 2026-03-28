@@ -1106,6 +1106,19 @@ function createProjectCard(project, index) {
         </div>
     ` : '';
     
+    // Create the button HTML - SIMPLE and WORKING
+    let buttonHtml = '';
+    if (project.url && project.url.trim() !== '') {
+        buttonHtml = `
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; text-align: center;">
+                <a href="${project.url}" target="_blank" 
+                   style="background-color: #32CD32; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; display: inline-block; font-weight: bold;">
+                    <i class="fas fa-external-link-alt"></i> View Project
+                </a>
+            </div>
+        `;
+    }
+    
     // Create card HTML
     const cardHTML = `
         <div class="project-header">
@@ -1124,21 +1137,7 @@ function createProjectCard(project, index) {
         </div>
         <div class="project-footer">
             ${tagsHtml}
-            ${project.url ? `
-            <div style="text-align: center; margin-top: 15px;">
-                <a href="${project.url}" target="_blank" style="
-                    display: inline-block;
-                    background: #32CD32;
-                    color: white;
-                    padding: 10px 20px;
-                    border-radius: 5px;
-                    text-decoration: none;
-                    font-weight: bold;
-                ">
-                    <i class="fas fa-external-link-alt"></i> View Project
-                </a>
-            </div>
-            ` : ''}
+            ${buttonHtml}
         </div>
     `;
     
