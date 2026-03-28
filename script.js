@@ -1052,7 +1052,104 @@ async function loadProjects() {
     }
 }
 
-
+function createProjectCard(project, index) {
+    const card = document.createElement('article');
+    card.className = 'project-card animate-on-scroll';
+    card.dataset.id = project.id;
+    
+    // Format date
+    const date = project.createdAt ? 
+        new Date(project.createdAt.seconds * 1000 || project.createdAt).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        }) : 'Recently added';
+    
+    // Create status badge
+    const statusClass = getStatusClass(project.status || 'idea');
+    const statusText = getStatusText(project.status || 'idea');
+    
+    // Create priority badge
+    const priorityClass = getPriorityClass(project.priority || 'medium');
+    const priorityText = getPriorityText(project.priority || 'medium');
+    
+    // Create image HTML
+    let imageHtml = '';
+    if (project.imageUrl) {
+        imageHtml = `
+            <div class="project-image">
+                <img src="${project.imageUrl}" alt="${project.title}" loading="lazy" 
+                     onerror="this.style.display='none'; this.parentNode.innerHTML='<div class=\"project-image-placeholder\"><i class=\"fas fa-project-diagram\"></i></div>';">
+            </div>
+        `;
+    } else {
+        imageHtml = `
+            <div class="project-image-placeholder">
+                <i class="fas fa-project-diagram"></i>
+            </div>
+        `;
+    }
+    
+    // Create tags HTML
+    const tagsHtml = (project.tags || []).map(tag => 
+        `<span class="project-tag">${tag}</span>`
+    ).join('');
+    
+    // Progress bar
+    const progress = project.progress || 0;
+    const progressBar = progress > 0 ? `
+        <div class="project-progress">
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: ${progress}%"></div>
+            </div>
+            <span>${progress}% Complete</span>
+        </div>
+    ` : '';
+    
+    // Create card HTML
+    const cardHTML = `
+        <div class="project-header">
+            ${imageHtml}
+            <div class="project-badge ${priorityClass}">${priorityText}</div>
+            <div class="project-badge ${statusClass}" style="top: 3.5rem;">${statusText}</div>
+        </div>
+        <div class="project-content">
+            <h3>${project.title || 'Untitled Project'}</h3>
+            <p>${project.description || 'No description available.'}</p>
+            <div class="project-meta">
+                <span><i class="fas fa-calendar"></i> ${date}</span>
+                <span><i class="fas fa-user"></i> ${project.author || 'Team'}</span>
+            </div>
+            ${progressBar}
+        </div>
+    `;
+    
+    // Add footer with tags and view button
+    let footerHTML = '';
+    if (project.url || tagsHtml) {
+        footerHTML = `<div class="project-footer">`;
+        
+        if (tagsHtml) {
+            footerHTML += `<div class="project-tags">${tagsHtml}</div>`;
+        }
+        
+        if (project.url && project.url.trim() !== '') {
+            footerHTML += `
+            <div class="project-actions">
+                <a href="${project.url}" target="_blank" class="btn btn-view-project">
+                    <i class="fas fa-external-link-alt"></i> View Project
+                </a>
+            </div>
+            `;
+        }
+        
+        footerHTML += `</div>`;
+    }
+    
+    card.innerHTML = cardHTML + footerHTML;
+    
+    return card;
+}
 
 function getStatusClass(status) {
     const statusClasses = {
