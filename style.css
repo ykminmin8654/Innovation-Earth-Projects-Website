@@ -870,6 +870,53 @@ h1 span {
     border: 1px solid var(--border);
 }
 
+/* Add to your CSS file */
+.project-footer {
+    padding: var(--space-md) var(--space-lg);
+    border-top: 1px solid var(--border);
+    background: var(--gray-light);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.project-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.project-actions {
+    width: 100%;
+    text-align: center;
+    padding-top: 10px;
+    border-top: 1px solid rgba(0,0,0,0.1);
+    margin-top: 5px;
+}
+
+.btn-view-project {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--lime-green);
+    color: var(--white);
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-view-project:hover {
+    background: var(--dark-green);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
 /* Loading, Error, and Empty States */
 .loading-state,
 .empty-state,

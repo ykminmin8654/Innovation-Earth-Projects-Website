@@ -1124,22 +1124,24 @@ function createProjectCard(project, index) {
         </div>
     `;
     
-    // Add footer with tags
-    if (tagsHtml) {
-        cardHTML += `
-        <div class="project-footer">
-            ${tagsHtml}
+    // Add View Project button inside the project-footer
+    let buttonHtml = '';
+    if (project.url && project.url.trim() !== '') {
+        buttonHtml = `
+        <div class="project-actions">
+            <a href="${project.url}" target="_blank" class="btn-view-project">
+                <i class="fas fa-external-link-alt"></i> View Project
+            </a>
         </div>
         `;
     }
     
-    // Add View Project button at the bottom (after tags)
-    if (project.url && project.url.trim() !== '') {
+    // Add footer with tags and button
+    if (tagsHtml || buttonHtml) {
         cardHTML += `
-        <div class="project-actions">
-            <a href="${project.url}" target="_blank" class="btn btn-view-project">
-                <i class="fas fa-external-link-alt"></i> View Project
-            </a>
+        <div class="project-footer">
+            ${tagsHtml ? `<div class="project-tags">${tagsHtml}</div>` : ''}
+            ${buttonHtml}
         </div>
         `;
     }
