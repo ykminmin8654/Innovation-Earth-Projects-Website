@@ -1057,19 +1057,19 @@ function createProjectCard(project, index) {
     card.className = 'project-card animate-on-scroll';
     card.dataset.id = project.id;
     
-    // Add cursor pointer style
-    card.style.cursor = 'pointer';
-    
-    // Add click handler if project has a URL
-    if (project.url) {
-        card.addEventListener('click', function() {
+    // Make card clickable if it has a URL
+    if (project.url && project.url.trim() !== '') {
+        card.style.cursor = 'pointer';
+        
+        card.addEventListener('click', function(e) {
+            // Don't trigger if user clicked on the button
+            if (e.target.closest('a') || e.target.closest('button')) {
+                return;
+            }
+            
+            // Open the project URL in new tab
             window.open(project.url, '_blank');
         });
-    }
-    
-    // Also add hover effect via CSS
-    if (project.url) {
-        card.classList.add('clickable-card');
     }
     
     // Format date
@@ -1121,7 +1121,7 @@ function createProjectCard(project, index) {
         </div>
     ` : '';
     
-    // Update the "View Project" button to prevent event bubbling
+    // Update the button to prevent event bubbling
     const linksHtml = project.url ? `
         <div class="project-links">
             <a href="${project.url}" target="_blank" class="btn btn-secondary" onclick="event.stopPropagation();">
