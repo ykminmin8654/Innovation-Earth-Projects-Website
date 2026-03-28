@@ -1106,16 +1106,13 @@ function createProjectCard(project, index) {
         </div>
     ` : '';
     
-    // Create the button HTML - SIMPLE and WORKING
-    let buttonHtml = '';
+    // Create the View Project button
+    let viewProjectButton = '';
     if (project.url && project.url.trim() !== '') {
-        buttonHtml = `
-            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; text-align: center;">
-                <a href="${project.url}" target="_blank" 
-                   style="background-color: #32CD32; color: white; padding: 10px 20px; border-radius: 5px; text-decoration: none; display: inline-block; font-weight: bold;">
-                    <i class="fas fa-external-link-alt"></i> View Project
-                </a>
-            </div>
+        viewProjectButton = `
+            <a href="${project.url}" target="_blank" class="btn btn-primary" style="margin-top: 15px; display: inline-block; text-align: center; width: 100%;">
+                <i class="fas fa-external-link-alt"></i> View Project
+            </a>
         `;
     }
     
@@ -1134,10 +1131,10 @@ function createProjectCard(project, index) {
                 <span><i class="fas fa-user"></i> ${project.author || 'Team'}</span>
             </div>
             ${progressBar}
+            ${viewProjectButton}
         </div>
         <div class="project-footer">
             ${tagsHtml}
-            ${buttonHtml}
         </div>
     `;
     
