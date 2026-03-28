@@ -1106,14 +1106,37 @@ function createProjectCard(project, index) {
         </div>
     ` : '';
     
-    // Create the View Project button - ALWAYS SHOWS
-    const viewProjectButton = `
-        <button class="btn btn-primary view-project-btn" 
-                style="margin-top: 15px; display: block; width: 100%; text-align: center;"
-                data-url="${project.url || ''}">
-            <i class="fas fa-external-link-alt"></i> View Project
-        </button>
-    `;
+    // FIX: Clean the URL - remove quotes
+    let cleanUrl = '';
+    if (project.url) {
+        // Remove quotes from the URL
+        cleanUrl = project.url.replace(/["']/g, '');
+        console.log('Original URL:', project.url);
+        console.log('Cleaned URL:', cleanUrl);
+    }
+    
+    // Create the View Project button
+    const hasUrl = cleanUrl && cleanUrl.trim() !== '';
+    let actionButton = '';
+    
+    if (hasUrl) {
+        // Make sure URL starts with http:// or https://
+        if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+            cleanUrl = 'https://' + cleanUrl;
+        }
+        
+        actionButton = `
+            <a href="${cleanUrl}" target="_blank" class="btn btn-primary" style="margin-top: 15px; display: block; width: 100%; text-align: center;">
+                <i class="fas fa-external-link-alt"></i> View Project
+            </a>
+        `;
+    } else {
+        actionButton = `
+            <button class="btn btn-secondary" style="margin-top: 15px; display: block; width: 100%; text-align: center;" onclick="alert('No URL available for this project.')">
+                <i class="fas fa-info-circle"></i> No URL Available
+            </button>
+        `;
+    }
     
     // Create card HTML
     const cardHTML = `
@@ -1130,7 +1153,7 @@ function createProjectCard(project, index) {
                 <span><i class="fas fa-user"></i> ${project.author || 'Team'}</span>
             </div>
             ${progressBar}
-            ${viewProjectButton}
+            ${actionButton}
         </div>
         <div class="project-footer">
             ${tagsHtml}
@@ -1138,20 +1161,6 @@ function createProjectCard(project, index) {
     `;
     
     card.innerHTML = cardHTML;
-    
-    // Add click event to the button
-    const button = card.querySelector('.view-project-btn');
-    if (button) {
-        button.addEventListener('click', function() {
-            const url = this.getAttribute('data-url');
-            if (url && url.trim() !== '') {
-                window.open(url, '_blank');
-            } else {
-                alert('This project does not have a link available.');
-            }
-        });
-    }
-    
     return card;
 }
 
