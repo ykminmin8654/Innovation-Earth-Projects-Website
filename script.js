@@ -1106,33 +1106,39 @@ function createProjectCard(project, index) {
         </div>
     ` : '';
     
-    // FIX: Clean the URL - remove quotes
-    let cleanUrl = '';
-    if (project.url) {
-        // Remove quotes from the URL
-        cleanUrl = project.url.replace(/["']/g, '');
-        console.log('Original URL:', project.url);
-        console.log('Cleaned URL:', cleanUrl);
-    }
+    // DEBUG: Log everything about the project
+    console.log('=== DEBUG PROJECT DATA ===');
+    console.log('Project title:', project.title);
+    console.log('Full project data:', project);
+    console.log('Raw URL value:', project.url);
+    console.log('URL type:', typeof project.url);
+    console.log('URL trimmed:', project.url ? project.url.trim() : 'no url');
+    console.log('URL exists check:', !!project.url);
+    console.log('URL length:', project.url ? project.url.length : 0);
     
-    // Create the View Project button
-    const hasUrl = cleanUrl && cleanUrl.trim() !== '';
+    // Create the View Project button - ALWAYS shows it
     let actionButton = '';
-    
-    if (hasUrl) {
-        // Make sure URL starts with http:// or https://
+    if (project.url && project.url.trim() !== '') {
+        // Clean the URL
+        let cleanUrl = project.url.trim().replace(/["']/g, '');
         if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
             cleanUrl = 'https://' + cleanUrl;
         }
         
+        console.log('Cleaned URL for button:', cleanUrl);
+        
         actionButton = `
-            <a href="${cleanUrl}" target="_blank" class="btn btn-primary" style="margin-top: 15px; display: block; width: 100%; text-align: center;">
+            <a href="${cleanUrl}" target="_blank" class="btn btn-primary" 
+               style="margin-top: 15px; display: block; width: 100%; text-align: center; background: #32CD32; color: white; padding: 10px; border-radius: 5px; text-decoration: none;">
                 <i class="fas fa-external-link-alt"></i> View Project
             </a>
         `;
     } else {
+        console.log('NO URL FOUND for this project!');
         actionButton = `
-            <button class="btn btn-secondary" style="margin-top: 15px; display: block; width: 100%; text-align: center;" onclick="alert('No URL available for this project.')">
+            <button class="btn btn-secondary" 
+                    style="margin-top: 15px; display: block; width: 100%; text-align: center; background: #6c757d; color: white; padding: 10px; border-radius: 5px; border: none;"
+                    onclick="alert('No URL available for ${project.title}. Please add a URL in Firebase.')">
                 <i class="fas fa-info-circle"></i> No URL Available
             </button>
         `;
