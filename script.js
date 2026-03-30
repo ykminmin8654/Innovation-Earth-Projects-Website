@@ -1106,41 +1106,56 @@ function createProjectCard(project, index) {
         </div>
     ` : '';
     
-    // DEBUG: Log everything about the project
-    console.log('=== DEBUG PROJECT DATA ===');
-    console.log('Project title:', project.title);
-    console.log('Full project data:', project);
-    console.log('Raw URL value:', project.url);
-    console.log('URL type:', typeof project.url);
-    console.log('URL trimmed:', project.url ? project.url.trim() : 'no url');
-    console.log('URL exists check:', !!project.url);
-    console.log('URL length:', project.url ? project.url.length : 0);
+    // Check if URL exists
+    const hasUrl = project.url && project.url.toString().trim() !== '';
     
-    // Create the View Project button - ALWAYS shows it
-    let actionButton = '';
-    if (project.url && project.url.trim() !== '') {
+    // Create button HTML
+    let buttonHtml = '';
+    if (hasUrl) {
         // Clean the URL
-        let cleanUrl = project.url.trim().replace(/["']/g, '');
-        if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
-            cleanUrl = 'https://' + cleanUrl;
+        let url = project.url.toString().trim();
+        
+        // Remove quotes if present
+        url = url.replace(/^["']|["']$/g, '');
+        
+        // Make sure it has https://
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            url = 'https://' + url;
         }
         
-        console.log('Cleaned URL for button:', cleanUrl);
-        
-        actionButton = `
-            <a href="${cleanUrl}" target="_blank" class="btn btn-primary" 
-               style="margin-top: 15px; display: block; width: 100%; text-align: center; background: #32CD32; color: white; padding: 10px; border-radius: 5px; text-decoration: none;">
-                <i class="fas fa-external-link-alt"></i> View Project
-            </a>
+        buttonHtml = `
+            <div style="text-align: center; margin-top: 15px; padding: 10px;">
+                <a href="${url}" target="_blank" 
+                   style="display: inline-block; 
+                          background: #32CD32; 
+                          color: white; 
+                          padding: 12px 24px; 
+                          border-radius: 5px; 
+                          text-decoration: none;
+                          font-weight: bold;
+                          width: 100%;
+                          max-width: 300px;">
+                    <i class="fas fa-external-link-alt"></i> View Project
+                </a>
+            </div>
         `;
     } else {
-        console.log('NO URL FOUND for this project!');
-        actionButton = `
-            <button class="btn btn-secondary" 
-                    style="margin-top: 15px; display: block; width: 100%; text-align: center; background: #6c757d; color: white; padding: 10px; border-radius: 5px; border: none;"
-                    onclick="alert('No URL available for ${project.title}. Please add a URL in Firebase.')">
-                <i class="fas fa-info-circle"></i> No URL Available
-            </button>
+        buttonHtml = `
+            <div style="text-align: center; margin-top: 15px; padding: 10px;">
+                <button onclick="alert('This project does not have a URL.')" 
+                        style="display: inline-block; 
+                               background: #6c757d; 
+                               color: white; 
+                               padding: 12px 24px; 
+                               border-radius: 5px; 
+                               border: none;
+                               font-weight: bold;
+                               width: 100%;
+                               max-width: 300px;
+                               cursor: pointer;">
+                    <i class="fas fa-info-circle"></i> No URL Available
+                </button>
+            </div>
         `;
     }
     
@@ -1159,11 +1174,11 @@ function createProjectCard(project, index) {
                 <span><i class="fas fa-user"></i> ${project.author || 'Team'}</span>
             </div>
             ${progressBar}
-            ${actionButton}
         </div>
         <div class="project-footer">
             ${tagsHtml}
         </div>
+        ${buttonHtml}
     `;
     
     card.innerHTML = cardHTML;
