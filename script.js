@@ -1106,16 +1106,13 @@ function createProjectCard(project, index) {
         </div>
     ` : '';
     
-    // Check if URL exists - it doesn't, so it's undefined
-    const hasUrl = project.url !== undefined && project.url !== null && project.url.toString().trim() !== '';
-    
-    console.log(`Project "${project.title}": hasUrl = ${hasUrl}, url =`, project.url);
-    
     // Create button HTML
     let buttonHtml = '';
-    if (hasUrl) {
-        // Clean the URL
-        let url = project.url.toString().trim();
+    
+    // Check if project has a URL
+    if (project.url && project.url.trim() !== '') {
+        // Project HAS a URL - create green clickable button
+        let url = project.url.trim();
         
         // Remove quotes if present
         url = url.replace(/^["']|["']$/g, '');
@@ -1126,7 +1123,7 @@ function createProjectCard(project, index) {
         }
         
         buttonHtml = `
-            <div style="text-align: center; margin-top: 15px; padding: 10px;">
+            <div style="text-align: center; margin: 15px 0; padding: 10px;">
                 <a href="${url}" target="_blank" 
                    style="display: inline-block; 
                           background: #32CD32; 
@@ -1135,28 +1132,24 @@ function createProjectCard(project, index) {
                           border-radius: 5px; 
                           text-decoration: none;
                           font-weight: bold;
-                          width: 100%;
-                          max-width: 300px;">
+                          cursor: pointer;">
                     <i class="fas fa-external-link-alt"></i> View Project
                 </a>
             </div>
         `;
     } else {
+        // Project does NOT have a URL - show grey disabled button
         buttonHtml = `
-            <div style="text-align: center; margin-top: 15px; padding: 10px;">
-                <button onclick="alert('This project does not have a URL. Add a URL in Firebase.')" 
-                        style="display: inline-block; 
-                               background: #6c757d; 
-                               color: white; 
-                               padding: 12px 24px; 
-                               border-radius: 5px; 
-                               border: none;
-                               font-weight: bold;
-                               width: 100%;
-                               max-width: 300px;
-                               cursor: pointer;">
-                    <i class="fas fa-plus-circle"></i> Add URL to Project
-                </button>
+            <div style="text-align: center; margin: 15px 0; padding: 10px;">
+                <div style="display: inline-block; 
+                          background: #6c757d; 
+                          color: white; 
+                          padding: 12px 24px; 
+                          border-radius: 5px; 
+                          font-weight: bold;
+                          cursor: not-allowed;">
+                    <i class="fas fa-ban"></i> No URL for this project
+                </div>
             </div>
         `;
     }
