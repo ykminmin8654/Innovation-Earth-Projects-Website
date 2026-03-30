@@ -1106,8 +1106,10 @@ function createProjectCard(project, index) {
         </div>
     ` : '';
     
-    // Check if URL exists
-    const hasUrl = project.url && project.url.toString().trim() !== '';
+    // Check if URL exists - it doesn't, so it's undefined
+    const hasUrl = project.url !== undefined && project.url !== null && project.url.toString().trim() !== '';
+    
+    console.log(`Project "${project.title}": hasUrl = ${hasUrl}, url =`, project.url);
     
     // Create button HTML
     let buttonHtml = '';
@@ -1142,7 +1144,7 @@ function createProjectCard(project, index) {
     } else {
         buttonHtml = `
             <div style="text-align: center; margin-top: 15px; padding: 10px;">
-                <button onclick="alert('This project does not have a URL.')" 
+                <button onclick="alert('This project does not have a URL. Add a URL in Firebase.')" 
                         style="display: inline-block; 
                                background: #6c757d; 
                                color: white; 
@@ -1153,7 +1155,7 @@ function createProjectCard(project, index) {
                                width: 100%;
                                max-width: 300px;
                                cursor: pointer;">
-                    <i class="fas fa-info-circle"></i> No URL Available
+                    <i class="fas fa-plus-circle"></i> Add URL to Project
                 </button>
             </div>
         `;
