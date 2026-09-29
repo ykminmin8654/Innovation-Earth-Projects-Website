@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Products — Innovation Earth Projects</title>
+  <meta name="description" content="Free tools built by students, for students. Browse everything we've shipped." />
+  <meta name="theme-color" content="#008080" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Icons -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  />
+
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="../shared/tokens.css" />
+  <link rel="stylesheet" href="../shared/base.css" />
+  <link rel="stylesheet" href="../shared/nav.css" />
+
+  <!-- Local styles -->
+  <link rel="stylesheet" href="./products.css" />
+</head>
+
+<body data-page="products">
+
+  <!-- Nav injected by shared/nav.js -->
+  <div id="nav-mount"></div>
+
+  <main>
+
+    <!-- ============================================================
+         PAGE HEADER
+         ============================================================ -->
+    <section class="page-head">
+      <div class="container">
+        <span class="eyebrow">Products</span>
+        <h1 class="page-head__title">Everything we've built</h1>
+        <p class="page-head__lede">
+          Free, forever. Built by students, for students.
+          Every tool here is designed to help you compete, learn, or build —
+          with no signup walls and no paywalls.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         FILTER TABS + GRID
+         ============================================================ -->
+    <section class="section section--tight">
+      <div class="container">
+
+        <!-- Filter tabs -->
+        <nav class="tabs" id="product-tabs" aria-label="Filter products">
+          <button class="tab tab--active" data-filter="all">
+            <i class="fas fa-th"></i> All
+            <span class="tab__count" data-count="all">0</span>
+          </button>
+          <button class="tab" data-filter="live">
+            <span class="dot dot--live"></span> Live
+            <span class="tab__count" data-count="live">0</span>
+          </button>
+          <button class="tab" data-filter="beta">
+            <span class="dot dot--beta"></span> Beta
+            <span class="tab__count" data-count="beta">0</span>
+          </button>
+          <button class="tab" data-filter="soon">
+            <span class="dot dot--soon"></span> Soon
+            <span class="tab__count" data-count="soon">0</span>
+          </button>
+        </nav>
+
+        <!-- Product grid -->
+        <div class="grid-products" id="products-grid">
+          <div class="state">
+            <div class="spinner"></div>
+            <p>Loading products…</p>
+          </div>
+        </div>
+
+        <!-- Retry (hidden by default) -->
+        <div class="retry-wrap" id="retry-wrap" hidden>
+          <button class="btn btn--secondary" id="retry-btn">
+            <i class="fas fa-redo"></i> Try again
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================================================
+         WHY FREE
+         ============================================================ -->
+    <section class="section section--tint">
+      <div class="container">
+        <div class="callout">
+          <div class="callout__mark" aria-hidden="true">$0</div>
+          <div class="callout__body">
+            <h3>Every tool, free</h3>
+            <p>
+              We're a registered LLC, not a nonprofit. We ship free tools
+              because we're students too — and we know exactly what's missing.
+              No ads, no upsells, no premium tiers.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         FEEDBACK CTA
+         ============================================================ -->
+    <section class="section">
+      <div class="container">
+        <div class="cta">
+          <div class="cta__copy">
+            <h2>Missing a tool?</h2>
+            <p>Tell us what would help you. We build what students actually need.</p>
+          </div>
+          <a href="../contact/contact.html" class="btn btn--primary">
+            Send a suggestion <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer injected by shared/nav.js -->
+  <div id="footer-mount"></div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+
+  <!-- Shared JS -->
+  <script src="../shared/firebase.js" defer></script>
+  <script src="../shared/nav.js" defer></script>
+
+  <!-- Local JS -->
+  <script src="./products.js" defer></script>
+
+</body>
+</html>

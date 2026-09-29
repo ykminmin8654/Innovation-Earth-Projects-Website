@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Innovation Earth Projects — Free tools for student builders</title>
+  <meta name="description" content="A student-run studio shipping free software for competitors, learners, and makers. No ads. No tracking. Free forever." />
+  <meta name="theme-color" content="#008080" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Icons -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  />
+
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="../shared/tokens.css" />
+  <link rel="stylesheet" href="../shared/base.css" />
+  <link rel="stylesheet" href="../shared/nav.css" />
+
+  <!-- Local styles -->
+  <link rel="stylesheet" href="./home.css" />
+</head>
+
+<body data-page="home">
+
+  <!-- Nav injected by shared/nav.js -->
+  <div id="nav-mount"></div>
+
+  <main>
+
+    <!-- ============================================================
+         HERO
+         ============================================================ -->
+    <section class="hero">
+      <div class="container hero__grid">
+
+        <div class="hero__copy">
+          <span class="eyebrow">Student-run studio · Est. 2024 · Utah, USA</span>
+
+          <h1 class="hero__title">
+            Free tools for<br />
+            <span class="accent">student builders.</span>
+          </h1>
+
+          <p class="hero__lede">
+            We're a registered LLC shipping software that helps students
+            compete, learn, and build — no paywalls, no signup walls.
+          </p>
+
+          <div class="hero__actions">
+            <a href="../products/products.html" class="btn btn--primary">
+              See our tools <i class="fas fa-arrow-right"></i>
+            </a>
+            <a href="../resources/resources.html" class="btn btn--secondary">
+              Browse resources
+            </a>
+          </div>
+
+          <ul class="hero__meta">
+            <li><i class="fas fa-check"></i> No ads</li>
+            <li><i class="fas fa-check"></i> No tracking</li>
+            <li><i class="fas fa-check"></i> Free forever</li>
+          </ul>
+        </div>
+
+        <div class="hero__visual" aria-hidden="true">
+          <div class="hero__frame">
+            <div class="hero__frame-bar">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="hero__frame-body">
+              <div class="hero__frame-line hero__frame-line--lg"></div>
+              <div class="hero__frame-line"></div>
+              <div class="hero__frame-line hero__frame-line--sm"></div>
+              <div class="hero__frame-chips">
+                <span>FBLA</span>
+                <span>DECA</span>
+                <span>HOSA</span>
+                <span>AMC</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================================================
+         FEATURED PRODUCTS
+         ============================================================ -->
+    <section class="section" id="featured-section">
+      <div class="container">
+        <header class="section__head">
+          <span class="eyebrow">What we ship</span>
+          <h2 class="section__title">Tools you can use today</h2>
+          <p class="section__lede">
+            Every product is free. Every product is built by students.
+          </p>
+        </header>
+
+        <div class="grid-products" id="featured-products">
+          <div class="state">
+            <div class="spinner"></div>
+            <p>Loading products…</p>
+          </div>
+        </div>
+
+        <div class="center-cta">
+          <a href="../products/products.html" class="btn btn--secondary">
+            View all products <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         COVERAGE CHIPS
+         ============================================================ -->
+    <section class="section section--tint">
+      <div class="container">
+        <header class="section__head">
+          <span class="eyebrow">What we cover</span>
+          <h2 class="section__title">Built for these competitions</h2>
+          <p class="section__lede">
+            Resources and tools for the competitions students actually enter.
+          </p>
+        </header>
+
+        <div class="chips">
+          <a href="../resources/resources.html" class="chip">FBLA</a>
+          <a href="../resources/resources.html" class="chip">DECA</a>
+          <a href="../resources/resources.html" class="chip">HOSA</a>
+          <a href="../resources/resources.html" class="chip">TSA</a>
+          <a href="../resources/resources.html" class="chip">SkillsUSA</a>
+          <a href="../resources/resources.html" class="chip">Science Olympiad</a>
+          <a href="../resources/resources.html" class="chip">AMC 8 / 10 / 12</a>
+          <a href="../resources/resources.html" class="chip">USABO</a>
+          <a href="../resources/resources.html" class="chip">USNCO</a>
+          <a href="../resources/resources.html" class="chip">USAPhO</a>
+          <a href="../resources/resources.html" class="chip">CyberPatriot</a>
+          <a href="../resources/resources.html" class="chip">FIRST Robotics</a>
+          <a href="../resources/resources.html" class="chip">Mathcounts</a>
+          <a href="../resources/resources.html" class="chip">National Science Bowl</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         WHY FREE
+         ============================================================ -->
+    <section class="section">
+      <div class="container">
+        <div class="callout">
+          <div class="callout__mark" aria-hidden="true">$0</div>
+          <div class="callout__body">
+            <h3>Why everything is free</h3>
+            <p>
+              We're a registered LLC, not a nonprofit. We build free tools
+              because we're students too — and we know exactly what's missing.
+              No ads, no upsells, no dark patterns.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         CHANGELOG
+         ============================================================ -->
+    <section class="section section--tint">
+      <div class="container">
+        <header class="section__head">
+          <span class="eyebrow">Recently shipped</span>
+          <h2 class="section__title">Changelog</h2>
+          <p class="section__lede">
+            Real dates. Real updates. We ship in public.
+          </p>
+        </header>
+
+        <ul class="changelog" id="changelog">
+          <li class="state">
+            <div class="spinner"></div>
+            <p>Loading updates…</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         FINAL CTA
+         ============================================================ -->
+    <section class="section">
+      <div class="container">
+        <div class="cta">
+          <div class="cta__copy">
+            <h2>Try a tool. It takes 10 seconds.</h2>
+            <p>No account. No card. No catch.</p>
+          </div>
+          <a href="../products/products.html" class="btn btn--primary">
+            Open tools <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer injected by shared/nav.js -->
+  <div id="footer-mount"></div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+
+  <!-- Shared JS -->
+  <script src="../shared/firebase.js" defer></script>
+  <script src="../shared/nav.js" defer></script>
+
+  <!-- Local JS -->
+  <script src="./home.js" defer></script>
+
+</body>
+</html>

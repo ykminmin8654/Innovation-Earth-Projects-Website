@@ -1,0 +1,76 @@
+/* ============================================================
+   TOKENS — design system variables
+   Every page imports this first. Do not add layout rules here.
+   ============================================================ */
+
+:root {
+  /* ---------- Brand ---------- */
+  --teal:        #008080;
+  --teal-deep:   #005F5F;
+  --cyan:        #00CED1;
+  --blue:        #1E90FF;
+  --lime:        #32CD32;
+  --green-dark:  #006400;
+
+  /* ---------- Light surfaces ---------- */
+  --bg:          #F8FBFC;
+  --surface:     #FFFFFF;
+  --surface-alt: #F1F7F8;
+  --border:      #E1EDEF;
+  --border-soft: #EDF3F4;
+
+  /* ---------- Ink ---------- */
+  --ink:         #0B1A1F;
+  --ink-soft:    #33474D;
+  --muted:       #6A8085;
+
+  /* ---------- Status ---------- */
+  --success:     #1E9E5A;
+  --success-bg:  #E6F7EC;
+  --warn:        #C68A00;
+  --warn-bg:     #FFF6E0;
+  --danger:      #D14343;
+  --danger-bg:   #FCEAEA;
+
+  /* ---------- Type ---------- */
+  --font: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+
+  /* Fluid display sizes */
+  --fs-display: clamp(2.25rem, 5vw, 3.75rem);
+  --fs-h1:      clamp(2rem,    4vw, 3rem);
+  --fs-h2:      clamp(1.5rem,  3vw, 2rem);
+  --fs-h3:      1.25rem;
+  --fs-body:    1rem;
+  --fs-sm:      0.9rem;
+  --fs-xs:      0.8rem;
+
+  /* ---------- Space scale ---------- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+  --s-9: 96px;
+
+  /* ---------- Radii ---------- */
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-pill: 999px;
+
+  /* ---------- Shadows (used sparingly) ---------- */
+  --shadow-sm: 0 1px 2px rgba(0, 60, 60, 0.05);
+  --shadow-md: 0 8px 24px -12px rgba(0, 80, 80, 0.15);
+
+  /* ---------- Motion ---------- */
+  --ease: cubic-bezier(.2, .7, .2, 1);
+  --dur: 200ms;
+
+  /* ---------- Layout ---------- */
+  --container: 1160px;
+  --nav-h: 64px;
+}
