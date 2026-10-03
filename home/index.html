@@ -28,7 +28,7 @@
   <link rel="stylesheet" href="../shared/nav.css" />
 
   <!-- Local styles -->
-  <link rel="stylesheet" href="./home.css" />
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 
 <body data-page="home">
@@ -46,7 +46,7 @@
   <main>
 
     <!-- ============================================================
-         HERO
+         1. HERO
          ============================================================ -->
     <section class="hero">
       <div class="container hero__grid">
@@ -69,11 +69,11 @@
           </p>
 
           <div class="hero__actions reveal" data-delay="400">
-            <a href="../products/" class="btn btn--primary btn--glow">
+            <a href="../products/index.html" class="btn btn--primary btn--glow">
               See our tools <i class="fas fa-arrow-right"></i>
             </a>
-            <a href="../resources/" class="btn btn--secondary">
-              Browse resources
+            <a href="#how-it-works" class="btn btn--secondary">
+              How it works
             </a>
           </div>
 
@@ -123,7 +123,7 @@
     </section>
 
     <!-- ============================================================
-         TRUST BAR
+         2. TRUST BAR
          ============================================================ -->
     <section class="trust-bar">
       <div class="container trust-bar__inner">
@@ -142,7 +142,7 @@
     </section>
 
     <!-- ============================================================
-         FEATURED PRODUCTS
+         3. FEATURED PRODUCTS
          ============================================================ -->
     <section class="section" id="featured-section">
       <div class="container">
@@ -170,12 +170,14 @@
             <h3 class="product-card__title">StudyPal</h3>
             <p class="product-card__desc">
               Flashcards and spaced repetition tuned for competition prep —
-              FBLA, DECA, HOSA, and more.
+              FBLA, DECA, HOSA, and more. Ships with pre-built decks for
+              common event categories.
             </p>
             <div class="product-card__tags">
               <span class="product-card__tag">Study</span>
               <span class="product-card__tag">FBLA</span>
               <span class="product-card__tag">DECA</span>
+              <span class="product-card__tag">HOSA</span>
             </div>
             <div class="product-card__footer">
               <span class="product-card__meta">Updated Sep 2025</span>
@@ -199,11 +201,13 @@
             <h3 class="product-card__title">Calc Trainer</h3>
             <p class="product-card__desc">
               Practice problems for AMC 8/10/12 with instant step-by-step
-              solutions and difficulty scaling.
+              solutions. Adaptive difficulty, timed mode, and progress
+              tracking across sessions.
             </p>
             <div class="product-card__tags">
               <span class="product-card__tag">Math</span>
               <span class="product-card__tag">AMC</span>
+              <span class="product-card__tag">Adaptive</span>
             </div>
             <div class="product-card__footer">
               <span class="product-card__meta">In development</span>
@@ -227,11 +231,13 @@
             <h3 class="product-card__title">SciBowl Arena</h3>
             <p class="product-card__desc">
               Live buzzer practice for National Science Bowl teams. Team
-              scoring, question banks, and analytics.
+              scoring, question banks across all categories, and post-game
+              analytics.
             </p>
             <div class="product-card__tags">
               <span class="product-card__tag">Science Bowl</span>
               <span class="product-card__tag">Team</span>
+              <span class="product-card__tag">Live</span>
             </div>
             <div class="product-card__footer">
               <span class="product-card__meta">Target: Q1 2026</span>
@@ -244,7 +250,7 @@
         </div>
 
         <div class="center-cta">
-          <a href="../products/" class="btn btn--secondary">
+          <a href="../products/index.html" class="btn btn--secondary">
             View all products <i class="fas fa-arrow-right"></i>
           </a>
         </div>
@@ -252,7 +258,7 @@
     </section>
 
     <!-- ============================================================
-         WHY WE BUILD
+         4. WHY WE BUILD
          ============================================================ -->
     <section class="section section--tint">
       <div class="container">
@@ -302,9 +308,9 @@
     </section>
 
     <!-- ============================================================
-         HOW IT WORKS
+         5. HOW IT WORKS
          ============================================================ -->
-    <section class="section">
+    <section class="section" id="how-it-works">
       <div class="container">
         <header class="section__head">
           <span class="eyebrow">How it works</span>
@@ -341,7 +347,7 @@
     </section>
 
     <!-- ============================================================
-         STATS
+         6. STATS (dark section)
          ============================================================ -->
     <section class="section section--dark">
       <div class="container">
@@ -367,41 +373,137 @@
     </section>
 
     <!-- ============================================================
-         COVERAGE CHIPS
+         7. BUILT IN PUBLIC / COMPARISON
          ============================================================ -->
-    <section class="section section--tint">
+    <section class="section">
       <div class="container">
         <header class="section__head">
-          <span class="eyebrow">What we cover</span>
-          <h2 class="section__title">Built for these competitions</h2>
+          <span class="eyebrow">Built in public</span>
+          <h2 class="section__title">How we compare</h2>
           <p class="section__lede">
-            Resources and tools for the events students actually enter.
+            We're not the biggest. We're the most honest.
           </p>
         </header>
 
-        <div class="chips chips--animated">
-          <a href="../resources/" class="chip chip--business">FBLA</a>
-          <a href="../resources/" class="chip chip--business">DECA</a>
-          <a href="../resources/" class="chip chip--health">HOSA</a>
-          <a href="../resources/" class="chip chip--stem">TSA</a>
-          <a href="../resources/" class="chip chip--cte">SkillsUSA</a>
-          <a href="../resources/" class="chip chip--science">Science Olympiad</a>
-          <a href="../resources/" class="chip chip--math">AMC 8 / 10 / 12</a>
-          <a href="../resources/" class="chip chip--science">USABO</a>
-          <a href="../resources/" class="chip chip--science">USNCO</a>
-          <a href="../resources/" class="chip chip--science">USAPhO</a>
-          <a href="../resources/" class="chip chip--stem">CyberPatriot</a>
-          <a href="../resources/" class="chip chip--stem">FIRST Robotics</a>
-          <a href="../resources/" class="chip chip--math">Mathcounts</a>
-          <a href="../resources/" class="chip chip--science">Science Bowl</a>
+        <div class="compare">
+          <div class="compare__col compare__col--us reveal" data-delay="100">
+            <div class="compare__head">
+              <span class="compare__badge">Us</span>
+              <h3 class="compare__title">Innovation Earth</h3>
+            </div>
+            <ul class="compare__list">
+              <li><i class="fas fa-check"></i> Free forever — no premium tier</li>
+              <li><i class="fas fa-check"></i> No ads, no tracking</li>
+              <li><i class="fas fa-check"></i> No signup required</li>
+              <li><i class="fas fa-check"></i> Built by students, for students</li>
+              <li><i class="fas fa-check"></i> Ships in public with a changelog</li>
+              <li><i class="fas fa-check"></i> Focused on specific competitions</li>
+            </ul>
+          </div>
+
+          <div class="compare__col reveal" data-delay="200">
+            <div class="compare__head">
+              <span class="compare__badge compare__badge--muted">Typical</span>
+              <h3 class="compare__title">Most study platforms</h3>
+            </div>
+            <ul class="compare__list compare__list--muted">
+              <li><i class="fas fa-times"></i> Free tier is a trial</li>
+              <li><i class="fas fa-times"></i> Ads and third-party tracking</li>
+              <li><i class="fas fa-times"></i> Account required</li>
+              <li><i class="fas fa-times"></i> Built by companies, not students</li>
+              <li><i class="fas fa-times"></i> Opaque update cycles</li>
+              <li><i class="fas fa-times"></i> Generic, one-size-fits-all</li>
+            </ul>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- ============================================================
-         CHANGELOG
+         8. RESOURCES PREVIEW
+         ============================================================ -->
+    <section class="section section--tint">
+      <div class="container">
+        <header class="section__head">
+          <span class="eyebrow">Beyond tools</span>
+          <h2 class="section__title">A growing resource library</h2>
+          <p class="section__lede">
+            Free links, study guides, and official pages for every major competition.
+          </p>
+        </header>
+
+        <div class="resource-preview">
+          <div class="resource-card reveal" data-delay="100">
+            <i class="fas fa-chart-line"></i>
+            <h3>Business &amp; Leadership</h3>
+            <p>FBLA, DECA, BPA — events, study guides, and official pages.</p>
+          </div>
+          <div class="resource-card reveal" data-delay="200">
+            <i class="fas fa-heartbeat"></i>
+            <h3>Healthcare</h3>
+            <p>HOSA competitive events, event guidelines, and preparation.</p>
+          </div>
+          <div class="resource-card reveal" data-delay="300">
+            <i class="fas fa-rocket"></i>
+            <h3>STEM &amp; Technology</h3>
+            <p>TSA, FIRST Robotics, CyberPatriot — competitions and resources.</p>
+          </div>
+          <div class="resource-card reveal" data-delay="400">
+            <i class="fas fa-flask"></i>
+            <h3>Science Olympiads</h3>
+            <p>Science Olympiad, USABO, USNCO, USAPhO, Science Bowl.</p>
+          </div>
+          <div class="resource-card reveal" data-delay="500">
+            <i class="fas fa-calculator"></i>
+            <h3>Math Competitions</h3>
+            <p>AMC 8/10/12, Mathcounts, AIME, USAMTS — past problems and prep.</p>
+          </div>
+          <div class="resource-card reveal" data-delay="600">
+            <i class="fas fa-tools"></i>
+            <h3>Career &amp; Technical</h3>
+            <p>SkillsUSA contest areas, technical standards, and championships.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         9. COVERAGE CHIPS
          ============================================================ -->
     <section class="section">
+      <div class="container">
+        <header class="section__head">
+          <span class="eyebrow">Full coverage list</span>
+          <h2 class="section__title">Every event we're tracking</h2>
+        </header>
+
+        <div class="chips chips--animated">
+          <span class="chip chip--business">FBLA</span>
+          <span class="chip chip--business">DECA</span>
+          <span class="chip chip--business">BPA</span>
+          <span class="chip chip--health">HOSA</span>
+          <span class="chip chip--stem">TSA</span>
+          <span class="chip chip--cte">SkillsUSA</span>
+          <span class="chip chip--science">Science Olympiad</span>
+          <span class="chip chip--math">AMC 8 / 10 / 12</span>
+          <span class="chip chip--science">USABO</span>
+          <span class="chip chip--science">USNCO</span>
+          <span class="chip chip--science">USAPhO</span>
+          <span class="chip chip--stem">CyberPatriot</span>
+          <span class="chip chip--stem">FIRST Robotics</span>
+          <span class="chip chip--math">Mathcounts</span>
+          <span class="chip chip--math">AIME</span>
+          <span class="chip chip--math">USAMTS</span>
+          <span class="chip chip--science">Science Bowl</span>
+          <span class="chip chip--stem">TSA</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         10. CHANGELOG
+         ============================================================ -->
+    <section class="section section--tint">
       <div class="container">
         <header class="section__head">
           <span class="eyebrow">Recently shipped</span>
@@ -430,6 +532,14 @@
           </li>
           <li class="changelog__item reveal">
             <span class="changelog__date">Aug 2025</span>
+            <h3 class="changelog__title">Site redesign begins</h3>
+            <p class="changelog__desc">
+              Moving from a landing page to a real product-first studio
+              site with sectioned pages and a design system.
+            </p>
+          </li>
+          <li class="changelog__item reveal">
+            <span class="changelog__date">Jul 2025</span>
             <h3 class="changelog__title">Innovation Earth Projects LLC registered</h3>
             <p class="changelog__desc">
               We officially became a Utah LLC. Every product we ship is
@@ -437,11 +547,11 @@
             </p>
           </li>
           <li class="changelog__item reveal">
-            <span class="changelog__date">Jul 2025</span>
-            <h3 class="changelog__title">Site redesign begins</h3>
+            <span class="changelog__date">Jun 2025</span>
+            <h3 class="changelog__title">First internal prototype: StudyPal</h3>
             <p class="changelog__desc">
-              Moving from a landing page to a real product-first studio
-              site with sectioned pages.
+              Built the very first version of StudyPal in a weekend to
+              help with FBLA state prep.
             </p>
           </li>
         </ul>
@@ -449,9 +559,9 @@
     </section>
 
     <!-- ============================================================
-         TESTIMONIALS
+         11. TESTIMONIALS
          ============================================================ -->
-    <section class="section section--tint">
+    <section class="section">
       <div class="container">
         <header class="section__head">
           <span class="eyebrow">What people say</span>
@@ -505,7 +615,57 @@
     </section>
 
     <!-- ============================================================
-         FAQ
+         12. BUILT IN PUBLIC / BEHIND THE SCENES
+         ============================================================ -->
+    <section class="section section--tint">
+      <div class="container">
+        <header class="section__head">
+          <span class="eyebrow">Behind the scenes</span>
+          <h2 class="section__title">How we actually work</h2>
+          <p class="section__lede">
+            No secrets. This is what shipping a student-run studio looks like.
+          </p>
+        </header>
+
+        <div class="bts">
+          <div class="bts__item reveal" data-delay="100">
+            <div class="bts__icon"><i class="fas fa-code-branch"></i></div>
+            <h3>Ship small, ship often</h3>
+            <p>
+              Every product goes live in small increments. If it's not
+              useful in week one, we cut it.
+            </p>
+          </div>
+          <div class="bts__item reveal" data-delay="200">
+            <div class="bts__icon"><i class="fas fa-comments"></i></div>
+            <h3>Feedback first</h3>
+            <p>
+              Every tool we build starts with real feedback from real
+              students. We don't guess.
+            </p>
+          </div>
+          <div class="bts__item reveal" data-delay="300">
+            <div class="bts__icon"><i class="fas fa-eye"></i></div>
+            <h3>Public changelog</h3>
+            <p>
+              Every update is logged with a date. No vaporware, no
+              "coming eventually."
+            </p>
+          </div>
+          <div class="bts__item reveal" data-delay="400">
+            <div class="bts__icon"><i class="fas fa-heart"></i></div>
+            <h3>Made for students</h3>
+            <p>
+              Every decision is filtered through one question: does this
+              help students?
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         13. FAQ
          ============================================================ -->
     <section class="section">
       <div class="container">
@@ -544,11 +704,30 @@
           </details>
 
           <details class="faq__item reveal">
+            <summary>How do you make money?</summary>
+            <p>
+              Right now, we don't. We may add optional paid features
+              later (like advanced analytics or team plans), but the
+              core tools will always be free.
+            </p>
+          </details>
+
+          <details class="faq__item reveal">
             <summary>Can I suggest a tool?</summary>
             <p>
-              Absolutely. Use our <a href="../contact/">contact form</a>
+              Absolutely. Email us at
+              <a href="mailto:InnovationEarthProjects@gmail.com">InnovationEarthProjects@gmail.com</a>
               and tell us what would help you. We build what students
               actually ask for.
+            </p>
+          </details>
+
+          <details class="faq__item reveal">
+            <summary>Can I contribute?</summary>
+            <p>
+              We're a small team, but we're always open to student
+              contributors — designers, writers, engineers. Email us
+              with what you're interested in.
             </p>
           </details>
         </div>
@@ -556,7 +735,7 @@
     </section>
 
     <!-- ============================================================
-         FINAL CTA
+         14. FINAL CTA
          ============================================================ -->
     <section class="section">
       <div class="container">
@@ -565,7 +744,7 @@
             <h2>Try a tool. It takes 10 seconds.</h2>
             <p>No account. No card. No catch.</p>
           </div>
-          <a href="../products/" class="btn btn--primary btn--glow">
+          <a href="../products/index.html" class="btn btn--primary btn--glow">
             Open tools <i class="fas fa-arrow-right"></i>
           </a>
         </div>
@@ -577,16 +756,11 @@
   <!-- Footer injected by shared/nav.js -->
   <div id="footer-mount"></div>
 
-  <!-- Firebase SDKs (kept for later) -->
-  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
-
   <!-- Shared JS -->
-  <script src="../shared/firebase.js" defer></script>
   <script src="../shared/nav.js" defer></script>
 
   <!-- Local JS -->
-  <script src="./home.js" defer></script>
+  <script src="./script.js" defer></script>
 
 </body>
 </html>
