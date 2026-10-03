@@ -1,13 +1,14 @@
 /* ============================================================
    NAV — injects nav + footer, handles mobile toggle
    No dependencies. Runs immediately when loaded.
+   Only links to pages that currently exist: home, products.
    ============================================================ */
 
 (function () {
   'use strict';
 
   // ---------------------------------------------
-  // SVG logo (inline so no external asset needed)
+  // SVG logo
   // ---------------------------------------------
   var LOGO_SVG =
     '<svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">' +
@@ -17,7 +18,7 @@
     '</svg>';
 
   // ---------------------------------------------
-  // Markup
+  // NAV markup — only pages that exist
   // ---------------------------------------------
   var NAV_HTML =
     '<header class="nav">' +
@@ -28,10 +29,6 @@
         '</a>' +
         '<nav class="nav__links" id="primary-nav" aria-label="Primary">' +
           '<a href="../products/index.html" data-nav="products">Products</a>' +
-          '<a href="../resources/index.html" data-nav="resources">Resources</a>' +
-          '<a href="../studio/index.html" data-nav="studio">Studio</a>' +
-          '<a href="../aboutus/index.html" data-nav="aboutus">About</a>' +
-          '<a href="../contact/index.html" data-nav="contact">Contact</a>' +
         '</nav>' +
         '<a href="../products/index.html" class="btn btn--ghost nav__cta">' +
           'Open tools <i class="fas fa-arrow-right"></i>' +
@@ -42,6 +39,9 @@
       '</div>' +
     '</header>';
 
+  // ---------------------------------------------
+  // FOOTER markup — only pages that exist
+  // ---------------------------------------------
   var FOOTER_HTML =
     '<footer class="footer">' +
       '<div class="container footer__inner">' +
@@ -55,11 +55,8 @@
         '<div class="footer__col">' +
           '<h4>Site</h4>' +
           '<ul>' +
+            '<li><a href="../home/index.html">Home</a></li>' +
             '<li><a href="../products/index.html">Products</a></li>' +
-            '<li><a href="../resources/index.html">Resources</a></li>' +
-            '<li><a href="../studio/index.html">Studio</a></li>' +
-            '<li><a href="../aboutus/index.html">About</a></li>' +
-            '<li><a href="../contact/index.html">Contact</a></li>' +
           '</ul>' +
         '</div>' +
         '<div class="footer__col">' +
@@ -74,7 +71,6 @@
           '<h4>Contact</h4>' +
           '<ul>' +
             '<li><a href="mailto:InnovationEarthProjects@gmail.com"><i class="fas fa-envelope"></i> Email us</a></li>' +
-            '<li><a href="../contact/index.html"><i class="fas fa-paper-plane"></i> Contact form</a></li>' +
           '</ul>' +
         '</div>' +
       '</div>' +
@@ -104,7 +100,7 @@
   }
 
   // ---------------------------------------------
-  // Active nav highlight (based on <body data-page>)
+  // Active nav highlight
   // ---------------------------------------------
   function setActiveLink() {
     var page = document.body.getAttribute('data-page');
@@ -127,7 +123,7 @@
   }
 
   // ---------------------------------------------
-  // Mobile menu toggle
+  // Mobile toggle
   // ---------------------------------------------
   function wireMobileToggle() {
     var toggle = document.getElementById('nav-toggle');
@@ -142,7 +138,6 @@
         : '<i class="fas fa-bars"></i>';
     });
 
-    // Close on link click
     var anchors = links.querySelectorAll('a');
     for (var i = 0; i < anchors.length; i++) {
       anchors[i].addEventListener('click', function () {
@@ -152,7 +147,6 @@
       });
     }
 
-    // Close on Escape
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && links.classList.contains('is-open')) {
         links.classList.remove('is-open');
@@ -164,7 +158,7 @@
   }
 
   // ---------------------------------------------
-  // Boot immediately (no dependency on other scripts)
+  // Boot
   // ---------------------------------------------
   function boot() {
     injectNav();
