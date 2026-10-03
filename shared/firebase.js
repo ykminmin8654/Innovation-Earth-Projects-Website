@@ -1,15 +1,38 @@
 /* ============================================================
-   FIREBASE — single shared init
-   Exposes: window.iepDB (Firestore instance or null)
-   Emits:   'iep:db-ready'  → Firebase is connected
-            'iep:db-failed' → init failed, use fallback
-   Depends on: firebase-app-compat.js + firebase-firestore-compat.js
+   FIREBASE — DISABLED
+   Firebase is temporarily unavailable while the site is being
+   rebuilt with hardcoded content. This file exists so that
+   pages referencing it don't throw 404s. It sets a stub
+   window.iepDB = null and fires a "failed" event so any
+   listener knows to fall back.
+
+   Re-enable later by uncommenting the init block below.
    ============================================================ */
 
 (function () {
   'use strict';
 
-  const config = {
+  // Public handle — null means "no Firebase available"
+  window.iepDB = null;
+
+  // Let any listener know we're not using Firebase right now
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', notify);
+  } else {
+    notify();
+  }
+
+  function notify() {
+    window.dispatchEvent(new Event('iep:db-failed'));
+    console.log('ℹ️ Firebase disabled — using hardcoded content');
+  }
+
+  /* ----------------------------------------------------------
+     TO RE-ENABLE LATER:
+     Uncomment this block, and remove/comment the notify() calls
+     above.
+
+  var config = {
     apiKey: "AIzaSyCgV39r2JAR68jXqt2tSLMoW_2vKtJEFV0",
     authDomain: "innovation-earth-projects.firebaseapp.com",
     projectId: "innovation-earth-projects",
@@ -19,38 +42,17 @@
     measurementId: "G-GBZCTX7LBL"
   };
 
-  // Public handle — every page reads window.iepDB
-  window.iepDB = null;
-
   function init() {
-    // SDK must be loaded by the page <head>
     if (typeof firebase === 'undefined') {
-      console.warn('⚠️ Firebase SDK not loaded — using local fallback');
+      console.warn('⚠️ Firebase SDK not loaded');
       window.dispatchEvent(new Event('iep:db-failed'));
       return;
     }
-
     try {
-      // Reuse existing app if a hot reload re-runs this script
-      if (!firebase.apps.length) {
-        firebase.initializeApp(config);
-      }
-
+      if (!firebase.apps.length) firebase.initializeApp(config);
       window.iepDB = firebase.firestore();
-
       console.log('✅ Firebase connected');
       window.dispatchEvent(new Event('iep:db-ready'));
-
-      // Optional: enable offline persistence (safe no-op if already enabled)
-      window.iepDB
-        .enablePersistence({ synchronizeTabs: true })
-        .catch(err => {
-          // Fails silently if multiple tabs are open — not fatal
-          if (err.code !== 'failed-precondition' && err.code !== 'unimplemented') {
-            console.warn('Persistence not enabled:', err.code);
-          }
-        });
-
     } catch (err) {
       console.error('❌ Firebase init failed:', err);
       window.dispatchEvent(new Event('iep:db-failed'));
@@ -62,4 +64,6 @@
   } else {
     init();
   }
+
+  ---------------------------------------------------------- */
 })();

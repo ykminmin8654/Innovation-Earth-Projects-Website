@@ -1,10 +1,9 @@
 /* ============================================================
    TOKENS — design system variables
-   Every page imports this first. Do not add layout rules here.
    ============================================================ */
 
 :root {
-  /* ---------- Brand ---------- */
+  /* Brand */
   --teal:        #008080;
   --teal-deep:   #005F5F;
   --cyan:        #00CED1;
@@ -12,19 +11,19 @@
   --lime:        #32CD32;
   --green-dark:  #006400;
 
-  /* ---------- Light surfaces ---------- */
+  /* Light surfaces */
   --bg:          #F8FBFC;
   --surface:     #FFFFFF;
   --surface-alt: #F1F7F8;
   --border:      #E1EDEF;
   --border-soft: #EDF3F4;
 
-  /* ---------- Ink ---------- */
+  /* Ink */
   --ink:         #0B1A1F;
   --ink-soft:    #33474D;
   --muted:       #6A8085;
 
-  /* ---------- Status ---------- */
+  /* Status */
   --success:     #1E9E5A;
   --success-bg:  #E6F7EC;
   --warn:        #C68A00;
@@ -32,8 +31,8 @@
   --danger:      #D14343;
   --danger-bg:   #FCEAEA;
 
-  /* ---------- Type ---------- */
-  --font: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  /* Type */
+  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
 
   /* Fluid display sizes */
@@ -45,7 +44,7 @@
   --fs-sm:      0.9rem;
   --fs-xs:      0.8rem;
 
-  /* ---------- Space scale ---------- */
+  /* Space scale */
   --s-1: 4px;
   --s-2: 8px;
   --s-3: 12px;
@@ -56,21 +55,22 @@
   --s-8: 64px;
   --s-9: 96px;
 
-  /* ---------- Radii ---------- */
+  /* Radii */
   --r-sm: 6px;
   --r-md: 8px;
   --r-lg: 12px;
   --r-pill: 999px;
 
-  /* ---------- Shadows (used sparingly) ---------- */
+  /* Shadows */
   --shadow-sm: 0 1px 2px rgba(0, 60, 60, 0.05);
   --shadow-md: 0 8px 24px -12px rgba(0, 80, 80, 0.15);
+  --shadow-lg: 0 20px 40px -20px rgba(0, 80, 80, 0.25);
 
-  /* ---------- Motion ---------- */
+  /* Motion */
   --ease: cubic-bezier(.2, .7, .2, 1);
   --dur: 200ms;
 
-  /* ---------- Layout ---------- */
+  /* Layout */
   --container: 1160px;
   --nav-h: 64px;
 }

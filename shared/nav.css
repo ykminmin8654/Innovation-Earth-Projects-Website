@@ -1,6 +1,5 @@
 /* ============================================================
    NAV + FOOTER
-   Injected by shared/nav.js into every page
    ============================================================ */
 
 /* ---------- NAV ---------- */
@@ -137,9 +136,6 @@
 @media (max-width: 860px) {
   .nav__links {
     display: none;
-  }
-  .nav__links.is-open {
-    display: flex;
     flex-direction: column;
     position: absolute;
     top: var(--nav-h);
@@ -150,6 +146,9 @@
     padding: var(--s-4);
     gap: var(--s-3);
     box-shadow: var(--shadow-md);
+  }
+  .nav__links.is-open {
+    display: flex;
   }
   .nav__cta { display: none; }
   .nav__toggle { display: inline-flex; margin-left: auto; }

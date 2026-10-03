@@ -83,9 +83,11 @@ code, pre { font-family: var(--mono); }
     transform var(--dur) var(--ease),
     background var(--dur) var(--ease),
     border-color var(--dur) var(--ease),
-    color var(--dur) var(--ease);
+    color var(--dur) var(--ease),
+    box-shadow var(--dur) var(--ease);
   white-space: nowrap;
   text-align: center;
+  cursor: pointer;
 }
 .btn:active { transform: translateY(1px); }
 .btn:focus-visible {
@@ -98,7 +100,10 @@ code, pre { font-family: var(--mono); }
   background: var(--teal);
   color: #fff;
 }
-.btn--primary:hover { background: var(--teal-deep); }
+.btn--primary:hover {
+  background: var(--teal-deep);
+  box-shadow: var(--shadow-md);
+}
 
 .btn--secondary {
   background: var(--surface);
@@ -120,6 +125,14 @@ code, pre { font-family: var(--mono); }
 .btn--sm { padding: 6px 12px; font-size: var(--fs-sm); }
 .btn--lg { padding: 14px 24px; font-size: 1rem; }
 .btn--block { width: 100%; }
+
+.btn--glow {
+  position: relative;
+  box-shadow: 0 8px 24px -8px rgba(0, 128, 128, 0.4);
+}
+.btn--glow:hover {
+  box-shadow: 0 12px 32px -8px rgba(0, 128, 128, 0.55);
+}
 
 /* ---------- Section primitives ---------- */
 .section { padding: var(--s-9) 0; }
