@@ -1,108 +1,21 @@
 /* ============================================================
-   NEWSLETTER — posts list + filters + search + subscribe
-   All posts hardcoded. No Firebase.
+   NEWSLETTER — posts loaded from posts.json (built from Markdown)
    ============================================================ */
 
 (function () {
   'use strict';
 
   /* ============================================================
-     1. POSTS DATA
+     1. STATE
      ============================================================ */
-  var POSTS = [
-    {
-      id: 'study-pal-v1-2',
-      date: '2025-10-12',
-      category: 'product',
-      title: 'StudyPal v1.2 — community decks and faster sync',
-      excerpt: 'You can now share decks with anyone by link, and sync is up to 3x faster on large collections.',
-      readTime: '3 min read',
-      featured: true,
-      icon: 'fa-brain',
-      url: '#'
-    },
-    {
-      id: 'spaced-repetition',
-      date: '2025-10-04',
-      category: 'research',
-      title: 'Why spaced repetition still beats everything else',
-      excerpt: 'A short dive into the research behind why spacing out your study sessions works — and how to actually apply it.',
-      readTime: '6 min read',
-      icon: 'fa-flask',
-      url: '#'
-    },
-    {
-      id: 'calc-trainer-beta',
-      date: '2025-09-28',
-      category: 'product',
-      title: 'Calc Trainer is now open for beta testers',
-      excerpt: 'Early access to our adaptive math practice tool. Solve problems, get instant step-by-step solutions, track your progress.',
-      readTime: '2 min read',
-      icon: 'fa-calculator',
-      url: '#'
-    },
-    {
-      id: 'llc-registered',
-      date: '2025-09-15',
-      category: 'studio',
-      title: 'We registered as a Utah LLC',
-      excerpt: "A quick note on why we formalized the studio, and what it changes (and what it doesn't).",
-      readTime: '4 min read',
-      icon: 'fa-building',
-      url: '#'
-    },
-    {
-      id: 'learning-in-public',
-      date: '2025-08-22',
-      category: 'research',
-      title: 'The case for building in public as a student',
-      excerpt: "Why sharing your work-in-progress beats waiting until it's \"ready\" — with real examples from our own projects.",
-      readTime: '5 min read',
-      icon: 'fa-eye',
-      url: '#'
-    },
-    {
-      id: 'first-prototype',
-      date: '2025-08-05',
-      category: 'studio',
-      title: 'How StudyPal started in a single weekend',
-      excerpt: "The story behind our first tool — what worked, what broke, and what we'd do differently.",
-      readTime: '4 min read',
-      icon: 'fa-rocket',
-      url: '#'
-    },
-    {
-      id: 'flashcard-science',
-      date: '2025-07-18',
-      category: 'research',
-      title: 'What the science says about flashcards',
-      excerpt: 'Retrieval practice, active recall, and why the humble flashcard keeps showing up in learning research.',
-      readTime: '7 min read',
-      icon: 'fa-flask',
-      url: '#'
-    },
-    {
-      id: 'design-system',
-      date: '2025-07-02',
-      category: 'studio',
-      title: 'Building our design system from scratch',
-      excerpt: 'How we went from ad-hoc CSS to a real design token system — and the mistakes we made along the way.',
-      readTime: '5 min read',
-      icon: 'fa-palette',
-      url: '#'
-    }
-  ];
-
-  /* ============================================================
-     2. STATE
-     ============================================================ */
+  var ALL_POSTS = [];
   var activeFilter = 'all';
   var activeSearch = '';
   var featuredPostEl = null;
   var postsGridEl = null;
 
   /* ============================================================
-     3. UTILITIES
+     2. UTILITIES
      ============================================================ */
   function escapeHtml(str) {
     if (str == null) return '';
@@ -136,10 +49,21 @@
   }
 
   /* ============================================================
+     3. LOAD POSTS
+     ============================================================ */
+  function loadPosts() {
+    return fetch('./posts.json', { cache: 'no-store' })
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      });
+  }
+
+  /* ============================================================
      4. FILTERING
      ============================================================ */
   function getVisiblePosts() {
-    var list = POSTS.slice();
+    var list = ALL_POSTS.slice();
 
     if (activeFilter !== 'all') {
       list = list.filter(function (p) { return p.category === activeFilter; });
@@ -172,8 +96,8 @@
     }
 
     var featured = null;
-    for (var i = 0; i < POSTS.length; i++) {
-      if (POSTS[i].featured) { featured = POSTS[i]; break; }
+    for (var i = 0; i < ALL_POSTS.length; i++) {
+      if (ALL_POSTS[i].featured) { featured = ALL_POSTS[i]; break; }
     }
     if (!featured) {
       featuredPostEl.innerHTML = '';
@@ -216,13 +140,17 @@
     }
 
     if (!list.length) {
+      var isEmpty = ALL_POSTS.length === 0;
       postsGridEl.innerHTML =
         '<div class="newsletter-empty">' +
-          '<i class="fas fa-' + (activeSearch ? 'search' : 'inbox') + '"></i>' +
-          '<h3>' + (activeSearch ? 'No results' : 'No posts here yet') + '</h3>' +
-          '<p>' + (activeSearch
-            ? 'Nothing matches "' + escapeHtml(activeSearch) + '". Try a different search.'
-            : 'Try a different filter, or check back soon.') + '</p>' +
+          '<i class="fas fa-' + (isEmpty ? 'inbox' : 'search') + '"></i>' +
+          '<h3>' + (isEmpty ? 'No posts yet' :
+            activeSearch ? 'No results' : 'No posts here') + '</h3>' +
+          '<p>' + (isEmpty
+            ? 'Check back soon — we\'re working on our first post.'
+            : activeSearch
+              ? 'Nothing matches "' + escapeHtml(activeSearch) + '". Try a different search.'
+              : 'Try a different filter.') + '</p>' +
         '</div>';
       return;
     }
@@ -255,8 +183,8 @@
 
   function updateCounts() {
     var counts = { all: 0, research: 0, product: 0, studio: 0 };
-    for (var i = 0; i < POSTS.length; i++) {
-      var c = POSTS[i].category;
+    for (var i = 0; i < ALL_POSTS.length; i++) {
+      var c = ALL_POSTS[i].category;
       counts.all++;
       if (counts[c] != null) counts[c]++;
     }
@@ -331,7 +259,8 @@
   }
 
   /* ============================================================
-     8. SUBSCRIBE + TURNSTILE     ============================================================ */
+     8. SUBSCRIBE + TURNSTILE
+     ============================================================ */
   function wireSubscribe() {
     var form = document.getElementById('subscribe-form');
     var input = document.getElementById('subscribe-email');
@@ -353,7 +282,6 @@
       note.classList.remove('is-success', 'is-error');
       note.textContent = '';
 
-      // 1. Email validation
       var valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
       if (!valid) {
         input.classList.add('is-error');
@@ -363,7 +291,6 @@
         return;
       }
 
-      // 2. Turnstile token
       var tokenField = form.querySelector('[name="cf-turnstile-response"]');
       var token = tokenField ? tokenField.value : '';
       if (!token) {
@@ -372,7 +299,6 @@
         return;
       }
 
-      // 3. Send to Cloudflare Worker
       note.textContent = 'Verifying…';
       var formData = new FormData(form);
 
@@ -386,7 +312,6 @@
           throw new Error('Verification failed with status ' + res.status);
         }
 
-        // 4. Save locally
         try {
           var list = JSON.parse(localStorage.getItem('iep:newsletter') || '[]');
           if (list.indexOf(email) === -1) list.push(email);
@@ -448,19 +373,28 @@
     featuredPostEl = document.getElementById('featured-post');
     postsGridEl = document.getElementById('posts-grid');
 
-    POSTS.sort(function (a, b) {
-      return new Date(b.date) - new Date(a.date);
-    });
-
-    updateCounts();
-    renderFeatured();
-    renderPosts();
     wireTabs();
     wireSearch();
     wireSubscribe();
-    initReveals();
 
-    console.log('✅ Newsletter ready');
+    loadPosts()
+      .then(function (posts) {
+        ALL_POSTS = Array.isArray(posts) ? posts : [];
+        updateCounts();
+        renderFeatured();
+        renderPosts();
+        initReveals();
+        console.log('✅ Newsletter ready — ' + ALL_POSTS.length + ' posts loaded');
+      })
+      .catch(function (err) {
+        console.error('Failed to load posts:', err);
+        postsGridEl.innerHTML =
+          '<div class="newsletter-empty">' +
+            '<i class="fas fa-exclamation-triangle"></i>' +
+            '<h3>Couldn\'t load posts</h3>' +
+            '<p>Please refresh the page and try again.</p>' +
+          '</div>';
+      });
   }
 
   if (document.readyState === 'loading') {
