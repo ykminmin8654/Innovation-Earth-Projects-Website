@@ -1,5 +1,6 @@
 /* ============================================================
    NEWSLETTER — posts loaded from posts.json (built from Markdown)
+   Post cards link to ./post.html?id=<slug>
    ============================================================ */
 
 (function () {
@@ -46,6 +47,10 @@
     if (cat === 'product')  return 'Product';
     if (cat === 'studio')   return 'Studio';
     return 'Post';
+  }
+
+  function postUrl(post) {
+    return './post.html?id=' + encodeURIComponent(post.id || '');
   }
 
   /* ============================================================
@@ -109,7 +114,7 @@
     var dateStr = formatDate(featured.date);
 
     featuredPostEl.innerHTML =
-      '<a class="featured__card" href="' + escapeHtml(featured.url || '#') + '">' +
+      '<a class="featured__card" href="' + postUrl(featured) + '">' +
         '<div class="featured__visual">' +
           '<i class="fas ' + escapeHtml(icon) + '"></i>' +
         '</div>' +
@@ -162,7 +167,7 @@
       var dateStr = formatDate(p.date);
 
       html +=
-        '<a class="post" href="' + escapeHtml(p.url || '#') + '">' +
+        '<a class="post" href="' + postUrl(p) + '">' +
           '<div class="post__meta">' +
             '<span class="post__badge post__badge--' + escapeHtml(cat) + '">' +
               '<span class="dot dot--' + escapeHtml(cat) + '"></span>' +

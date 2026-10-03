@@ -89,10 +89,12 @@ function build() {
     const raw = fs.readFileSync(filePath, 'utf8');
     const { data, body } = parseFrontmatter(raw);
 
+    // Slug derived from filename (strip .md and any date prefix)
     const slug = file
       .replace(/\.md$/, '')
       .replace(/^\d{4}-\d{2}-\d{2}-/, '');
 
+    // Excerpt: use frontmatter excerpt, or first 160 chars of body
     const excerpt = data.excerpt || body.replace(/[#*_`]/g, '').slice(0, 160) + '…';
 
     posts.push({
@@ -104,11 +106,12 @@ function build() {
       readTime: data.readTime || estimateReadTime(body),
       featured: data.featured === true,
       icon: data.icon || defaultIconFor(data.category),
-      url: data.url || `#${slug}`,
+      url: '',  // no external URL by default — post detail page is used instead
       body: body
     });
   }
 
+  // Sort newest first
   posts.sort((a, b) => new Date(b.date) - new Date(a.date));
 
   fs.writeFileSync(OUTPUT_FILE, JSON.stringify(posts, null, 2));
