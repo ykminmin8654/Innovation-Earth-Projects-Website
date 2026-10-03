@@ -1,6 +1,6 @@
 backend:
   name: github
-  repo: ykminmin8654/innovation-earth-projects
+  repo: ykminmin8654/innovation-earth-projects-website
   branch: main
   base_url: https://decap-proxy.ykminmin8654.workers.dev
   auth_endpoint: auth
