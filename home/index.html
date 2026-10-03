@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap"
     rel="stylesheet"
   />
 
@@ -33,6 +33,13 @@
 
 <body data-page="home">
 
+  <!-- Animated background orbs -->
+  <div class="bg-orbs" aria-hidden="true">
+    <span class="orb orb--teal"></span>
+    <span class="orb orb--cyan"></span>
+    <span class="orb orb--lime"></span>
+  </div>
+
   <!-- Nav injected by shared/nav.js -->
   <div id="nav-mount"></div>
 
@@ -45,40 +52,51 @@
       <div class="container hero__grid">
 
         <div class="hero__copy">
-          <span class="eyebrow">Student-run studio · Est. 2024 · Utah, USA</span>
+          <span class="eyebrow eyebrow--animated">
+            <span class="eyebrow__dot"></span>
+            Student-run studio · Est. 2024 · Utah, USA
+          </span>
 
           <h1 class="hero__title">
-            Free tools for<br />
-            <span class="accent">student builders.</span>
+            <span class="reveal">Free tools for</span><br />
+            <span class="reveal accent">student builders.</span>
           </h1>
 
-          <p class="hero__lede">
+          <p class="hero__lede reveal" data-delay="200">
             We're a registered LLC shipping software that helps students
-            compete, learn, and build — no paywalls, no signup walls.
+            compete, learn, and build — no paywalls, no signup walls,
+            no ads. Just tools that work.
           </p>
 
-          <div class="hero__actions">
-            <a href="../products/products.html" class="btn btn--primary">
+          <div class="hero__actions reveal" data-delay="400">
+            <a href="../products/" class="btn btn--primary btn--glow">
               See our tools <i class="fas fa-arrow-right"></i>
             </a>
-            <a href="../resources/resources.html" class="btn btn--secondary">
+            <a href="../resources/" class="btn btn--secondary">
               Browse resources
             </a>
           </div>
 
-          <ul class="hero__meta">
+          <ul class="hero__meta reveal" data-delay="600">
             <li><i class="fas fa-check"></i> No ads</li>
             <li><i class="fas fa-check"></i> No tracking</li>
             <li><i class="fas fa-check"></i> Free forever</li>
           </ul>
         </div>
 
-        <div class="hero__visual" aria-hidden="true">
+        <div class="hero__visual reveal" data-delay="300">
           <div class="hero__frame">
             <div class="hero__frame-bar">
               <span></span><span></span><span></span>
+              <span class="hero__frame-url">innovationearthprojects.org</span>
             </div>
             <div class="hero__frame-body">
+              <div class="hero__frame-header">
+                <div class="hero__frame-logo"></div>
+                <div class="hero__frame-nav">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
               <div class="hero__frame-line hero__frame-line--lg"></div>
               <div class="hero__frame-line"></div>
               <div class="hero__frame-line hero__frame-line--sm"></div>
@@ -87,11 +105,39 @@
                 <span>DECA</span>
                 <span>HOSA</span>
                 <span>AMC</span>
+                <span>USABO</span>
+              </div>
+              <div class="hero__frame-cards">
+                <div class="hero__frame-card"></div>
+                <div class="hero__frame-card"></div>
+                <div class="hero__frame-card"></div>
               </div>
             </div>
           </div>
+          <div class="hero__float hero__float--1"><i class="fas fa-rocket"></i></div>
+          <div class="hero__float hero__float--2"><i class="fas fa-code"></i></div>
+          <div class="hero__float hero__float--3"><i class="fas fa-graduation-cap"></i></div>
         </div>
 
+      </div>
+    </section>
+
+    <!-- ============================================================
+         TRUST BAR
+         ============================================================ -->
+    <section class="trust-bar">
+      <div class="container trust-bar__inner">
+        <span class="trust-bar__label">Helping students compete in</span>
+        <div class="trust-bar__logos">
+          <span>FBLA</span>
+          <span>DECA</span>
+          <span>HOSA</span>
+          <span>TSA</span>
+          <span>Science Olympiad</span>
+          <span>AMC</span>
+          <span>USABO</span>
+          <span>SkillsUSA</span>
+        </div>
       </div>
     </section>
 
@@ -108,17 +154,214 @@
           </p>
         </header>
 
-        <div class="grid-products" id="featured-products">
-          <div class="state">
-            <div class="spinner"></div>
-            <p>Loading products…</p>
-          </div>
+        <div class="grid-products">
+
+          <!-- Product 1 -->
+          <article class="product-card reveal" data-delay="100">
+            <div class="product-card__top">
+              <span class="product-card__status product-card__status--live">
+                <span class="pulse-dot"></span> Live
+              </span>
+              <span class="product-card__free">Free</span>
+            </div>
+            <div class="product-card__icon product-card__icon--teal">
+              <i class="fas fa-brain"></i>
+            </div>
+            <h3 class="product-card__title">StudyPal</h3>
+            <p class="product-card__desc">
+              Flashcards and spaced repetition tuned for competition prep —
+              FBLA, DECA, HOSA, and more.
+            </p>
+            <div class="product-card__tags">
+              <span class="product-card__tag">Study</span>
+              <span class="product-card__tag">FBLA</span>
+              <span class="product-card__tag">DECA</span>
+            </div>
+            <div class="product-card__footer">
+              <span class="product-card__meta">Updated Sep 2025</span>
+              <a class="product-card__link" href="#" target="_blank" rel="noopener">
+                Open <i class="fas fa-arrow-right"></i>
+              </a>
+            </div>
+          </article>
+
+          <!-- Product 2 -->
+          <article class="product-card reveal" data-delay="200">
+            <div class="product-card__top">
+              <span class="product-card__status product-card__status--beta">
+                <span class="pulse-dot pulse-dot--warn"></span> Beta
+              </span>
+              <span class="product-card__free">Free</span>
+            </div>
+            <div class="product-card__icon product-card__icon--cyan">
+              <i class="fas fa-calculator"></i>
+            </div>
+            <h3 class="product-card__title">Calc Trainer</h3>
+            <p class="product-card__desc">
+              Practice problems for AMC 8/10/12 with instant step-by-step
+              solutions and difficulty scaling.
+            </p>
+            <div class="product-card__tags">
+              <span class="product-card__tag">Math</span>
+              <span class="product-card__tag">AMC</span>
+            </div>
+            <div class="product-card__footer">
+              <span class="product-card__meta">In development</span>
+              <a class="product-card__link" href="#" target="_blank" rel="noopener">
+                Try beta <i class="fas fa-arrow-right"></i>
+              </a>
+            </div>
+          </article>
+
+          <!-- Product 3 -->
+          <article class="product-card reveal" data-delay="300">
+            <div class="product-card__top">
+              <span class="product-card__status product-card__status--soon">
+                Coming soon
+              </span>
+              <span class="product-card__free">Free</span>
+            </div>
+            <div class="product-card__icon product-card__icon--lime">
+              <i class="fas fa-flask"></i>
+            </div>
+            <h3 class="product-card__title">SciBowl Arena</h3>
+            <p class="product-card__desc">
+              Live buzzer practice for National Science Bowl teams. Team
+              scoring, question banks, and analytics.
+            </p>
+            <div class="product-card__tags">
+              <span class="product-card__tag">Science Bowl</span>
+              <span class="product-card__tag">Team</span>
+            </div>
+            <div class="product-card__footer">
+              <span class="product-card__meta">Target: Q1 2026</span>
+              <span class="product-card__link product-card__link--disabled">
+                Coming soon
+              </span>
+            </div>
+          </article>
+
         </div>
 
         <div class="center-cta">
-          <a href="../products/products.html" class="btn btn--secondary">
+          <a href="../products/" class="btn btn--secondary">
             View all products <i class="fas fa-arrow-right"></i>
           </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         WHY WE BUILD
+         ============================================================ -->
+    <section class="section section--tint">
+      <div class="container">
+        <header class="section__head">
+          <span class="eyebrow">Why we build</span>
+          <h2 class="section__title">The tools we wish we had</h2>
+          <p class="section__lede">
+            Every product starts with a problem one of us actually ran into.
+          </p>
+        </header>
+
+        <div class="reasons">
+          <div class="reason reveal" data-delay="100">
+            <div class="reason__icon reason__icon--teal">
+              <i class="fas fa-lock-open"></i>
+            </div>
+            <h3 class="reason__title">No paywalls</h3>
+            <p class="reason__desc">
+              The best study tools shouldn't be locked behind $20/month
+              subscriptions students can't afford.
+            </p>
+          </div>
+
+          <div class="reason reveal" data-delay="200">
+            <div class="reason__icon reason__icon--cyan">
+              <i class="fas fa-users"></i>
+            </div>
+            <h3 class="reason__title">Built by students</h3>
+            <p class="reason__desc">
+              We're competing in the same events you are. We know what's
+              actually useful — and what isn't.
+            </p>
+          </div>
+
+          <div class="reason reveal" data-delay="300">
+            <div class="reason__icon reason__icon--lime">
+              <i class="fas fa-bolt"></i>
+            </div>
+            <h3 class="reason__title">Fast, focused, free</h3>
+            <p class="reason__desc">
+              No bloat, no signup flows, no dark patterns. Open the tool,
+              use it, done.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         HOW IT WORKS
+         ============================================================ -->
+    <section class="section">
+      <div class="container">
+        <header class="section__head">
+          <span class="eyebrow">How it works</span>
+          <h2 class="section__title">Three steps. Zero friction.</h2>
+        </header>
+
+        <ol class="steps">
+          <li class="step reveal" data-delay="100">
+            <span class="step__num">01</span>
+            <h3 class="step__title">Pick a tool</h3>
+            <p class="step__desc">
+              Browse our library of free tools built for the competitions
+              you're actually in.
+            </p>
+          </li>
+          <li class="step reveal" data-delay="200">
+            <span class="step__num">02</span>
+            <h3 class="step__title">Open it. No signup.</h3>
+            <p class="step__desc">
+              Every tool works instantly — no account, no email, no
+              credit card.
+            </p>
+          </li>
+          <li class="step reveal" data-delay="300">
+            <span class="step__num">03</span>
+            <h3 class="step__title">Win, learn, build</h3>
+            <p class="step__desc">
+              Use them to prep for competitions, study, or just build
+              something cool.
+            </p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         STATS
+         ============================================================ -->
+    <section class="section section--dark">
+      <div class="container">
+        <div class="stats">
+          <div class="stat reveal" data-delay="100">
+            <div class="stat__num" data-count="3">0</div>
+            <div class="stat__label">Products shipped</div>
+          </div>
+          <div class="stat reveal" data-delay="200">
+            <div class="stat__num" data-count="12">0</div>
+            <div class="stat__label">Competitions covered</div>
+          </div>
+          <div class="stat reveal" data-delay="300">
+            <div class="stat__num">$0</div>
+            <div class="stat__label">Cost forever</div>
+          </div>
+          <div class="stat reveal" data-delay="400">
+            <div class="stat__num">&infin;</div>
+            <div class="stat__label">Ideas in the pipeline</div>
+          </div>
         </div>
       </div>
     </section>
@@ -132,44 +375,25 @@
           <span class="eyebrow">What we cover</span>
           <h2 class="section__title">Built for these competitions</h2>
           <p class="section__lede">
-            Resources and tools for the competitions students actually enter.
+            Resources and tools for the events students actually enter.
           </p>
         </header>
 
-        <div class="chips">
-          <a href="../resources/resources.html" class="chip">FBLA</a>
-          <a href="../resources/resources.html" class="chip">DECA</a>
-          <a href="../resources/resources.html" class="chip">HOSA</a>
-          <a href="../resources/resources.html" class="chip">TSA</a>
-          <a href="../resources/resources.html" class="chip">SkillsUSA</a>
-          <a href="../resources/resources.html" class="chip">Science Olympiad</a>
-          <a href="../resources/resources.html" class="chip">AMC 8 / 10 / 12</a>
-          <a href="../resources/resources.html" class="chip">USABO</a>
-          <a href="../resources/resources.html" class="chip">USNCO</a>
-          <a href="../resources/resources.html" class="chip">USAPhO</a>
-          <a href="../resources/resources.html" class="chip">CyberPatriot</a>
-          <a href="../resources/resources.html" class="chip">FIRST Robotics</a>
-          <a href="../resources/resources.html" class="chip">Mathcounts</a>
-          <a href="../resources/resources.html" class="chip">National Science Bowl</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============================================================
-         WHY FREE
-         ============================================================ -->
-    <section class="section">
-      <div class="container">
-        <div class="callout">
-          <div class="callout__mark" aria-hidden="true">$0</div>
-          <div class="callout__body">
-            <h3>Why everything is free</h3>
-            <p>
-              We're a registered LLC, not a nonprofit. We build free tools
-              because we're students too — and we know exactly what's missing.
-              No ads, no upsells, no dark patterns.
-            </p>
-          </div>
+        <div class="chips chips--animated">
+          <a href="../resources/" class="chip chip--business">FBLA</a>
+          <a href="../resources/" class="chip chip--business">DECA</a>
+          <a href="../resources/" class="chip chip--health">HOSA</a>
+          <a href="../resources/" class="chip chip--stem">TSA</a>
+          <a href="../resources/" class="chip chip--cte">SkillsUSA</a>
+          <a href="../resources/" class="chip chip--science">Science Olympiad</a>
+          <a href="../resources/" class="chip chip--math">AMC 8 / 10 / 12</a>
+          <a href="../resources/" class="chip chip--science">USABO</a>
+          <a href="../resources/" class="chip chip--science">USNCO</a>
+          <a href="../resources/" class="chip chip--science">USAPhO</a>
+          <a href="../resources/" class="chip chip--stem">CyberPatriot</a>
+          <a href="../resources/" class="chip chip--stem">FIRST Robotics</a>
+          <a href="../resources/" class="chip chip--math">Mathcounts</a>
+          <a href="../resources/" class="chip chip--science">Science Bowl</a>
         </div>
       </div>
     </section>
@@ -177,7 +401,7 @@
     <!-- ============================================================
          CHANGELOG
          ============================================================ -->
-    <section class="section section--tint">
+    <section class="section">
       <div class="container">
         <header class="section__head">
           <span class="eyebrow">Recently shipped</span>
@@ -187,12 +411,147 @@
           </p>
         </header>
 
-        <ul class="changelog" id="changelog">
-          <li class="state">
-            <div class="spinner"></div>
-            <p>Loading updates…</p>
+        <ul class="changelog">
+          <li class="changelog__item reveal">
+            <span class="changelog__date">Oct 2025</span>
+            <h3 class="changelog__title">Calc Trainer enters beta</h3>
+            <p class="changelog__desc">
+              AMC-focused practice with instant solutions is live for
+              early testers. Feedback welcome.
+            </p>
+          </li>
+          <li class="changelog__item reveal">
+            <span class="changelog__date">Sep 2025</span>
+            <h3 class="changelog__title">StudyPal 1.0 released</h3>
+            <p class="changelog__desc">
+              First public release of our flashcard and spaced-repetition
+              tool for competition prep.
+            </p>
+          </li>
+          <li class="changelog__item reveal">
+            <span class="changelog__date">Aug 2025</span>
+            <h3 class="changelog__title">Innovation Earth Projects LLC registered</h3>
+            <p class="changelog__desc">
+              We officially became a Utah LLC. Every product we ship is
+              now backed by a real organization.
+            </p>
+          </li>
+          <li class="changelog__item reveal">
+            <span class="changelog__date">Jul 2025</span>
+            <h3 class="changelog__title">Site redesign begins</h3>
+            <p class="changelog__desc">
+              Moving from a landing page to a real product-first studio
+              site with sectioned pages.
+            </p>
           </li>
         </ul>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         TESTIMONIALS
+         ============================================================ -->
+    <section class="section section--tint">
+      <div class="container">
+        <header class="section__head">
+          <span class="eyebrow">What people say</span>
+          <h2 class="section__title">Early feedback</h2>
+        </header>
+
+        <div class="testimonials">
+          <figure class="testimonial reveal" data-delay="100">
+            <blockquote>
+              "StudyPal is what I wished existed when I was prepping for
+              FBLA state. Simple, free, and actually works."
+            </blockquote>
+            <figcaption>
+              <div class="testimonial__avatar">J</div>
+              <div>
+                <strong>Jordan M.</strong>
+                <span>FBLA competitor, Utah</span>
+              </div>
+            </figcaption>
+          </figure>
+
+          <figure class="testimonial reveal" data-delay="200">
+            <blockquote>
+              "Cool to see students shipping real tools instead of just
+              talking about it. Calc Trainer is genuinely useful."
+            </blockquote>
+            <figcaption>
+              <div class="testimonial__avatar">S</div>
+              <div>
+                <strong>Sam R.</strong>
+                <span>Math team coach</span>
+              </div>
+            </figcaption>
+          </figure>
+
+          <figure class="testimonial reveal" data-delay="300">
+            <blockquote>
+              "No signup, no ads, no catch. That alone makes it better
+              than 90% of what's out there."
+            </blockquote>
+            <figcaption>
+              <div class="testimonial__avatar">A</div>
+              <div>
+                <strong>Alex T.</strong>
+                <span>HOSA member</span>
+              </div>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         FAQ
+         ============================================================ -->
+    <section class="section">
+      <div class="container">
+        <header class="section__head">
+          <span class="eyebrow">Questions</span>
+          <h2 class="section__title">Frequently asked</h2>
+        </header>
+
+        <div class="faq">
+          <details class="faq__item reveal">
+            <summary>Are these tools really free?</summary>
+            <p>
+              Yes. Every product we've shipped is free, and there are no
+              plans to ever charge. We're a registered LLC and may add
+              optional paid services someday, but the current tools
+              stay free.
+            </p>
+          </details>
+
+          <details class="faq__item reveal">
+            <summary>Do I need an account?</summary>
+            <p>
+              No. Every tool works without signup. Some tools may offer
+              optional accounts later for saving progress, but nothing
+              is gated.
+            </p>
+          </details>
+
+          <details class="faq__item reveal">
+            <summary>Who's behind this?</summary>
+            <p>
+              A small group of students based in Utah. We started
+              Innovation Earth Projects in 2024 and registered as an
+              LLC in 2025.
+            </p>
+          </details>
+
+          <details class="faq__item reveal">
+            <summary>Can I suggest a tool?</summary>
+            <p>
+              Absolutely. Use our <a href="../contact/">contact form</a>
+              and tell us what would help you. We build what students
+              actually ask for.
+            </p>
+          </details>
+        </div>
       </div>
     </section>
 
@@ -201,12 +560,12 @@
          ============================================================ -->
     <section class="section">
       <div class="container">
-        <div class="cta">
+        <div class="cta reveal">
           <div class="cta__copy">
             <h2>Try a tool. It takes 10 seconds.</h2>
             <p>No account. No card. No catch.</p>
           </div>
-          <a href="../products/products.html" class="btn btn--primary">
+          <a href="../products/" class="btn btn--primary btn--glow">
             Open tools <i class="fas fa-arrow-right"></i>
           </a>
         </div>
@@ -218,7 +577,7 @@
   <!-- Footer injected by shared/nav.js -->
   <div id="footer-mount"></div>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase SDKs (kept for later) -->
   <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
 

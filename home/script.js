@@ -1,224 +1,161 @@
 /* ============================================================
-   HOME — featured products + changelog
-   Depends on: shared/firebase.js (window.iepDB)
+   HOME — animations, scroll reveals, stat counters
+   No Firebase dependency (all content is hardcoded in HTML)
    ============================================================ */
 
 (function () {
   'use strict';
 
   // ------------------------------------------------------------
-  // Config
+  // Scroll reveal via IntersectionObserver
   // ------------------------------------------------------------
-  const FEATURED_LIMIT = 3;       // how many products to show on home
-  const CHANGELOG_LIMIT = 5;      // how many changelog entries
-  const CACHE_KEY_PRODUCTS = 'iep:products:cache';
-  const CACHE_KEY_CHANGELOG = 'iep:changelog:cache';
+  function initScrollReveals() {
+    const reveals = document.querySelectorAll('.reveal');
+    if (!reveals.length) return;
 
-  // ------------------------------------------------------------
-  // Utilities
-  // ------------------------------------------------------------
-  function escapeHtml(str) {
-    if (str == null) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
+    // If IntersectionObserver isn't supported, show everything
+    if (!('IntersectionObserver' in window)) {
+      reveals.forEach(el => el.classList.add('is-visible'));
+      return;
+    }
 
-  function normalizeUrl(url) {
-    if (!url) return '';
-    let u = String(url).trim().replace(/^["']|["']$/g, '');
-    if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
-    return u;
-  }
-
-  function formatDate(value) {
-    if (!value) return '';
-    try {
-      const d = value.seconds
-        ? new Date(value.seconds * 1000)
-        : new Date(value);
-      if (isNaN(d.getTime())) return '';
-      return d.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        }
       });
-    } catch {
-      return '';
-    }
-  }
+    }, {
+      threshold: 0.12,
+      rootMargin: '0px 0px -60px 0px',
+    });
 
-  function statusMeta(status) {
-    const s = String(status || 'live').toLowerCase();
-    switch (s) {
-      case 'live':   return { cls: 'live',   label: 'Live'   };
-      case 'beta':   return { cls: 'beta',   label: 'Beta'   };
-      case 'soon':
-      case 'coming': return { cls: 'soon',   label: 'Soon'   };
-      default:       return { cls: 'live',   label: 'Live'   };
-    }
+    reveals.forEach(el => observer.observe(el));
   }
 
   // ------------------------------------------------------------
-  // Products
+  // Stat counter animation
   // ------------------------------------------------------------
-  async function fetchProducts() {
-    // Try Firestore
-    if (window.iepDB) {
-      try {
-        const snap = await window.iepDB
-          .collection('products')
-          .limit(FEATURED_LIMIT)
-          .get();
+  function initStatCounters() {
+    const nums = document.querySelectorAll('.stat__num[data-count]');
+    if (!nums.length) return;
 
-        const items = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        if (items.length) {
-          localStorage.setItem(CACHE_KEY_PRODUCTS, JSON.stringify(items));
-          return items;
-        }
-      } catch (err) {
-        console.warn('Firestore products failed, trying cache:', err.message);
+    const animate = (el) => {
+      const target = Number(el.dataset.count);
+      if (isNaN(target) || target <= 0) {
+        el.textContent = el.dataset.count;
+        return;
       }
-    }
+      const duration = 1600;
+      const start = performance.now();
 
-    // Fallback: cache
-    try {
-      const cached = JSON.parse(localStorage.getItem(CACHE_KEY_PRODUCTS) || '[]');
-      if (cached.length) return cached.slice(0, FEATURED_LIMIT);
-    } catch { /* ignore */ }
+      const tick = (now) => {
+        const progress = Math.min((now - start) / duration, 1);
+        // easeOutCubic
+        const eased = 1 - Math.pow(1 - progress, 3);
+        el.textContent = Math.floor(eased * target);
+        if (progress < 1) {
+          requestAnimationFrame(tick);
+        } else {
+          el.textContent = target;
+        }
+      };
+      requestAnimationFrame(tick);
+    };
 
-    return [];
-  }
-
-  function renderProducts(container, products) {
-    if (!container) return;
-
-    if (!products.length) {
-      container.innerHTML = `
-        <div class="state">
-          <i class="fas fa-box-open"></i>
-          <h3>No products yet</h3>
-          <p>Check back soon — we're shipping.</p>
-        </div>
-      `;
+    if (!('IntersectionObserver' in window)) {
+      nums.forEach(animate);
       return;
     }
 
-    container.innerHTML = products.map(p => {
-      const meta = statusMeta(p.status);
-      const url = normalizeUrl(p.url);
-      const hasUrl = !!url;
-
-      const linkHtml = hasUrl
-        ? `<a class="product-card__link" href="${escapeHtml(url)}" target="_blank" rel="noopener">
-             Open <i class="fas fa-arrow-right"></i>
-           </a>`
-        : `<span class="product-card__link product-card__link--disabled">
-             Coming soon
-           </span>`;
-
-      return `
-        <article class="product-card">
-          <div class="product-card__top">
-            <span class="product-card__status product-card__status--${meta.cls}">
-              ${meta.label}
-            </span>
-            <span class="product-card__free">Free</span>
-          </div>
-          <h3 class="product-card__title">${escapeHtml(p.title || 'Untitled product')}</h3>
-          <p class="product-card__desc">${escapeHtml(p.description || '')}</p>
-          ${linkHtml}
-        </article>
-      `;
-    }).join('');
-  }
-
-  // ------------------------------------------------------------
-  // Changelog
-  // ------------------------------------------------------------
-  async function fetchChangelog() {
-    if (window.iepDB) {
-      try {
-        const snap = await window.iepDB
-          .collection('changelog')
-          .orderBy('date', 'desc')
-          .limit(CHANGELOG_LIMIT)
-          .get();
-
-        const items = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        if (items.length) {
-          localStorage.setItem(CACHE_KEY_CHANGELOG, JSON.stringify(items));
-          return items;
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          animate(entry.target);
+          observer.unobserve(entry.target);
         }
-      } catch (err) {
-        console.warn('Firestore changelog failed, trying cache:', err.message);
-      }
-    }
+      });
+    }, { threshold: 0.4 });
 
-    try {
-      const cached = JSON.parse(localStorage.getItem(CACHE_KEY_CHANGELOG) || '[]');
-      if (cached.length) return cached.slice(0, CHANGELOG_LIMIT);
-    } catch { /* ignore */ }
-
-    return [];
+    nums.forEach(el => observer.observe(el));
   }
 
-  function renderChangelog(container, items) {
-    if (!container) return;
+  // ------------------------------------------------------------
+  // Smooth-scroll for same-page anchor links
+  // ------------------------------------------------------------
+  function initSmoothAnchors() {
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', (e) => {
+        const id = a.getAttribute('href').slice(1);
+        if (!id) return;
+        const el = document.getElementById(id);
+        if (!el) return;
+        e.preventDefault();
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  }
 
-    if (!items.length) {
-      container.innerHTML = `
-        <li class="state">
-          <i class="fas fa-clock"></i>
-          <h3>No updates yet</h3>
-          <p>Our first release notes will land here.</p>
-        </li>
-      `;
-      return;
-    }
+  // ------------------------------------------------------------
+  // Card tilt on hover (subtle 3D)
+  // ------------------------------------------------------------
+  function initCardTilt() {
+    const cards = document.querySelectorAll('.product-card');
+    if (!cards.length) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (window.matchMedia('(hover: none)').matches) return; // skip on touch
 
-    container.innerHTML = items.map(item => {
-      const date = formatDate(item.date) || 'Recently';
-      return `
-        <li>
-          <span class="changelog__date">${escapeHtml(date)}</span>
-          <h3 class="changelog__title">${escapeHtml(item.title || 'Update')}</h3>
-          <p class="changelog__desc">${escapeHtml(item.description || '')}</p>
-        </li>
-      `;
-    }).join('');
+    cards.forEach(card => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        const centerX = rect.width / 2;
+        const centerY = rect.height / 2;
+        const rotateX = ((y - centerY) / centerY) * -3;
+        const rotateY = ((x - centerX) / centerX) * 3;
+        card.style.transform = `translateY(-4px) perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+      });
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = '';
+      });
+    });
+  }
+
+  // ------------------------------------------------------------
+  // Parallax orbs on scroll
+  // ------------------------------------------------------------
+  function initOrbParallax() {
+    const orbs = document.querySelectorAll('.bg-orbs .orb');
+    if (!orbs.length) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const y = window.scrollY;
+        orbs.forEach((orb, i) => {
+          const speed = (i + 1) * 0.05;
+          orb.style.setProperty('--scroll-y', `${y * speed}px`);
+          orb.style.translate = `0 ${y * speed}px`;
+        });
+        ticking = false;
+      });
+    }, { passive: true });
   }
 
   // ------------------------------------------------------------
   // Boot
   // ------------------------------------------------------------
-  async function boot() {
-    const productsEl = document.getElementById('featured-products');
-    const changelogEl = document.getElementById('changelog');
-
-    // If Firebase hasn't loaded yet, wait briefly, then render with cache
-    const loadData = async () => {
-      const [products, changelog] = await Promise.all([
-        fetchProducts(),
-        fetchChangelog(),
-      ]);
-      renderProducts(productsEl, products);
-      renderChangelog(changelogEl, changelog);
-    };
-
-    if (window.iepDB) {
-      loadData();
-    } else {
-      // Wait for firebase-ready event or timeout
-      let done = false;
-      const onReady = () => { if (!done) { done = true; loadData(); } };
-      window.addEventListener('iep:db-ready', onReady, { once: true });
-      window.addEventListener('iep:db-failed', onReady, { once: true });
-      setTimeout(onReady, 1500);
-    }
+  function boot() {
+    initScrollReveals();
+    initStatCounters();
+    initSmoothAnchors();
+    initCardTilt();
+    initOrbParallax();
   }
 
   if (document.readyState === 'loading') {
