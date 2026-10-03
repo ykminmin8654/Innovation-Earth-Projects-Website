@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Newsletter — Innovation Earth Projects</title>
+  <meta name="description" content="Occasional updates from our studio: research we find interesting, new products, and behind-the-scenes notes." />
+  <meta name="theme-color" content="#008080" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  />
+
+  <link rel="stylesheet" href="../shared/tokens.css" />
+  <link rel="stylesheet" href="../shared/base.css" />
+  <link rel="stylesheet" href="../shared/nav.css" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+
+<body data-page="newsletter">
+
+  <div class="bg-orbs" aria-hidden="true">
+    <span class="orb orb--teal"></span>
+    <span class="orb orb--cyan"></span>
+  </div>
+
+  <div id="nav-mount"></div>
+
+  <main>
+
+    <!-- ============================================================
+         PAGE HEAD
+         ============================================================ -->
+    <section class="page-head">
+      <div class="container">
+        <span class="eyebrow">Newsletter</span>
+        <h1 class="page-head__title">Occasional notes from the studio</h1>
+        <p class="page-head__lede">
+          Research we find interesting, new products, and behind-the-scenes
+          updates. No spam, no schedule — just posts when we have something
+          worth sharing.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         FILTERS + FEATURED
+         ============================================================ -->
+    <section class="section section--tight">
+      <div class="container">
+
+        <!-- Filter tabs -->
+        <nav class="tabs" id="newsletter-tabs" aria-label="Filter posts">
+          <button class="tab tab--active" data-filter="all">
+            All posts <span class="tab__count" data-count="all">0</span>
+          </button>
+          <button class="tab" data-filter="research">
+            <span class="dot dot--research"></span> Research
+            <span class="tab__count" data-count="research">0</span>
+          </button>
+          <button class="tab" data-filter="product">
+            <span class="dot dot--product"></span> Product
+            <span class="tab__count" data-count="product">0</span>
+          </button>
+          <button class="tab" data-filter="studio">
+            <span class="dot dot--studio"></span> Studio
+            <span class="tab__count" data-count="studio">0</span>
+          </button>
+        </nav>
+
+        <!-- Featured post -->
+        <div id="featured-post" class="featured"></div>
+
+        <!-- Post list -->
+        <div id="posts-grid" class="posts">
+          <div class="state">
+            <div class="spinner"></div>
+            <p>Loading posts…</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================================================
+         SUBSCRIBE CTA
+         ============================================================ -->
+    <section class="section">
+      <div class="container">
+        <div class="subscribe">
+          <div class="subscribe__copy">
+            <span class="eyebrow">Stay in the loop</span>
+            <h2>Get new posts by email</h2>
+            <p>
+              We send a short email when we publish something new — usually
+              once or twice a month. Unsubscribe anytime.
+            </p>
+          </div>
+
+          <form class="subscribe__form" id="subscribe-form" novalidate>
+            <label class="visually-hidden" for="subscribe-email">Email address</label>
+            <input
+              type="email"
+              id="subscribe-email"
+              name="email"
+              class="subscribe__input"
+              placeholder="you@example.com"
+              required
+              autocomplete="email"
+            />
+            <button type="submit" class="btn btn--primary btn--glow">
+              Subscribe <i class="fas fa-arrow-right"></i>
+            </button>
+          </form>
+
+          <p class="subscribe__note" id="subscribe-note" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="footer-mount"></div>
+
+  <script src="../shared/nav.js" defer></script>
+  <script src="./script.js" defer></script>
+
+</body>
+</html>
