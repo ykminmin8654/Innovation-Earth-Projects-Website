@@ -8,7 +8,6 @@
 
   /* ============================================================
      1. POSTS DATA
-     Edit this array to add/remove posts. Newest at the top.
      ============================================================ */
   var POSTS = [
     {
@@ -47,7 +46,7 @@
       date: '2025-09-15',
       category: 'studio',
       title: 'We registered as a Utah LLC',
-      excerpt: 'A quick note on why we formalized the studio, and what it changes (and what it doesn\'t).',
+      excerpt: "A quick note on why we formalized the studio, and what it changes (and what it doesn't).",
       readTime: '4 min read',
       icon: 'fa-building',
       url: '#'
@@ -57,7 +56,7 @@
       date: '2025-08-22',
       category: 'research',
       title: 'The case for building in public as a student',
-      excerpt: 'Why sharing your work-in-progress beats waiting until it\'s "ready" — with real examples from our own projects.',
+      excerpt: "Why sharing your work-in-progress beats waiting until it's \"ready\" — with real examples from our own projects.",
       readTime: '5 min read',
       icon: 'fa-eye',
       url: '#'
@@ -67,7 +66,7 @@
       date: '2025-08-05',
       category: 'studio',
       title: 'How StudyPal started in a single weekend',
-      excerpt: 'The story behind our first tool — what worked, what broke, and what we\'d do differently.',
+      excerpt: "The story behind our first tool — what worked, what broke, and what we'd do differently.",
       readTime: '4 min read',
       icon: 'fa-rocket',
       url: '#'
@@ -142,12 +141,10 @@
   function getVisiblePosts() {
     var list = POSTS.slice();
 
-    // Category filter (featured only shows in "all")
     if (activeFilter !== 'all') {
       list = list.filter(function (p) { return p.category === activeFilter; });
     }
 
-    // Search filter
     if (activeSearch) {
       var q = activeSearch.toLowerCase();
       list = list.filter(function (p) {
@@ -169,7 +166,6 @@
   function renderFeatured() {
     if (!featuredPostEl) return;
 
-    // Hide featured if searching or filtering
     if (activeFilter !== 'all' || activeSearch) {
       featuredPostEl.innerHTML = '';
       return;
@@ -215,7 +211,6 @@
 
     var list = getVisiblePosts();
 
-    // In "all" view without search, exclude the featured post from the grid
     if (activeFilter === 'all' && !activeSearch) {
       list = list.filter(function (p) { return !p.featured; });
     }
@@ -278,7 +273,7 @@
   }
 
   /* ============================================================
-     6. INTERACTIONS — tabs
+     6. TABS
      ============================================================ */
   function wireTabs() {
     var tabs = document.querySelectorAll('#newsletter-tabs .tab');
@@ -297,7 +292,7 @@
   }
 
   /* ============================================================
-     7. INTERACTIONS — search
+     7. SEARCH
      ============================================================ */
   function wireSearch() {
     var input = document.getElementById('newsletter-search');
@@ -325,7 +320,6 @@
       });
     }
 
-    // Escape key clears search
     input.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && input.value) {
         input.value = '';
@@ -337,8 +331,7 @@
   }
 
   /* ============================================================
-     8. INTERACTIONS — subscribe form + Turnstile
-     ============================================================ */
+     8. SUBSCRIBE + TURNSTILE     ============================================================ */
   function wireSubscribe() {
     var form = document.getElementById('subscribe-form');
     var input = document.getElementById('subscribe-email');
@@ -356,12 +349,11 @@
 
       var email = input.value.trim();
 
-      // Reset UI
       input.classList.remove('is-error');
       note.classList.remove('is-success', 'is-error');
       note.textContent = '';
 
-      // 1. Validate email
+      // 1. Email validation
       var valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
       if (!valid) {
         input.classList.add('is-error');
@@ -371,7 +363,7 @@
         return;
       }
 
-      // 2. Get Turnstile token
+      // 2. Turnstile token
       var tokenField = form.querySelector('[name="cf-turnstile-response"]');
       var token = tokenField ? tokenField.value : '';
       if (!token) {
@@ -391,10 +383,10 @@
         });
 
         if (!res.ok) {
-          throw new Error('Verification failed');
+          throw new Error('Verification failed with status ' + res.status);
         }
 
-        // 4. Save locally (temporary — swap for backend later)
+        // 4. Save locally
         try {
           var list = JSON.parse(localStorage.getItem('iep:newsletter') || '[]');
           if (list.indexOf(email) === -1) list.push(email);
@@ -415,7 +407,6 @@
       }
     });
 
-    // Clear errors while typing
     input.addEventListener('input', function () {
       input.classList.remove('is-error');
       note.classList.remove('is-error');
@@ -457,7 +448,6 @@
     featuredPostEl = document.getElementById('featured-post');
     postsGridEl = document.getElementById('posts-grid');
 
-    // Sort posts by date desc
     POSTS.sort(function (a, b) {
       return new Date(b.date) - new Date(a.date);
     });
