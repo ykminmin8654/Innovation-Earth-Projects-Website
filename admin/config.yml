@@ -3,7 +3,7 @@ backend:
   repo: ykminmin8654/Innovation-Earth-Projects-Website
   branch: main
   base_url: https://decap-proxy.ykminmin8654.workers.dev
-  auth_endpoint: auth
+  auth_endpoint: /auth
 
 media_folder: "newsletter/images"
 public_folder: "/newsletter/images"
