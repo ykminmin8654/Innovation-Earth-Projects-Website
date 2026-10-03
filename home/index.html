@@ -4,43 +4,35 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>Innovation Earth Projects — Free tools for student builders</title>
-  <meta name="description" content="A student-run studio shipping free software for competitors, learners, and makers. No ads. No tracking. Free forever." />
+  <title>Innovation Earth Projects — Tools for student builders</title>
+  <meta name="description" content="A student-run studio shipping software for competitors, learners, and makers." />
   <meta name="theme-color" content="#008080" />
 
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap"
     rel="stylesheet"
   />
-
-  <!-- Icons -->
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
   />
 
-  <!-- Shared styles -->
   <link rel="stylesheet" href="../shared/tokens.css" />
   <link rel="stylesheet" href="../shared/base.css" />
   <link rel="stylesheet" href="../shared/nav.css" />
-
-  <!-- Local styles -->
   <link rel="stylesheet" href="./styles.css" />
 </head>
 
 <body data-page="home">
 
-  <!-- Animated background orbs -->
   <div class="bg-orbs" aria-hidden="true">
     <span class="orb orb--teal"></span>
     <span class="orb orb--cyan"></span>
     <span class="orb orb--lime"></span>
   </div>
 
-  <!-- Nav injected by shared/nav.js -->
   <div id="nav-mount"></div>
 
   <main>
@@ -54,23 +46,23 @@
         <div class="hero__copy">
           <span class="eyebrow eyebrow--animated">
             <span class="eyebrow__dot"></span>
-            Student-run studio · Est. 2024 · Utah, USA
+            Student-run studio · Utah, USA
           </span>
 
           <h1 class="hero__title">
-            <span class="reveal">Free tools for</span><br />
+            <span class="reveal">Tools for</span><br />
             <span class="reveal accent">student builders.</span>
           </h1>
 
           <p class="hero__lede reveal" data-delay="200">
-            We're a registered LLC shipping software that helps students
-            compete, learn, and build — no paywalls, no signup walls,
-            no ads. Just tools that work.
+            We build software for the competitions, classes, and side
+            projects students actually care about. Real tools, shipped
+            in public.
           </p>
 
           <div class="hero__actions reveal" data-delay="400">
             <a href="../products/index.html" class="btn btn--primary btn--glow">
-              See our tools <i class="fas fa-arrow-right"></i>
+              Browse tools <i class="fas fa-arrow-right"></i>
             </a>
             <a href="#how-it-works" class="btn btn--secondary">
               How it works
@@ -80,7 +72,7 @@
           <ul class="hero__meta reveal" data-delay="600">
             <li><i class="fas fa-check"></i> No ads</li>
             <li><i class="fas fa-check"></i> No tracking</li>
-            <li><i class="fas fa-check"></i> Free forever</li>
+            <li><i class="fas fa-check"></i> Optional accounts</li>
           </ul>
         </div>
 
@@ -123,40 +115,20 @@
     </section>
 
     <!-- ============================================================
-         2. TRUST BAR
-         ============================================================ -->
-    <section class="trust-bar">
-      <div class="container trust-bar__inner">
-        <span class="trust-bar__label">Helping students compete in</span>
-        <div class="trust-bar__logos">
-          <span>FBLA</span>
-          <span>DECA</span>
-          <span>HOSA</span>
-          <span>TSA</span>
-          <span>Science Olympiad</span>
-          <span>AMC</span>
-          <span>USABO</span>
-          <span>SkillsUSA</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============================================================
-         3. FEATURED PRODUCTS
+         2. FEATURED TOOLS — moved to top
          ============================================================ -->
     <section class="section" id="featured-section">
       <div class="container">
         <header class="section__head">
-          <span class="eyebrow">What we ship</span>
-          <h2 class="section__title">Tools you can use today</h2>
+          <span class="eyebrow">Tools</span>
+          <h2 class="section__title">What we've built</h2>
           <p class="section__lede">
-            Every product is free. Every product is built by students.
+            Real software, shipping right now. Built by students, used by students.
           </p>
         </header>
 
         <div class="grid-products">
 
-          <!-- Product 1 -->
           <article class="product-card reveal" data-delay="100">
             <div class="product-card__top">
               <span class="product-card__status product-card__status--live">
@@ -180,14 +152,13 @@
               <span class="product-card__tag">HOSA</span>
             </div>
             <div class="product-card__footer">
-              <span class="product-card__meta">Updated Sep 2025</span>
+              <span class="product-card__meta">v1.2 · Sep 2025</span>
               <a class="product-card__link" href="#" target="_blank" rel="noopener">
                 Open <i class="fas fa-arrow-right"></i>
               </a>
             </div>
           </article>
 
-          <!-- Product 2 -->
           <article class="product-card reveal" data-delay="200">
             <div class="product-card__top">
               <span class="product-card__status product-card__status--beta">
@@ -210,20 +181,19 @@
               <span class="product-card__tag">Adaptive</span>
             </div>
             <div class="product-card__footer">
-              <span class="product-card__meta">In development</span>
+              <span class="product-card__meta">v0.4 · Oct 2025</span>
               <a class="product-card__link" href="#" target="_blank" rel="noopener">
                 Try beta <i class="fas fa-arrow-right"></i>
               </a>
             </div>
           </article>
 
-          <!-- Product 3 -->
           <article class="product-card reveal" data-delay="300">
             <div class="product-card__top">
               <span class="product-card__status product-card__status--soon">
                 Coming soon
               </span>
-              <span class="product-card__free">Free</span>
+              <span class="product-card__free product-card__free--muted">Free tier</span>
             </div>
             <div class="product-card__icon product-card__icon--lime">
               <i class="fas fa-flask"></i>
@@ -251,20 +221,81 @@
 
         <div class="center-cta">
           <a href="../products/index.html" class="btn btn--secondary">
-            View all products <i class="fas fa-arrow-right"></i>
+            View all tools <i class="fas fa-arrow-right"></i>
           </a>
         </div>
       </div>
     </section>
 
     <!-- ============================================================
-         4. WHY WE BUILD
+         3. TRUST BAR
+         ============================================================ -->
+    <section class="trust-bar">
+      <div class="container trust-bar__inner">
+        <span class="trust-bar__label">Built for students competing in</span>
+        <div class="trust-bar__logos">
+          <span>FBLA</span>
+          <span>DECA</span>
+          <span>HOSA</span>
+          <span>TSA</span>
+          <span>Science Olympiad</span>
+          <span>AMC</span>
+          <span>USABO</span>
+          <span>SkillsUSA</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         4. HOW IT WORKS
+         ============================================================ -->
+    <section class="section" id="how-it-works">
+      <div class="container">
+        <header class="section__head">
+          <span class="eyebrow">How it works</span>
+          <h2 class="section__title">Open a tool. Start using it.</h2>
+          <p class="section__lede">
+            No signup flow, no onboarding, no email capture. Just tools.
+          </p>
+        </header>
+
+        <ol class="steps">
+          <li class="step reveal" data-delay="100">
+            <span class="step__num">01</span>
+            <h3 class="step__title">Pick a tool</h3>
+            <p class="step__desc">
+              Browse our library of tools built for the competitions
+              and subjects you're actually working on.
+            </p>
+          </li>
+          <li class="step reveal" data-delay="200">
+            <span class="step__num">02</span>
+            <h3 class="step__title">Use it instantly</h3>
+            <p class="step__desc">
+              Every tool works without an account. Optional accounts
+              for saving progress are rolling out soon.
+            </p>
+          </li>
+          <li class="step reveal" data-delay="300">
+            <span class="step__num">03</span>
+            <h3 class="step__title">Win, learn, build</h3>
+            <p class="step__desc">
+              Use them to prep for competitions, study, or just build
+              something cool on the side.
+            </p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         5. WHY WE BUILD
          ============================================================ -->
     <section class="section section--tint">
       <div class="container">
         <header class="section__head">
           <span class="eyebrow">Why we build</span>
-          <h2 class="section__title">The tools we wish we had</h2>
+          <h2 class="section__title">Tools we wished existed</h2>
           <p class="section__lede">
             Every product starts with a problem one of us actually ran into.
           </p>
@@ -273,12 +304,11 @@
         <div class="reasons">
           <div class="reason reveal" data-delay="100">
             <div class="reason__icon reason__icon--teal">
-              <i class="fas fa-lock-open"></i>
+              <i class="fas fa-wrench"></i>
             </div>
-            <h3 class="reason__title">No paywalls</h3>
+            <h3 class="reason__title">Actually useful</h3>
             <p class="reason__desc">
-              The best study tools shouldn't be locked behind $20/month
-              subscriptions students can't afford.
+              No filler features. Every screen in every tool earns its place.
             </p>
           </div>
 
@@ -289,7 +319,7 @@
             <h3 class="reason__title">Built by students</h3>
             <p class="reason__desc">
               We're competing in the same events you are. We know what's
-              actually useful — and what isn't.
+              actually helpful — and what isn't.
             </p>
           </div>
 
@@ -297,10 +327,10 @@
             <div class="reason__icon reason__icon--lime">
               <i class="fas fa-bolt"></i>
             </div>
-            <h3 class="reason__title">Fast, focused, free</h3>
+            <h3 class="reason__title">Fast and focused</h3>
             <p class="reason__desc">
-              No bloat, no signup flows, no dark patterns. Open the tool,
-              use it, done.
+              No bloat, no dark patterns, no confusing menus. Open the
+              tool, use it, done.
             </p>
           </div>
         </div>
@@ -308,127 +338,108 @@
     </section>
 
     <!-- ============================================================
-         5. HOW IT WORKS
-         ============================================================ -->
-    <section class="section" id="how-it-works">
-      <div class="container">
-        <header class="section__head">
-          <span class="eyebrow">How it works</span>
-          <h2 class="section__title">Three steps. Zero friction.</h2>
-        </header>
-
-        <ol class="steps">
-          <li class="step reveal" data-delay="100">
-            <span class="step__num">01</span>
-            <h3 class="step__title">Pick a tool</h3>
-            <p class="step__desc">
-              Browse our library of free tools built for the competitions
-              you're actually in.
-            </p>
-          </li>
-          <li class="step reveal" data-delay="200">
-            <span class="step__num">02</span>
-            <h3 class="step__title">Open it. No signup.</h3>
-            <p class="step__desc">
-              Every tool works instantly — no account, no email, no
-              credit card.
-            </p>
-          </li>
-          <li class="step reveal" data-delay="300">
-            <span class="step__num">03</span>
-            <h3 class="step__title">Win, learn, build</h3>
-            <p class="step__desc">
-              Use them to prep for competitions, study, or just build
-              something cool.
-            </p>
-          </li>
-        </ol>
-      </div>
-    </section>
-
-    <!-- ============================================================
-         6. STATS (dark section)
-         ============================================================ -->
-    <section class="section section--dark">
-      <div class="container">
-        <div class="stats">
-          <div class="stat reveal" data-delay="100">
-            <div class="stat__num" data-count="3">0</div>
-            <div class="stat__label">Products shipped</div>
-          </div>
-          <div class="stat reveal" data-delay="200">
-            <div class="stat__num" data-count="12">0</div>
-            <div class="stat__label">Competitions covered</div>
-          </div>
-          <div class="stat reveal" data-delay="300">
-            <div class="stat__num">$0</div>
-            <div class="stat__label">Cost forever</div>
-          </div>
-          <div class="stat reveal" data-delay="400">
-            <div class="stat__num">&infin;</div>
-            <div class="stat__label">Ideas in the pipeline</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============================================================
-         7. BUILT IN PUBLIC / COMPARISON
+         6. COVERAGE CHIPS
          ============================================================ -->
     <section class="section">
       <div class="container">
         <header class="section__head">
-          <span class="eyebrow">Built in public</span>
-          <h2 class="section__title">How we compare</h2>
+          <span class="eyebrow">Coverage</span>
+          <h2 class="section__title">Built around these events</h2>
           <p class="section__lede">
-            We're not the biggest. We're the most honest.
+            A snapshot of the competitions our tools and resources support.
           </p>
         </header>
 
-        <div class="compare">
-          <div class="compare__col compare__col--us reveal" data-delay="100">
-            <div class="compare__head">
-              <span class="compare__badge">Us</span>
-              <h3 class="compare__title">Innovation Earth</h3>
-            </div>
-            <ul class="compare__list">
-              <li><i class="fas fa-check"></i> Free forever — no premium tier</li>
-              <li><i class="fas fa-check"></i> No ads, no tracking</li>
-              <li><i class="fas fa-check"></i> No signup required</li>
-              <li><i class="fas fa-check"></i> Built by students, for students</li>
-              <li><i class="fas fa-check"></i> Ships in public with a changelog</li>
-              <li><i class="fas fa-check"></i> Focused on specific competitions</li>
-            </ul>
-          </div>
-
-          <div class="compare__col reveal" data-delay="200">
-            <div class="compare__head">
-              <span class="compare__badge compare__badge--muted">Typical</span>
-              <h3 class="compare__title">Most study platforms</h3>
-            </div>
-            <ul class="compare__list compare__list--muted">
-              <li><i class="fas fa-times"></i> Free tier is a trial</li>
-              <li><i class="fas fa-times"></i> Ads and third-party tracking</li>
-              <li><i class="fas fa-times"></i> Account required</li>
-              <li><i class="fas fa-times"></i> Built by companies, not students</li>
-              <li><i class="fas fa-times"></i> Opaque update cycles</li>
-              <li><i class="fas fa-times"></i> Generic, one-size-fits-all</li>
-            </ul>
-          </div>
+        <div class="chips chips--animated">
+          <span class="chip chip--business">FBLA</span>
+          <span class="chip chip--business">DECA</span>
+          <span class="chip chip--business">BPA</span>
+          <span class="chip chip--health">HOSA</span>
+          <span class="chip chip--stem">TSA</span>
+          <span class="chip chip--cte">SkillsUSA</span>
+          <span class="chip chip--science">Science Olympiad</span>
+          <span class="chip chip--math">AMC 8 / 10 / 12</span>
+          <span class="chip chip--science">USABO</span>
+          <span class="chip chip--science">USNCO</span>
+          <span class="chip chip--science">USAPhO</span>
+          <span class="chip chip--stem">CyberPatriot</span>
+          <span class="chip chip--stem">FIRST Robotics</span>
+          <span class="chip chip--math">Mathcounts</span>
+          <span class="chip chip--math">AIME</span>
+          <span class="chip chip--math">USAMTS</span>
+          <span class="chip chip--science">Science Bowl</span>
         </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         7. CHANGELOG
+         ============================================================ -->
+    <section class="section section--tint">
+      <div class="container">
+        <header class="section__head">
+          <span class="eyebrow">Recently shipped</span>
+          <h2 class="section__title">Changelog</h2>
+          <p class="section__lede">
+            We ship in public. Every update has a date.
+          </p>
+        </header>
+
+        <ul class="changelog">
+          <li class="changelog__item reveal">
+            <span class="changelog__date">Oct 2025</span>
+            <h3 class="changelog__title">Calc Trainer enters beta</h3>
+            <p class="changelog__desc">
+              AMC-focused practice with instant solutions is live for
+              early testers. Feedback welcome.
+            </p>
+          </li>
+          <li class="changelog__item reveal">
+            <span class="changelog__date">Sep 2025</span>
+            <h3 class="changelog__title">StudyPal 1.0 released</h3>
+            <p class="changelog__desc">
+              First public release of our flashcard and spaced-repetition
+              tool for competition prep.
+            </p>
+          </li>
+          <li class="changelog__item reveal">
+            <span class="changelog__date">Aug 2025</span>
+            <h3 class="changelog__title">Site redesign</h3>
+            <p class="changelog__desc">
+              Moving from a landing page to a real product-first studio
+              site with sectioned pages and a design system.
+            </p>
+          </li>
+          <li class="changelog__item reveal">
+            <span class="changelog__date">Jul 2025</span>
+            <h3 class="changelog__title">Innovation Earth Projects LLC registered</h3>
+            <p class="changelog__desc">
+              We officially became a Utah LLC. Every product we ship is
+              now backed by a real organization.
+            </p>
+          </li>
+          <li class="changelog__item reveal">
+            <span class="changelog__date">Jun 2025</span>
+            <h3 class="changelog__title">First prototype: StudyPal</h3>
+            <p class="changelog__desc">
+              Built the very first version of StudyPal in a weekend to
+              help with FBLA state prep.
+            </p>
+          </li>
+        </ul>
       </div>
     </section>
 
     <!-- ============================================================
          8. RESOURCES PREVIEW
          ============================================================ -->
-    <section class="section section--tint">
+    <section class="section">
       <div class="container">
         <header class="section__head">
           <span class="eyebrow">Beyond tools</span>
-          <h2 class="section__title">A growing resource library</h2>
+          <h2 class="section__title">Resources for every event</h2>
           <p class="section__lede">
-            Free links, study guides, and official pages for every major competition.
+            Curated links, guides, and official pages for the competitions we cover.
           </p>
         </header>
 
@@ -468,206 +479,9 @@
     </section>
 
     <!-- ============================================================
-         9. COVERAGE CHIPS
-         ============================================================ -->
-    <section class="section">
-      <div class="container">
-        <header class="section__head">
-          <span class="eyebrow">Full coverage list</span>
-          <h2 class="section__title">Every event we're tracking</h2>
-        </header>
-
-        <div class="chips chips--animated">
-          <span class="chip chip--business">FBLA</span>
-          <span class="chip chip--business">DECA</span>
-          <span class="chip chip--business">BPA</span>
-          <span class="chip chip--health">HOSA</span>
-          <span class="chip chip--stem">TSA</span>
-          <span class="chip chip--cte">SkillsUSA</span>
-          <span class="chip chip--science">Science Olympiad</span>
-          <span class="chip chip--math">AMC 8 / 10 / 12</span>
-          <span class="chip chip--science">USABO</span>
-          <span class="chip chip--science">USNCO</span>
-          <span class="chip chip--science">USAPhO</span>
-          <span class="chip chip--stem">CyberPatriot</span>
-          <span class="chip chip--stem">FIRST Robotics</span>
-          <span class="chip chip--math">Mathcounts</span>
-          <span class="chip chip--math">AIME</span>
-          <span class="chip chip--math">USAMTS</span>
-          <span class="chip chip--science">Science Bowl</span>
-          <span class="chip chip--stem">TSA</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============================================================
-         10. CHANGELOG
+         9. FAQ
          ============================================================ -->
     <section class="section section--tint">
-      <div class="container">
-        <header class="section__head">
-          <span class="eyebrow">Recently shipped</span>
-          <h2 class="section__title">Changelog</h2>
-          <p class="section__lede">
-            Real dates. Real updates. We ship in public.
-          </p>
-        </header>
-
-        <ul class="changelog">
-          <li class="changelog__item reveal">
-            <span class="changelog__date">Oct 2025</span>
-            <h3 class="changelog__title">Calc Trainer enters beta</h3>
-            <p class="changelog__desc">
-              AMC-focused practice with instant solutions is live for
-              early testers. Feedback welcome.
-            </p>
-          </li>
-          <li class="changelog__item reveal">
-            <span class="changelog__date">Sep 2025</span>
-            <h3 class="changelog__title">StudyPal 1.0 released</h3>
-            <p class="changelog__desc">
-              First public release of our flashcard and spaced-repetition
-              tool for competition prep.
-            </p>
-          </li>
-          <li class="changelog__item reveal">
-            <span class="changelog__date">Aug 2025</span>
-            <h3 class="changelog__title">Site redesign begins</h3>
-            <p class="changelog__desc">
-              Moving from a landing page to a real product-first studio
-              site with sectioned pages and a design system.
-            </p>
-          </li>
-          <li class="changelog__item reveal">
-            <span class="changelog__date">Jul 2025</span>
-            <h3 class="changelog__title">Innovation Earth Projects LLC registered</h3>
-            <p class="changelog__desc">
-              We officially became a Utah LLC. Every product we ship is
-              now backed by a real organization.
-            </p>
-          </li>
-          <li class="changelog__item reveal">
-            <span class="changelog__date">Jun 2025</span>
-            <h3 class="changelog__title">First internal prototype: StudyPal</h3>
-            <p class="changelog__desc">
-              Built the very first version of StudyPal in a weekend to
-              help with FBLA state prep.
-            </p>
-          </li>
-        </ul>
-      </div>
-    </section>
-
-    <!-- ============================================================
-         11. TESTIMONIALS
-         ============================================================ -->
-    <section class="section">
-      <div class="container">
-        <header class="section__head">
-          <span class="eyebrow">What people say</span>
-          <h2 class="section__title">Early feedback</h2>
-        </header>
-
-        <div class="testimonials">
-          <figure class="testimonial reveal" data-delay="100">
-            <blockquote>
-              "StudyPal is what I wished existed when I was prepping for
-              FBLA state. Simple, free, and actually works."
-            </blockquote>
-            <figcaption>
-              <div class="testimonial__avatar">J</div>
-              <div>
-                <strong>Jordan M.</strong>
-                <span>FBLA competitor, Utah</span>
-              </div>
-            </figcaption>
-          </figure>
-
-          <figure class="testimonial reveal" data-delay="200">
-            <blockquote>
-              "Cool to see students shipping real tools instead of just
-              talking about it. Calc Trainer is genuinely useful."
-            </blockquote>
-            <figcaption>
-              <div class="testimonial__avatar">S</div>
-              <div>
-                <strong>Sam R.</strong>
-                <span>Math team coach</span>
-              </div>
-            </figcaption>
-          </figure>
-
-          <figure class="testimonial reveal" data-delay="300">
-            <blockquote>
-              "No signup, no ads, no catch. That alone makes it better
-              than 90% of what's out there."
-            </blockquote>
-            <figcaption>
-              <div class="testimonial__avatar">A</div>
-              <div>
-                <strong>Alex T.</strong>
-                <span>HOSA member</span>
-              </div>
-            </figcaption>
-          </figure>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============================================================
-         12. BUILT IN PUBLIC / BEHIND THE SCENES
-         ============================================================ -->
-    <section class="section section--tint">
-      <div class="container">
-        <header class="section__head">
-          <span class="eyebrow">Behind the scenes</span>
-          <h2 class="section__title">How we actually work</h2>
-          <p class="section__lede">
-            No secrets. This is what shipping a student-run studio looks like.
-          </p>
-        </header>
-
-        <div class="bts">
-          <div class="bts__item reveal" data-delay="100">
-            <div class="bts__icon"><i class="fas fa-code-branch"></i></div>
-            <h3>Ship small, ship often</h3>
-            <p>
-              Every product goes live in small increments. If it's not
-              useful in week one, we cut it.
-            </p>
-          </div>
-          <div class="bts__item reveal" data-delay="200">
-            <div class="bts__icon"><i class="fas fa-comments"></i></div>
-            <h3>Feedback first</h3>
-            <p>
-              Every tool we build starts with real feedback from real
-              students. We don't guess.
-            </p>
-          </div>
-          <div class="bts__item reveal" data-delay="300">
-            <div class="bts__icon"><i class="fas fa-eye"></i></div>
-            <h3>Public changelog</h3>
-            <p>
-              Every update is logged with a date. No vaporware, no
-              "coming eventually."
-            </p>
-          </div>
-          <div class="bts__item reveal" data-delay="400">
-            <div class="bts__icon"><i class="fas fa-heart"></i></div>
-            <h3>Made for students</h3>
-            <p>
-              Every decision is filtered through one question: does this
-              help students?
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============================================================
-         13. FAQ
-         ============================================================ -->
-    <section class="section">
       <div class="container">
         <header class="section__head">
           <span class="eyebrow">Questions</span>
@@ -676,21 +490,20 @@
 
         <div class="faq">
           <details class="faq__item reveal">
-            <summary>Are these tools really free?</summary>
+            <summary>Do I need an account to use the tools?</summary>
             <p>
-              Yes. Every product we've shipped is free, and there are no
-              plans to ever charge. We're a registered LLC and may add
-              optional paid services someday, but the current tools
-              stay free.
+              No. Every tool works without signing up. We're rolling out
+              optional accounts later for saving progress, syncing across
+              devices, and team features — but nothing is gated.
             </p>
           </details>
 
           <details class="faq__item reveal">
-            <summary>Do I need an account?</summary>
+            <summary>Are all the tools free?</summary>
             <p>
-              No. Every tool works without signup. Some tools may offer
-              optional accounts later for saving progress, but nothing
-              is gated.
+              Most are. Some tools have a free tier and paid add-ons for
+              advanced features. Each product page lists exactly what's
+              free and what isn't.
             </p>
           </details>
 
@@ -698,24 +511,15 @@
             <summary>Who's behind this?</summary>
             <p>
               A small group of students based in Utah. We started
-              Innovation Earth Projects in 2024 and registered as an
-              LLC in 2025.
-            </p>
-          </details>
-
-          <details class="faq__item reveal">
-            <summary>How do you make money?</summary>
-            <p>
-              Right now, we don't. We may add optional paid features
-              later (like advanced analytics or team plans), but the
-              core tools will always be free.
+              Innovation Earth Projects in 2024 and registered as a
+              Utah LLC in 2025.
             </p>
           </details>
 
           <details class="faq__item reveal">
             <summary>Can I suggest a tool?</summary>
             <p>
-              Absolutely. Email us at
+              Yes. Email us at
               <a href="mailto:InnovationEarthProjects@gmail.com">InnovationEarthProjects@gmail.com</a>
               and tell us what would help you. We build what students
               actually ask for.
@@ -725,9 +529,9 @@
           <details class="faq__item reveal">
             <summary>Can I contribute?</summary>
             <p>
-              We're a small team, but we're always open to student
-              contributors — designers, writers, engineers. Email us
-              with what you're interested in.
+              We're a small team, but we're open to student contributors —
+              designers, writers, engineers. Email us with what you're
+              interested in.
             </p>
           </details>
         </div>
@@ -735,17 +539,17 @@
     </section>
 
     <!-- ============================================================
-         14. FINAL CTA
+         10. FINAL CTA
          ============================================================ -->
     <section class="section">
       <div class="container">
         <div class="cta reveal">
           <div class="cta__copy">
             <h2>Try a tool. It takes 10 seconds.</h2>
-            <p>No account. No card. No catch.</p>
+            <p>No account required. No credit card. No catch.</p>
           </div>
           <a href="../products/index.html" class="btn btn--primary btn--glow">
-            Open tools <i class="fas fa-arrow-right"></i>
+            Browse tools <i class="fas fa-arrow-right"></i>
           </a>
         </div>
       </div>
@@ -753,13 +557,9 @@
 
   </main>
 
-  <!-- Footer injected by shared/nav.js -->
   <div id="footer-mount"></div>
 
-  <!-- Shared JS -->
   <script src="../shared/nav.js" defer></script>
-
-  <!-- Local JS -->
   <script src="./script.js" defer></script>
 
 </body>

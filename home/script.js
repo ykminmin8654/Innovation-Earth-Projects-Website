@@ -1,24 +1,27 @@
 /* ============================================================
-   HOME — animations, scroll reveals, counters, tilt, parallax
+   HOME — all behavior + animations in one file
    No Firebase. No external dependencies.
    ============================================================ */
 
 (function () {
   'use strict';
 
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var isTouch = window.matchMedia('(hover: none)').matches;
+
+  /* ============================================================
+     SECTION 1 — CORE BEHAVIOR
+     ============================================================ */
+
   /* ------------------------------------------------------------
-     1. SCROLL REVEALS
-     Adds .is-visible to elements with .reveal as they enter view
+     Scroll reveals — .reveal elements fade in as they enter view
      ------------------------------------------------------------ */
   function initScrollReveals() {
     var reveals = document.querySelectorAll('.reveal');
     if (!reveals.length) return;
 
-    // Fallback for old browsers
     if (!('IntersectionObserver' in window)) {
-      for (var i = 0; i < reveals.length; i++) {
-        reveals[i].classList.add('is-visible');
-      }
+      for (var i = 0; i < reveals.length; i++) reveals[i].classList.add('is-visible');
       return;
     }
 
@@ -29,71 +32,13 @@
           observer.unobserve(entry.target);
         }
       });
-    }, {
-      threshold: 0.12,
-      rootMargin: '0px 0px -60px 0px'
-    });
+    }, { threshold: 0.12, rootMargin: '0px 0px -60px 0px' });
 
-    for (var i = 0; i < reveals.length; i++) {
-      observer.observe(reveals[i]);
-    }
+    for (var i = 0; i < reveals.length; i++) observer.observe(reveals[i]);
   }
 
   /* ------------------------------------------------------------
-     2. STAT COUNTERS
-     Animates numbers in .stat__num[data-count] when scrolled into view
-     ------------------------------------------------------------ */
-  function initStatCounters() {
-    var nums = document.querySelectorAll('.stat__num[data-count]');
-    if (!nums.length) return;
-
-    function animate(el) {
-      var target = Number(el.dataset.count);
-      if (isNaN(target) || target <= 0) {
-        el.textContent = el.dataset.count;
-        return;
-      }
-
-      var duration = 1600;
-      var start = performance.now();
-
-      function tick(now) {
-        var progress = Math.min((now - start) / duration, 1);
-        // easeOutCubic
-        var eased = 1 - Math.pow(1 - progress, 3);
-        el.textContent = Math.floor(eased * target);
-        if (progress < 1) {
-          requestAnimationFrame(tick);
-        } else {
-          el.textContent = target;
-        }
-      }
-      requestAnimationFrame(tick);
-    }
-
-    // Fallback
-    if (!('IntersectionObserver' in window)) {
-      for (var i = 0; i < nums.length; i++) animate(nums[i]);
-      return;
-    }
-
-    var observer = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          animate(entry.target);
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.4 });
-
-    for (var i = 0; i < nums.length; i++) {
-      observer.observe(nums[i]);
-    }
-  }
-
-  /* ------------------------------------------------------------
-     3. SMOOTH SCROLL FOR SAME-PAGE ANCHOR LINKS
-     e.g. <a href="#how-it-works">
+     Smooth scroll for same-page anchors (#how-it-works)
      ------------------------------------------------------------ */
   function initSmoothAnchors() {
     var anchors = document.querySelectorAll('a[href^="#"]');
@@ -101,31 +46,24 @@
       anchors[i].addEventListener('click', function (e) {
         var href = this.getAttribute('href');
         if (!href || href === '#') return;
-
         var id = href.slice(1);
         var target = document.getElementById(id);
         if (!target) return;
-
         e.preventDefault();
-        var navHeight = 64; // matches --nav-h
+        var navHeight = 64;
         var top = target.getBoundingClientRect().top + window.pageYOffset - navHeight - 16;
-
         window.scrollTo({ top: top, behavior: 'smooth' });
       });
     }
   }
 
   /* ------------------------------------------------------------
-     4. CARD TILT ON HOVER
-     Subtle 3D rotation following the cursor on product cards
+     Card tilt — subtle 3D rotation on product cards
      ------------------------------------------------------------ */
   function initCardTilt() {
+    if (reduceMotion || isTouch) return;
     var cards = document.querySelectorAll('.product-card');
     if (!cards.length) return;
-
-    // Skip on reduced-motion or touch devices
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    if (window.matchMedia('(hover: none)').matches) return;
 
     for (var i = 0; i < cards.length; i++) {
       (function (card) {
@@ -133,15 +71,13 @@
           var rect = card.getBoundingClientRect();
           var x = e.clientX - rect.left;
           var y = e.clientY - rect.top;
-          var centerX = rect.width / 2;
-          var centerY = rect.height / 2;
-          var rotateX = ((y - centerY) / centerY) * -3;
-          var rotateY = ((x - centerX) / centerX) * 3;
+          var cx = rect.width / 2;
+          var cy = rect.height / 2;
+          var rx = ((y - cy) / cy) * -3;
+          var ry = ((x - cx) / cx) * 3;
           card.style.transform =
-            'translateY(-4px) perspective(800px) rotateX(' +
-            rotateX + 'deg) rotateY(' + rotateY + 'deg)';
+            'translateY(-4px) perspective(800px) rotateX(' + rx + 'deg) rotateY(' + ry + 'deg)';
         });
-
         card.addEventListener('mouseleave', function () {
           card.style.transform = '';
         });
@@ -150,61 +86,7 @@
   }
 
   /* ------------------------------------------------------------
-     5. PARALLAX BACKGROUND ORBS
-     Orbs drift slowly relative to scroll for depth
-     ------------------------------------------------------------ */
-  function initOrbParallax() {
-    var orbs = document.querySelectorAll('.bg-orbs .orb');
-    if (!orbs.length) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    var ticking = false;
-
-    function update() {
-      var y = window.pageYOffset;
-      for (var i = 0; i < orbs.length; i++) {
-        var speed = (i + 1) * 0.05;
-        orbs[i].style.transform = 'translateY(' + (y * speed) + 'px)';
-      }
-      ticking = false;
-    }
-
-    window.addEventListener('scroll', function () {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(update);
-    }, { passive: true });
-  }
-
-  /* ------------------------------------------------------------
-     6. HERO PARALLAX
-     Subtle rise of the mockup frame as you scroll past the hero
-     ------------------------------------------------------------ */
-  function initHeroParallax() {
-    var frame = document.querySelector('.hero__frame');
-    if (!frame) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    var ticking = false;
-
-    function update() {
-      var y = window.pageYOffset;
-      // Only apply while hero is still visible
-      if (y < 800) {
-        frame.style.transform = 'translateY(' + (y * -0.05) + 'px)';
-      }
-      ticking = false;
-    }
-
-    window.addEventListener('scroll', function () {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(update);
-    }, { passive: true });
-  }
-
-  /* ------------------------------------------------------------
-     7. FAQ — close others when one opens (accordion behavior)
+     FAQ accordion — one open at a time
      ------------------------------------------------------------ */
   function initFaqAccordion() {
     var items = document.querySelectorAll('.faq__item');
@@ -213,36 +95,29 @@
     for (var i = 0; i < items.length; i++) {
       items[i].addEventListener('toggle', function () {
         if (!this.open) return;
-        // Close all other open items
         for (var j = 0; j < items.length; j++) {
-          if (items[j] !== this && items[j].open) {
-            items[j].open = false;
-          }
+          if (items[j] !== this && items[j].open) items[j].open = false;
         }
       });
     }
   }
 
   /* ------------------------------------------------------------
-     8. TRUST BAR MARQUEE
-     Duplicate logos so the marquee wraps seamlessly
+     Trust bar marquee — duplicate logos for seamless loop
      ------------------------------------------------------------ */
   function initTrustBarMarquee() {
+    if (reduceMotion) return;
     var logos = document.querySelector('.trust-bar__logos');
     if (!logos) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    // Duplicate the child elements once so the animation loops smoothly
     var original = logos.innerHTML;
     logos.innerHTML = original + original;
   }
 
   /* ------------------------------------------------------------
-     9. SCROLL PROGRESS BAR
-     Injects a thin progress bar at the top of the viewport
+     Scroll progress bar — thin bar at top of viewport
      ------------------------------------------------------------ */
   function initScrollProgress() {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (reduceMotion) return;
 
     var bar = document.createElement('div');
     bar.className = 'scroll-progress';
@@ -261,19 +136,16 @@
       bar.style.width = pct + '%';
       ticking = false;
     }
-
     window.addEventListener('scroll', function () {
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(update);
     }, { passive: true });
-
     update();
   }
 
   /* ------------------------------------------------------------
-     10. BACK TO TOP BUTTON
-     Appears after scrolling past 600px
+     Back-to-top button
      ------------------------------------------------------------ */
   function initBackToTop() {
     var btn = document.createElement('button');
@@ -298,18 +170,11 @@
     var ticking = false;
     function update() {
       var show = window.pageYOffset > 600;
-      if (show) {
-        btn.style.opacity = '1';
-        btn.style.visibility = 'visible';
-        btn.style.transform = 'translateY(0)';
-      } else {
-        btn.style.opacity = '0';
-        btn.style.visibility = 'hidden';
-        btn.style.transform = 'translateY(12px)';
-      }
+      btn.style.opacity = show ? '1' : '0';
+      btn.style.visibility = show ? 'visible' : 'hidden';
+      btn.style.transform = show ? 'translateY(0)' : 'translateY(12px)';
       ticking = false;
     }
-
     window.addEventListener('scroll', function () {
       if (ticking) return;
       ticking = true;
@@ -318,8 +183,7 @@
   }
 
   /* ------------------------------------------------------------
-     11. BUTTON RIPPLE
-     Material-style click ripple on .btn--primary
+     Button ripple on primary buttons
      ------------------------------------------------------------ */
   function initButtonRipple() {
     var buttons = document.querySelectorAll('.btn--primary');
@@ -335,12 +199,10 @@
           ripple.style.cssText =
             'position:absolute;border-radius:50%;' +
             'background:rgba(255,255,255,0.5);' +
-            'pointer-events:none;' +
-            'transform:scale(0);' +
+            'pointer-events:none;transform:scale(0);' +
             'animation:rippleAnim 0.6s ease-out;' +
             'width:' + size + 'px;height:' + size + 'px;' +
             'left:' + x + 'px;top:' + y + 'px;';
-
           btn.appendChild(ripple);
           setTimeout(function () {
             if (ripple.parentNode) ripple.parentNode.removeChild(ripple);
@@ -349,49 +211,403 @@
       })(buttons[i]);
     }
 
-    // Inject ripple keyframes once
     if (!document.getElementById('ripple-keyframes')) {
       var style = document.createElement('style');
       style.id = 'ripple-keyframes';
-      style.textContent =
-        '@keyframes rippleAnim{' +
-          'to{transform:scale(2.5);opacity:0;}' +
-        '}';
+      style.textContent = '@keyframes rippleAnim{to{transform:scale(2.5);opacity:0;}}';
       document.head.appendChild(style);
     }
   }
 
+  /* ============================================================
+     SECTION 2 — EXTRA ANIMATIONS
+     ============================================================ */
+
   /* ------------------------------------------------------------
-     12. EYEBROW DOT ANIMATION RESET
-     Restarts the pulse animation every 4s so it stays noticeable
+     Text scramble on hero accent
      ------------------------------------------------------------ */
-  function initEyebrowPulse() {
-    var dot = document.querySelector('.eyebrow__dot');
-    if (!dot) return;
-    setInterval(function () {
-      dot.style.animation = 'none';
-      // Force reflow
-      void dot.offsetWidth;
-      dot.style.animation = '';
-    }, 4000);
+  function initTextScramble() {
+    if (reduceMotion) return;
+    var targets = document.querySelectorAll('.hero__title .accent');
+    if (!targets.length) return;
+
+    var chars = '!<>-_\\/[]{}—=+*^?#ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+    targets.forEach(function (el) {
+      var finalText = el.textContent.trim();
+      var queue = [];
+      var frame = 0;
+      var frameRequest = null;
+
+      for (var i = 0; i < finalText.length; i++) {
+        var start = Math.floor(Math.random() * 30);
+        var end = start + Math.floor(Math.random() * 30);
+        queue.push({
+          to: finalText[i],
+          start: start,
+          end: end,
+          char: null
+        });
+      }
+
+      function update() {
+        var output = '';
+        var complete = 0;
+
+        for (var i = 0; i < queue.length; i++) {
+          var item = queue[i];
+          if (frame >= item.end) {
+            complete++;
+            output += item.to;
+          } else if (frame >= item.start) {
+            if (!item.char || Math.random() < 0.28) {
+              item.char = chars[Math.floor(Math.random() * chars.length)];
+            }
+            output += '<span style="opacity:0.7">' + item.char + '</span>';
+          } else {
+            output += '&nbsp;';
+          }
+        }
+
+        el.innerHTML = output;
+
+        if (complete === queue.length) {
+          if (frameRequest) cancelAnimationFrame(frameRequest);
+          return;
+        }
+        frame++;
+        frameRequest = requestAnimationFrame(update);
+      }
+
+      setTimeout(update, 400);
+    });
   }
 
   /* ------------------------------------------------------------
-     BOOT
+     Magnetic buttons
      ------------------------------------------------------------ */
+  function initMagneticButtons() {
+    if (reduceMotion || isTouch) return;
+    var buttons = document.querySelectorAll('.btn--primary, .btn--glow');
+    var strength = 0.25;
+
+    buttons.forEach(function (btn) {
+      btn.addEventListener('mousemove', function (e) {
+        var rect = btn.getBoundingClientRect();
+        var x = e.clientX - rect.left - rect.width / 2;
+        var y = e.clientY - rect.top - rect.height / 2;
+        btn.style.transform =
+          'translate(' + (x * strength) + 'px, ' + (y * strength) + 'px)';
+      });
+      btn.addEventListener('mouseleave', function () {
+        btn.style.transform = '';
+      });
+    });
+  }
+
+  /* ------------------------------------------------------------
+     Cursor glow
+     ------------------------------------------------------------ */
+  function initCursorGlow() {
+    if (reduceMotion || isTouch) return;
+
+    var glow = document.createElement('div');
+    glow.className = 'cursor-glow';
+    glow.style.cssText =
+      'position:fixed;width:400px;height:400px;border-radius:50%;' +
+      'pointer-events:none;z-index:1;' +
+      'background:radial-gradient(circle,rgba(0,206,209,0.12) 0%,transparent 60%);' +
+      'transform:translate(-50%,-50%);' +
+      'transition:opacity 0.3s ease;opacity:0;will-change:transform;';
+    document.body.appendChild(glow);
+
+    var mouseX = 0, mouseY = 0, glowX = 0, glowY = 0, shown = false;
+
+    document.addEventListener('mousemove', function (e) {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+      if (!shown) {
+        glow.style.opacity = '1';
+        shown = true;
+        glowX = mouseX;
+        glowY = mouseY;
+      }
+    });
+    document.addEventListener('mouseleave', function () {
+      glow.style.opacity = '0';
+      shown = false;
+    });
+
+    function animate() {
+      glowX += (mouseX - glowX) * 0.15;
+      glowY += (mouseY - glowY) * 0.15;
+      glow.style.left = glowX + 'px';
+      glow.style.top = glowY + 'px';
+      requestAnimationFrame(animate);
+    }
+    animate();
+  }
+
+  /* ------------------------------------------------------------
+     Section stagger — children of each section cascade in
+     ------------------------------------------------------------ */
+  function initSectionStagger() {
+    if (reduceMotion) return;
+    if (!('IntersectionObserver' in window)) return;
+
+    var sections = document.querySelectorAll('main .section');
+    sections.forEach(function (section) {
+      var targets = section.querySelectorAll(
+        '.section__head, .product-card, .reason, .step, ' +
+        '.changelog__item, .resource-card, .faq__item, .cta, .chips'
+      );
+      if (!targets.length) return;
+
+      targets.forEach(function (el, i) {
+        el.style.setProperty('--stagger-delay', (i * 60) + 'ms');
+      });
+
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            targets.forEach(function (el) { el.classList.add('stagger-in'); });
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15 });
+
+      observer.observe(section);
+    });
+  }
+
+  /* ------------------------------------------------------------
+     Parallax product cards
+     ------------------------------------------------------------ */
+  function initParallaxCards() {
+    if (reduceMotion) return;
+    var cards = document.querySelectorAll('.product-card');
+    if (!cards.length) return;
+
+    var ticking = false;
+    function update() {
+      var viewportH = window.innerHeight;
+      cards.forEach(function (card, i) {
+        var rect = card.getBoundingClientRect();
+        if (rect.bottom < -100 || rect.top > viewportH + 100) return;
+        var progress = (viewportH - rect.top) / (viewportH + rect.height);
+        progress = Math.max(0, Math.min(1, progress));
+        var offset = (progress - 0.5) * (10 + i * 4);
+        card.style.setProperty('--parallax-offset', offset + 'px');
+        card.style.transform = 'translateY(var(--parallax-offset))';
+      });
+      ticking = false;
+    }
+    window.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }, { passive: true });
+    update();
+  }
+
+  /* ------------------------------------------------------------
+     Particles — slow upward drift
+     ------------------------------------------------------------ */
+  function initParticles() {
+    if (reduceMotion) return;
+
+    var canvas = document.createElement('canvas');
+    canvas.className = 'particle-canvas';
+    canvas.style.cssText =
+      'position:fixed;inset:0;pointer-events:none;z-index:0;opacity:0.5;';
+    document.body.appendChild(canvas);
+
+    var ctx = canvas.getContext('2d');
+    var particles = [];
+    var count = 40;
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    var colors = ['rgba(0,206,209,', 'rgba(0,128,128,', 'rgba(50,205,50,'];
+
+    for (var i = 0; i < count; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 2 + 0.5,
+        vy: -(Math.random() * 0.3 + 0.1),
+        vx: (Math.random() - 0.5) * 0.15,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        alpha: Math.random() * 0.4 + 0.2
+      });
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (var i = 0; i < particles.length; i++) {
+        var p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.y < -10) { p.y = canvas.height + 10; p.x = Math.random() * canvas.width; }
+        if (p.x < -10) p.x = canvas.width + 10;
+        if (p.x > canvas.width + 10) p.x = -10;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color + p.alpha + ')';
+        ctx.fill();
+      }
+      requestAnimationFrame(draw);
+    }
+    draw();
+  }
+
+  /* ------------------------------------------------------------
+     Chip shimmer
+     ------------------------------------------------------------ */
+  function initChipShimmer() {
+    if (reduceMotion) return;
+    var chips = document.querySelectorAll('.chip');
+    if (!chips.length) return;
+
+    chips.forEach(function (chip, i) {
+      if (getComputedStyle(chip).position === 'static') {
+        chip.style.position = 'relative';
+      }
+      chip.style.overflow = 'hidden';
+
+      var sweep = document.createElement('span');
+      sweep.className = 'chip-sweep';
+      sweep.style.cssText =
+        'position:absolute;top:0;left:-100%;width:100%;height:100%;' +
+        'background:linear-gradient(90deg,transparent,rgba(255,255,255,0.5),transparent);' +
+        'pointer-events:none;';
+      chip.appendChild(sweep);
+
+      setInterval(function () {
+        sweep.style.transition = 'left 0.8s ease';
+        sweep.style.left = '100%';
+        setTimeout(function () {
+          sweep.style.transition = 'none';
+          sweep.style.left = '-100%';
+        }, 800);
+      }, 4000 + i * 200 + Math.random() * 2000);
+    });
+  }
+
+  /* ------------------------------------------------------------
+     Changelog type-on effect for dates
+     ------------------------------------------------------------ */
+  function initChangelogType() {
+    if (reduceMotion) return;
+    if (!('IntersectionObserver' in window)) return;
+
+    var dates = document.querySelectorAll('.changelog__date');
+
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        var el = entry.target;
+        var text = el.textContent;
+        el.textContent = '';
+        el.style.opacity = '1';
+        var i = 0;
+        var timer = setInterval(function () {
+          el.textContent += text[i];
+          i++;
+          if (i >= text.length) clearInterval(timer);
+        }, 40);
+        observer.unobserve(el);
+      });
+    }, { threshold: 0.5 });
+
+    dates.forEach(function (d) {
+      d.style.opacity = '0';
+      observer.observe(d);
+    });
+  }
+
+  /* ------------------------------------------------------------
+     Step number flip
+     ------------------------------------------------------------ */
+  function initStepFlip() {
+    if (reduceMotion) return;
+    if (!('IntersectionObserver' in window)) return;
+
+    var nums = document.querySelectorAll('.step__num');
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('flip-in');
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.6 });
+
+    nums.forEach(function (n) { observer.observe(n); });
+  }
+
+  /* ------------------------------------------------------------
+     Footer icon drift
+     ------------------------------------------------------------ */
+  function initFooterIconDrift() {
+    if (reduceMotion) return;
+    var links = document.querySelectorAll('.footer__col a');
+    links.forEach(function (link) {
+      var icon = link.querySelector('i');
+      if (!icon) return;
+      link.addEventListener('mouseenter', function () {
+        icon.style.transition = 'transform 0.4s cubic-bezier(.2,.7,.2,1)';
+        icon.style.transform = 'translateX(3px) rotate(-8deg)';
+      });
+      link.addEventListener('mouseleave', function () {
+        icon.style.transform = '';
+      });
+    });
+  }
+
+  /* ------------------------------------------------------------
+     Accent shimmer — gradient text animation
+     ------------------------------------------------------------ */
+  function initAccentShimmer() {
+    if (reduceMotion) return;
+    var accents = document.querySelectorAll('h2 .accent, h1 .accent');
+    accents.forEach(function (a) {
+      if (a.dataset.shimmered) return;
+      a.dataset.shimmered = '1';
+      a.classList.add('accent-shimmer');
+    });
+  }
+
+  /* ============================================================
+     BOOT
+     ============================================================ */
   function boot() {
+    // Core behavior
     initScrollReveals();
-    initStatCounters();
     initSmoothAnchors();
     initCardTilt();
-    initOrbParallax();
-    initHeroParallax();
     initFaqAccordion();
     initTrustBarMarquee();
     initScrollProgress();
     initBackToTop();
     initButtonRipple();
-    initEyebrowPulse();
+
+    // Extra animations
+    initTextScramble();
+    initMagneticButtons();
+    initCursorGlow();
+    initSectionStagger();
+    initParallaxCards();
+    initParticles();
+    initChipShimmer();
+    initChangelogType();
+    initStepFlip();
+    initFooterIconDrift();
+    initAccentShimmer();
 
     console.log('✅ Home page ready');
   }
