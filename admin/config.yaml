@@ -1,0 +1,24 @@
+backend:
+  name: github
+  repo: ykminmin8654/innovation-earth-projects
+  branch: main
+  base_url: https://decap-proxy.ykminmin8654.workers.dev
+  auth_endpoint: auth
+
+media_folder: "newsletter/images"
+public_folder: "/newsletter/images"
+
+collections:
+  - name: "newsletter"
+    label: "Newsletter Posts"
+    folder: "newsletter/posts"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Publish Date", name: "date", widget: "datetime" }
+      - { label: "Category", name: "category", widget: "select",
+          options: ["research", "product", "studio"] }
+      - { label: "Excerpt", name: "excerpt", widget: "text" }
+      - { label: "Body", name: "body", widget: "markdown" }
+      - { label: "Featured", name: "featured", widget: "boolean", default: false }
