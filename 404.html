@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Loading… — Innovation Earth Projects</title>
+  <meta name="robots" content="noindex" />
+
+  <style>
+    :root {
+      --teal: #008080;
+      --teal-deep: #005F5F;
+      --ink: #0B1A1F;
+      --muted: #6A8085;
+      --bg: #F8FBFC;
+      --border: #E1EDEF;
+      --font: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 2rem;
+    }
+    .loader { max-width: 420px; }
+    .loader__mark {
+      display: inline-flex;
+      color: var(--teal);
+      margin-bottom: 1.5rem;
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+    .loader__title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.5rem;
+      color: var(--teal-deep);
+    }
+    .loader__sub {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin: 0 0 1.5rem;
+    }
+    .loader__link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: var(--teal);
+      color: #fff;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background 0.2s ease;
+    }
+    .loader__link:hover { background: var(--teal-deep); }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(1.08); opacity: 0.85; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="loader">
+    <span class="loader__mark" aria-hidden="true">
+      <svg viewBox="0 0 64 64" width="56" height="56">
+        <circle cx="32" cy="32" r="28" fill="none" stroke="currentColor" stroke-width="3"/>
+        <path d="M32 12 L32 52 M12 32 L52 32" stroke="currentColor" stroke-width="3"/>
+        <circle cx="32" cy="32" r="8" fill="currentColor"/>
+      </svg>
+    </span>
+    <h1 class="loader__title">Loading…</h1>
+    <p class="loader__sub">Taking you to the right page.</p>
+    <a class="loader__link" id="manual-link" href="/home/">
+      Continue <span aria-hidden="true">→</span>
+    </a>
+  </div>
+
+  <script>
+    /* ============================================================
+       GitHub Pages clean-URL shim
+       Turns /resources into /resources/ by re-serving from the folder.
+       ============================================================ */
+    (function () {
+      var KNOWN_ROUTES = ['home', 'products', 'resources', 'studio', 'aboutus', 'contact'];
+
+      var pathname = window.location.pathname;            // e.g. /resources
+      var search   = window.location.search || '';        // preserve query string
+      var hash     = window.location.hash || '';          // preserve hash
+
+      // Strip trailing slash and leading slash to get the route segment
+      var cleaned = pathname.replace(/^\/+|\/+$/g, '');   // "resources"
+      var segments = cleaned.split('/').filter(Boolean);  // ["resources"]
+
+      // Root path → home
+      if (segments.length === 0) {
+        window.location.replace('/home/' + search + hash);
+        return;
+      }
+
+      // Take the first segment as the route
+      var route = segments[0];
+
+      // If it's a known route and there's no file extension, rewrite to folder
+      if (KNOWN_ROUTES.indexOf(route) !== -1 && !/\.\w+$/.test(segments[segments.length - 1])) {
+        // Rebuild the path with trailing slash
+        var newPath = '/' + route + '/' + segments.slice(1).join('/');
+        if (!newPath.endsWith('/')) newPath += '/';
+
+        // Update the URL bar silently (no reload), then navigate
+        window.history.replaceState(null, '', newPath + search + hash);
+
+        // The folder's index.html will be served by GitHub Pages
+        // We can just hard-navigate — GitHub will serve /resources/index.html
+        window.location.replace(newPath + search + hash);
+        return;
+      }
+
+      // Unknown route → send to home
+      document.getElementById('manual-link').href = '/home/';
+    })();
+  </script>
+</body>
+</html>

@@ -22,20 +22,16 @@
   const NAV_HTML = `
     <header class="nav">
       <div class="nav__inner">
-        <a href="../home/home.html" class="nav__brand" aria-label="Innovation Earth Projects — home">
+        <a href="../home/" class="nav__brand" aria-label="Innovation Earth Projects — home">
           <span class="nav__mark">${LOGO_SVG}</span>
           <span class="nav__wordmark">Innovation&nbsp;Earth</span>
         </a>
 
         <nav class="nav__links" id="primary-nav" aria-label="Primary">
-          <a href="../products/products.html"   data-nav="products">Products</a>
-          <a href="../resources/resources.html" data-nav="resources">Resources</a>
-          <a href="../studio/studio.html"       data-nav="studio">Studio</a>
-          <a href="../aboutus/aboutus.html"     data-nav="aboutus">About</a>
-          <a href="../contact/contact.html"     data-nav="contact">Contact</a>
+          <a href="../products/"   data-nav="products">Products</a>
         </nav>
 
-        <a href="../products/products.html" class="btn btn--ghost nav__cta">
+        <a href="../products/" class="btn btn--ghost nav__cta">
           Open tools <i class="fas fa-arrow-right"></i>
         </a>
 
@@ -62,11 +58,7 @@
         <div class="footer__col">
           <h4>Site</h4>
           <ul>
-            <li><a href="../products/products.html">Products</a></li>
-            <li><a href="../resources/resources.html">Resources</a></li>
-            <li><a href="../studio/studio.html">Studio</a></li>
-            <li><a href="../aboutus/aboutus.html">About</a></li>
-            <li><a href="../contact/contact.html">Contact</a></li>
+            <li><a href="../products/">Products</a></li>
           </ul>
         </div>
 
@@ -100,7 +92,7 @@
               </a>
             </li>
             <li>
-              <a href="../contact/contact.html">
+              <a href="../contact/">
                 <i class="fas fa-paper-plane"></i> Contact form
               </a>
             </li>
