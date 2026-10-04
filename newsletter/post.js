@@ -1,7 +1,6 @@
 /* ============================================================
-   POST DETAIL — shows full post with author + license
-   If post has PDF/TXT, shows download buttons.
-   If post has a body, renders markdown.
+   POST DETAIL — loads one post by ?id=<slug>
+   Shows title, excerpt, author, license, download buttons, body.
    ============================================================ */
 
 (function () {
@@ -9,9 +8,7 @@
 
   var articleEl = null;
 
-  /* ============================================================
-     UTILITIES
-     ============================================================ */
+  /* ---------- Utilities ---------- */
   function escapeHtml(str) {
     if (str == null) return '';
     return String(str)
@@ -27,13 +24,9 @@
       var d = new Date(dateStr + 'T00:00:00');
       if (isNaN(d.getTime())) return dateStr;
       return d.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
+        year: 'numeric', month: 'long', day: 'numeric'
       });
-    } catch (e) {
-      return dateStr;
-    }
+    } catch (e) { return dateStr; }
   }
 
   function categoryLabel(cat) {
@@ -43,9 +36,7 @@
     return 'Post';
   }
 
-  /* ============================================================
-     MARKDOWN
-     ============================================================ */
+  /* ---------- Markdown ---------- */
   function renderMarkdown(md) {
     if (!md) return '';
 
@@ -108,9 +99,7 @@
     return html.replace(/<p>\s*<\/p>/g, '');
   }
 
-  /* ============================================================
-     LOAD
-     ============================================================ */
+  /* ---------- Load ---------- */
   function getPostId() {
     return new URLSearchParams(window.location.search).get('id') || '';
   }
@@ -130,9 +119,7 @@
       });
   }
 
-  /* ============================================================
-     RENDER
-     ============================================================ */
+  /* ---------- Render ---------- */
   function bylineHtml(post) {
     var name = post.author || 'Unknown';
     var initial = name.charAt(0).toUpperCase();
@@ -140,8 +127,7 @@
     var avatarHtml = post.authorImage
       ? '<img src="' + escapeHtml(post.authorImage) + '" alt="" class="post-header__avatar">'
       : '<span class="post-header__avatar post-header__avatar--placeholder">' +
-          escapeHtml(initial) +
-        '</span>';
+          escapeHtml(initial) + '</span>';
 
     var licenseHtml = '';
     if (post.licenseLabel) {
@@ -158,7 +144,7 @@
     return (
       '<div class="post-header__byline">' +
         avatarHtml +
-        '<div class="post-header__byline-text">' +
+        '<div class="post-header__byline-info">' +
           '<span class="post-header__author-name">' + escapeHtml(name) + '</span>' +
           licenseHtml +
         '</div>' +
@@ -234,9 +220,7 @@
       '</div>';
   }
 
-  /* ============================================================
-     BOOT
-     ============================================================ */
+  /* ---------- Boot ---------- */
   function boot() {
     articleEl = document.getElementById('post-article');
     if (!articleEl) return;
@@ -260,7 +244,6 @@
   } else {
     boot();
   }
-
   window.addEventListener('shim:content-loaded', boot);
 
 })();

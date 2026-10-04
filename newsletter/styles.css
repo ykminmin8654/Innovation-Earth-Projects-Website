@@ -163,14 +163,13 @@ main, .nav, .footer { position: relative; z-index: 1; }
 .dot--studio   { background: var(--blue); }
 
 /* ============================================================
-   FEATURED POST — same layout as before
+   FEATURED — 2 column grid
    ============================================================ */
 .featured { margin-bottom: var(--s-7); }
 
 .featured__card {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
@@ -178,7 +177,7 @@ main, .nav, .footer { position: relative; z-index: 1; }
   box-shadow: var(--shadow-md);
   text-decoration: none;
   color: inherit;
-  transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease);
+  transition: border-color var(--dur) var(--ease), transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 .featured__card:hover {
   border-color: var(--cyan);
@@ -188,7 +187,7 @@ main, .nav, .footer { position: relative; z-index: 1; }
 
 .featured__visual {
   position: relative;
-  min-height: 260px;
+  min-height: 280px;
   background: linear-gradient(135deg, var(--teal) 0%, var(--cyan) 60%, var(--lime) 120%);
   display: flex;
   align-items: center;
@@ -206,7 +205,7 @@ main, .nav, .footer { position: relative; z-index: 1; }
 .featured__visual i {
   position: relative;
   font-size: 3.5rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .featured__body {
@@ -258,20 +257,22 @@ main, .nav, .footer { position: relative; z-index: 1; }
   margin: 0 0 var(--s-4);
 }
 
-/* Compact author + license strip */
-.featured__byline {
+/* Byline (both featured and card) */
+.featured__byline,
+.post__byline {
   display: flex;
   align-items: center;
   gap: 10px;
   padding-top: var(--s-3);
   border-top: 1px solid var(--border-soft);
-  margin-top: var(--s-2);
+  margin-top: var(--s-3);
 }
-.featured__avatar {
+
+.featured__avatar,
+.post__avatar {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  object-fit: cover;
   flex-shrink: 0;
   background: var(--surface-alt);
   display: grid;
@@ -279,18 +280,24 @@ main, .nav, .footer { position: relative; z-index: 1; }
   font-weight: 700;
   font-size: 0.8rem;
   color: #fff;
+  overflow: hidden;
+  object-fit: cover;
 }
-.featured__avatar--placeholder {
+.featured__avatar--placeholder,
+.post__avatar--placeholder {
   background: linear-gradient(135deg, var(--teal), var(--cyan));
 }
-.featured__byline-info {
+
+.featured__byline-info,
+.post__byline-info {
   display: flex;
   flex-direction: column;
   gap: 1px;
   min-width: 0;
   line-height: 1.2;
 }
-.featured__author-name {
+.featured__author-name,
+.post__author-name {
   font-size: 0.85rem;
   color: var(--ink);
   font-weight: 600;
@@ -298,16 +305,21 @@ main, .nav, .footer { position: relative; z-index: 1; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.featured__license {
+.featured__license,
+.post__license {
   font-size: 0.72rem;
   color: var(--muted);
   font-family: var(--mono);
   text-decoration: none;
 }
-a.featured__license:hover { color: var(--teal); text-decoration: underline; }
+a.featured__license:hover,
+a.post__license:hover {
+  color: var(--teal);
+  text-decoration: underline;
+}
 
 /* ============================================================
-   POSTS GRID — clean card, no fancy inner flex
+   POSTS GRID
    ============================================================ */
 .posts {
   display: grid;
@@ -323,8 +335,6 @@ a.featured__license:hover { color: var(--teal); text-decoration: underline; }
   border-radius: var(--r-lg);
   text-decoration: none;
   color: inherit;
-  position: relative;
-  overflow: hidden;
   transition: border-color var(--dur) var(--ease),
               transform var(--dur) var(--ease),
               box-shadow var(--dur) var(--ease);
@@ -373,56 +383,8 @@ a.featured__license:hover { color: var(--teal); text-decoration: underline; }
   color: var(--ink-soft);
   font-size: var(--fs-sm);
   line-height: 1.55;
-  margin: 0 0 var(--s-4);
+  margin: 0;
 }
-
-/* Compact author strip inside post card */
-.post__byline {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-top: var(--s-3);
-  border-top: 1px solid var(--border-soft);
-  margin-bottom: var(--s-3);
-}
-.post__avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-  background: var(--surface-alt);
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-  font-size: 0.78rem;
-  color: #fff;
-}
-.post__avatar--placeholder {
-  background: linear-gradient(135deg, var(--teal), var(--cyan));
-}
-.post__byline-info {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-  line-height: 1.2;
-}
-.post__author-name {
-  font-size: var(--fs-sm);
-  color: var(--ink);
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.post__license {
-  font-size: 0.7rem;
-  color: var(--muted);
-  font-family: var(--mono);
-  text-decoration: none;
-}
-a.post__license:hover { color: var(--teal); text-decoration: underline; }
 
 .post__footer {
   display: flex;
@@ -430,6 +392,7 @@ a.post__license:hover { color: var(--teal); text-decoration: underline; }
   align-items: center;
   padding-top: var(--s-3);
   border-top: 1px solid var(--border-soft);
+  margin-top: var(--s-3);
 }
 .post__read {
   font-size: var(--fs-xs);
@@ -446,7 +409,9 @@ a.post__license:hover { color: var(--teal); text-decoration: underline; }
 }
 .post:hover .post__arrow { transform: translateX(4px); color: var(--teal); }
 
-/* Empty state */
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
 .newsletter-empty {
   grid-column: 1 / -1;
   padding: var(--s-7);
@@ -465,7 +430,9 @@ a.post__license:hover { color: var(--teal); text-decoration: underline; }
 .newsletter-empty h3 { margin-bottom: var(--s-2); color: var(--ink); }
 .newsletter-empty p { margin: 0; font-size: var(--fs-sm); }
 
-/* Subscribe block */
+/* ============================================================
+   SUBSCRIBE
+   ============================================================ */
 .subscribe {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -517,6 +484,9 @@ a.post__license:hover { color: var(--teal); text-decoration: underline; }
   .subscribe__form .subscribe__input { flex: 1; min-width: 220px; }
 }
 
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
 @media (max-width: 900px) {
   .featured__card { grid-template-columns: 1fr; }
   .featured__visual { min-height: 180px; }

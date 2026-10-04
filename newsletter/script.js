@@ -1,6 +1,5 @@
 /* ============================================================
    NEWSLETTER — posts loaded from posts.json
-   Cards link to PDF, TXT, or detail page based on what's available.
    ============================================================ */
 
 (function () {
@@ -12,9 +11,7 @@
   var featuredPostEl = null;
   var postsGridEl = null;
 
-  /* ============================================================
-     UTILITIES
-     ============================================================ */
+  /* ---------- Utilities ---------- */
   function escapeHtml(str) {
     if (str == null) return '';
     return String(str)
@@ -30,13 +27,9 @@
       var d = new Date(dateStr + 'T00:00:00');
       if (isNaN(d.getTime())) return dateStr;
       return d.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
+        year: 'numeric', month: 'short', day: 'numeric'
       });
-    } catch (e) {
-      return dateStr;
-    }
+    } catch (e) { return dateStr; }
   }
 
   function categoryLabel(cat) {
@@ -46,9 +39,6 @@
     return 'Post';
   }
 
-  /* ------------------------------------------------------------
-     Decide where a post card links to
-     ------------------------------------------------------------ */
   function postUrl(post) {
     if (post.pdf) return post.pdf;
     if (post.txt) return post.txt;
@@ -59,12 +49,7 @@
     return !!(post.pdf || post.txt);
   }
 
-  /* ------------------------------------------------------------
-     Author + license byline HTML
-     variant: 'featured' | 'post'
-     ------------------------------------------------------------ */
-  function bylineHtml(post, variant) {
-    var prefix = (variant === 'featured') ? 'featured' : 'post';
+  function bylineHtml(post, prefix) {
     var name = post.author || 'Unknown';
     var initial = name.charAt(0).toUpperCase();
     var img = post.authorImage;
@@ -72,8 +57,7 @@
     var avatarHtml = img
       ? '<img src="' + escapeHtml(img) + '" alt="" class="' + prefix + '__avatar" loading="lazy">'
       : '<span class="' + prefix + '__avatar ' + prefix + '__avatar--placeholder">' +
-          escapeHtml(initial) +
-        '</span>';
+          escapeHtml(initial) + '</span>';
 
     var licenseHtml = '';
     if (post.licenseLabel) {
@@ -98,9 +82,7 @@
     );
   }
 
-  /* ============================================================
-     LOAD POSTS
-     ============================================================ */
+  /* ---------- Load ---------- */
   function loadPosts() {
     return fetch('./posts.json', { cache: 'no-store' })
       .then(function (res) {
@@ -109,9 +91,7 @@
       });
   }
 
-  /* ============================================================
-     FILTERING
-     ============================================================ */
+  /* ---------- Filtering ---------- */
   function getVisiblePosts() {
     var list = ALL_POSTS.slice();
 
@@ -135,9 +115,7 @@
     return list;
   }
 
-  /* ============================================================
-     RENDER — FEATURED
-     ============================================================ */
+  /* ---------- Render featured ---------- */
   function renderFeatured() {
     if (!featuredPostEl) return;
 
@@ -184,9 +162,7 @@
       '</a>';
   }
 
-  /* ============================================================
-     RENDER — POSTS GRID
-     ============================================================ */
+  /* ---------- Render posts grid ---------- */
   function renderPosts() {
     if (!postsGridEl) return;
 
@@ -248,9 +224,7 @@
     postsGridEl.innerHTML = html;
   }
 
-  /* ============================================================
-     COUNTS
-     ============================================================ */
+  /* ---------- Counts ---------- */
   function updateCounts() {
     var counts = { all: 0, research: 0, product: 0, studio: 0 };
     for (var i = 0; i < ALL_POSTS.length; i++) {
@@ -270,9 +244,7 @@
     renderPosts();
   }
 
-  /* ============================================================
-     TABS
-     ============================================================ */
+  /* ---------- Tabs ---------- */
   function wireTabs() {
     var tabs = document.querySelectorAll('#newsletter-tabs .tab');
     for (var i = 0; i < tabs.length; i++) {
@@ -289,9 +261,7 @@
     }
   }
 
-  /* ============================================================
-     SEARCH
-     ============================================================ */
+  /* ---------- Search ---------- */
   function wireSearch() {
     var input = document.getElementById('newsletter-search');
     var clearBtn = document.getElementById('newsletter-search-clear');
@@ -328,9 +298,7 @@
     });
   }
 
-  /* ============================================================
-     SUBSCRIBE + TURNSTILE
-     ============================================================ */
+  /* ---------- Subscribe + Turnstile ---------- */
   function wireSubscribe() {
     var form = document.getElementById('subscribe-form');
     var input = document.getElementById('subscribe-email');
@@ -377,7 +345,6 @@
           method: 'POST',
           body: formData
         });
-
         if (!res.ok) throw new Error('Verification failed');
 
         try {
@@ -407,9 +374,7 @@
     });
   }
 
-  /* ============================================================
-     REVEAL ON SCROLL
-     ============================================================ */
+  /* ---------- Reveal on scroll ---------- */
   function initReveals() {
     if (!('IntersectionObserver' in window)) return;
 
@@ -434,13 +399,10 @@
     }
   }
 
-  /* ============================================================
-     BOOT
-     ============================================================ */
+  /* ---------- Boot ---------- */
   function boot() {
     featuredPostEl = document.getElementById('featured-post');
     postsGridEl = document.getElementById('posts-grid');
-
     if (!postsGridEl) return;
 
     wireTabs();
@@ -472,7 +434,6 @@
   } else {
     boot();
   }
-
   window.addEventListener('shim:content-loaded', boot);
 
 })();
