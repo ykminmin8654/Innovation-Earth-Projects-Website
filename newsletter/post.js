@@ -1,7 +1,7 @@
 /* ============================================================
-   POST DETAIL — loads one post by ?id=<slug>
-   Uses `marked` for Markdown rendering, `DOMPurify` for safety.
-   Falls back to a minimal parser if either CDN fails.
+   POST DETAIL — shows full post with author + license
+   If post has PDF/TXT, shows download buttons.
+   If post has a body, renders markdown.
    ============================================================ */
 
 (function () {
@@ -10,7 +10,7 @@
   var articleEl = null;
 
   /* ============================================================
-     1. UTILITIES
+     UTILITIES
      ============================================================ */
   function escapeHtml(str) {
     if (str == null) return '';
@@ -44,24 +44,17 @@
   }
 
   /* ============================================================
-     2. MARKDOWN RENDERING
+     MARKDOWN
      ============================================================ */
   function renderMarkdown(md) {
     if (!md) return '';
 
-    // Prefer `marked` if available
     if (typeof marked !== 'undefined' && typeof marked.parse === 'function') {
       try {
         marked.setOptions({
-          gfm: true,         // GitHub-flavored: tables, strikethrough, task lists
-          breaks: false,     // Don't turn every \n into <br>
-          headerIds: false,  // Don't add id="" to headings
-          mangle: false      // Don't mangle email links
+          gfm: true, breaks: false, headerIds: false, mangle: false
         });
-
         var rawHtml = marked.parse(md);
-
-        // Sanitize if DOMPurify is available
         if (typeof DOMPurify !== 'undefined') {
           return DOMPurify.sanitize(rawHtml, {
             ALLOWED_TAGS: [
@@ -73,75 +66,37 @@
               'table','thead','tbody','tr','th','td',
               'span','div'
             ],
-            ALLOWED_ATTR: [
-              'href','title','target','rel','src','alt','class'
-            ]
+            ALLOWED_ATTR: ['href','title','target','rel','src','alt','class']
           });
         }
-
         return rawHtml;
       } catch (err) {
-        console.error('marked failed, using fallback:', err);
+        console.error('marked failed:', err);
       }
     }
-
-    // Fallback parser
     return fallbackMarkdown(md);
   }
 
-  /* ------------------------------------------------------------
-     Minimal fallback parser (if `marked` fails to load)
-     ------------------------------------------------------------ */
   function fallbackMarkdown(md) {
-    var html = md
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
-
-    // Fenced code blocks
+    var html = md.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     html = html.replace(/```([\s\S]*?)```/g, function (m, code) {
       return '<pre><code>' + code.trim() + '</code></pre>';
     });
-
-    // Inline code
     html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-    // Headings
     html = html.replace(/^###### (.*)$/gm, '<h6>$1</h6>');
     html = html.replace(/^##### (.*)$/gm, '<h5>$1</h5>');
     html = html.replace(/^#### (.*)$/gm, '<h4>$1</h4>');
     html = html.replace(/^### (.*)$/gm, '<h3>$1</h3>');
     html = html.replace(/^## (.*)$/gm, '<h2>$1</h2>');
     html = html.replace(/^# (.*)$/gm, '<h1>$1</h1>');
-
-    // Bold + italic
     html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/__([^_]+)__/g, '<strong>$1</strong>');
     html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-    html = html.replace(/_([^_]+)_/g, '<em>$1</em>');
-
-    // Strikethrough
-    html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
-
-    // Links + images
-    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g,
-      '<img src="$2" alt="$1">');
     html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g,
       '<a href="$2" target="_blank" rel="noopener">$1</a>');
-
-    // Horizontal rule
-    html = html.replace(/^---+$/gm, '<hr>');
-
-    // Blockquotes
-    html = html.replace(/^&gt; (.*)$/gm, '<blockquote>$1</blockquote>');
-
-    // Lists
     html = html.replace(/^\s*[-*] (.*)$/gm, '<li>$1</li>');
     html = html.replace(/(<li>[\s\S]*?<\/li>)(?!\s*<li>)/g, function (m) {
       return '<ul>' + m + '</ul>';
     });
-
-    // Paragraphs
     var blocks = html.split(/\n{2,}/);
     html = blocks.map(function (block) {
       var trimmed = block.trim();
@@ -150,21 +105,16 @@
       if (/<\/?(ul|ol|li)>/.test(trimmed)) return trimmed;
       return '<p>' + trimmed.replace(/\n/g, ' ') + '</p>';
     }).join('\n');
-
     return html.replace(/<p>\s*<\/p>/g, '');
   }
 
   /* ============================================================
-     3. URL PARSING
+     LOAD
      ============================================================ */
   function getPostId() {
-    var params = new URLSearchParams(window.location.search);
-    return params.get('id') || '';
+    return new URLSearchParams(window.location.search).get('id') || '';
   }
 
-  /* ============================================================
-     4. LOAD POST DATA
-     ============================================================ */
   function loadPost(id) {
     return fetch('/newsletter/posts.json', { cache: 'no-store' })
       .then(function (res) {
@@ -181,8 +131,61 @@
   }
 
   /* ============================================================
-     5. RENDER
+     RENDER
      ============================================================ */
+  function bylineHtml(post) {
+    var name = post.author || 'Unknown';
+    var initial = name.charAt(0).toUpperCase();
+
+    var avatarHtml = post.authorImage
+      ? '<img src="' + escapeHtml(post.authorImage) + '" alt="" class="post-header__avatar">'
+      : '<span class="post-header__avatar post-header__avatar--placeholder">' +
+          escapeHtml(initial) +
+        '</span>';
+
+    var licenseHtml = '';
+    if (post.licenseLabel) {
+      if (post.licenseUrl) {
+        licenseHtml = '<a href="' + escapeHtml(post.licenseUrl) +
+          '" target="_blank" rel="noopener" class="post-header__license">' +
+          escapeHtml(post.licenseLabel) + '</a>';
+      } else {
+        licenseHtml = '<span class="post-header__license">' +
+          escapeHtml(post.licenseLabel) + '</span>';
+      }
+    }
+
+    return (
+      '<div class="post-header__byline">' +
+        avatarHtml +
+        '<div class="post-header__byline-text">' +
+          '<span class="post-header__author-name">' + escapeHtml(name) + '</span>' +
+          licenseHtml +
+        '</div>' +
+      '</div>'
+    );
+  }
+
+  function downloadsHtml(post) {
+    if (!post.pdf && !post.txt) return '';
+
+    var buttons = '';
+    if (post.pdf) {
+      buttons +=
+        '<a href="' + escapeHtml(post.pdf) + '" target="_blank" rel="noopener" class="btn btn--primary btn--glow">' +
+          '<i class="fas fa-file-pdf"></i> Download PDF' +
+        '</a>';
+    }
+    if (post.txt) {
+      buttons +=
+        '<a href="' + escapeHtml(post.txt) + '" target="_blank" rel="noopener" class="btn btn--secondary">' +
+          '<i class="fas fa-file-alt"></i> Download Text' +
+        '</a>';
+    }
+
+    return '<div class="post-downloads">' + buttons + '</div>';
+  }
+
   function renderPost(post) {
     if (!articleEl) return;
 
@@ -191,7 +194,7 @@
         '<div class="post-error">' +
           '<i class="fas fa-file-alt"></i>' +
           '<h2>Post not found</h2>' +
-          '<p>We couldn\'t find that post. It may have been removed or the link is broken.</p>' +
+          '<p>We couldn\'t find that post.</p>' +
           '<p><a href="/newsletter">Back to all posts</a></p>' +
         '</div>';
       return;
@@ -201,7 +204,7 @@
 
     var cat = post.category || 'studio';
     var dateStr = formatDate(post.date);
-    var bodyHtml = renderMarkdown(post.body || '');
+    var bodyHtml = post.body ? renderMarkdown(post.body) : '';
 
     articleEl.innerHTML =
       '<header class="post-header">' +
@@ -211,12 +214,13 @@
             categoryLabel(cat) +
           '</span>' +
           '<span>' + escapeHtml(dateStr) + '</span>' +
-          (post.readTime ? '<span>·</span><span>' + escapeHtml(post.readTime) + '</span>' : '') +
         '</div>' +
         '<h1 class="post-header__title">' + escapeHtml(post.title || 'Untitled') + '</h1>' +
         (post.excerpt ? '<p class="post-header__excerpt">' + escapeHtml(post.excerpt) + '</p>' : '') +
+        bylineHtml(post) +
       '</header>' +
-      '<div class="post-body">' + bodyHtml + '</div>';
+      downloadsHtml(post) +
+      (bodyHtml ? '<div class="post-body">' + bodyHtml + '</div>' : '');
   }
 
   function renderError(message) {
@@ -231,7 +235,7 @@
   }
 
   /* ============================================================
-     6. BOOT
+     BOOT
      ============================================================ */
   function boot() {
     articleEl = document.getElementById('post-article');
@@ -239,7 +243,7 @@
 
     var id = getPostId();
     if (!id) {
-      renderError('No post was specified in the URL.');
+      renderError('No post was specified.');
       return;
     }
 
@@ -257,7 +261,6 @@
     boot();
   }
 
-  // Re-run when the 404 shim loads this page
   window.addEventListener('shim:content-loaded', boot);
 
 })();

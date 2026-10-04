@@ -1,35 +1,38 @@
-name: Build newsletter posts
+collections:
+  - name: "newsletter"
+    label: "Newsletter Posts"
+    folder: "newsletter/posts"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - { label: "Title", name: "title", widget: "string" }
+      - { label: "Publish Date", name: "date", widget: "datetime" }
+      - { label: "Category", name: "category", widget: "select",
+          options: ["research", "product", "studio"] }
+      - { label: "Excerpt", name: "excerpt", widget: "text" }
 
-on:
-  push:
-    branches: [main]
-    paths:
-      - 'newsletter/posts/**'
-      - 'scripts/build-posts.js'
-  workflow_dispatch:
+      # Author block
+      - { label: "Author Name", name: "author", widget: "string" }
+      - { label: "Author Photo", name: "authorImage", widget: "image", required: false }
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
+      # License
+      - { label: "License", name: "license", widget: "select", default: "all-rights-reserved",
+          options:
+            - { label: "All Rights Reserved", value: "all-rights-reserved" }
+            - { label: "CC BY 4.0", value: "cc-by-4.0" }
+            - { label: "CC BY-SA 4.0", value: "cc-by-sa-4.0" }
+            - { label: "CC BY-NC 4.0", value: "cc-by-nc-4.0" }
+            - { label: "CC BY-NC-SA 4.0", value: "cc-by-nc-sa-4.0" }
+            - { label: "CC0 (Public Domain)", value: "cc0" }
+            - { label: "MIT", value: "mit" }
+            - { label: "Custom", value: "custom" }
+        }
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - { label: "Custom License (if selected above)", name: "licenseCustom",
+          widget: "string", required: false }
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
+      # Files
+      - { label: "PDF", name: "pdf", widget: "file", required: false }
+      - { label: "TXT", name: "txt", widget: "file", required: false }
 
-      - name: Build posts.json
-        run: node scripts/build-posts.js
-
-      - name: Commit posts.json if changed
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add newsletter/posts.json
-          git diff --quiet && git diff --staged --quiet || git commit -m "chore: rebuild newsletter posts.json"
-          git push
+      - { label: "Featured", name: "featured", widget: "boolean", default: false }

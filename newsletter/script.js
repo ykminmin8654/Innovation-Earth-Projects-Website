@@ -1,14 +1,11 @@
 /* ============================================================
-   NEWSLETTER — posts loaded from posts.json (built from Markdown)
-   Post cards link to ./post.html?id=<slug>
+   NEWSLETTER — posts loaded from posts.json
+   Cards link to PDF, TXT, or detail page based on what's available.
    ============================================================ */
 
 (function () {
   'use strict';
 
-  /* ============================================================
-     1. STATE
-     ============================================================ */
   var ALL_POSTS = [];
   var activeFilter = 'all';
   var activeSearch = '';
@@ -16,7 +13,7 @@
   var postsGridEl = null;
 
   /* ============================================================
-     2. UTILITIES
+     UTILITIES
      ============================================================ */
   function escapeHtml(str) {
     if (str == null) return '';
@@ -49,12 +46,61 @@
     return 'Post';
   }
 
+  /* ------------------------------------------------------------
+     Decide where a post card links to
+     ------------------------------------------------------------ */
   function postUrl(post) {
+    // Prefer PDF
+    if (post.pdf) return post.pdf;
+    // Fall back to TXT
+    if (post.txt) return post.txt;
+    // Fall back to detail page
     return './post.html?id=' + encodeURIComponent(post.id || '');
   }
 
+  function isExternalFile(post) {
+    return !!(post.pdf || post.txt);
+  }
+
+  /* ------------------------------------------------------------
+     Author + license byline HTML
+     ------------------------------------------------------------ */
+  function bylineHtml(post, variant) {
+    var prefix = variant === 'featured' ? 'featured' : 'post';
+    var name = post.author || 'Unknown';
+    var initial = name.charAt(0).toUpperCase();
+
+    var avatarHtml = post.authorImage
+      ? '<img src="' + escapeHtml(post.authorImage) + '" alt="" class="' + prefix + '__avatar" loading="lazy">'
+      : '<span class="' + prefix + '__avatar ' + prefix + '__avatar--placeholder">' +
+          escapeHtml(initial) +
+        '</span>';
+
+    var licenseHtml = '';
+    if (post.licenseLabel) {
+      if (post.licenseUrl) {
+        licenseHtml = '<a href="' + escapeHtml(post.licenseUrl) +
+          '" target="_blank" rel="noopener" class="' + prefix + '__license">' +
+          escapeHtml(post.licenseLabel) + '</a>';
+      } else {
+        licenseHtml = '<span class="' + prefix + '__license">' +
+          escapeHtml(post.licenseLabel) + '</span>';
+      }
+    }
+
+    return (
+      '<div class="' + prefix + '__byline">' +
+        avatarHtml +
+        '<div class="' + prefix + '__byline-text">' +
+          '<span class="' + prefix + '__author-name">' + escapeHtml(name) + '</span>' +
+          licenseHtml +
+        '</div>' +
+      '</div>'
+    );
+  }
+
   /* ============================================================
-     3. LOAD POSTS
+     LOAD POSTS
      ============================================================ */
   function loadPosts() {
     return fetch('./posts.json', { cache: 'no-store' })
@@ -65,7 +111,7 @@
   }
 
   /* ============================================================
-     4. FILTERING
+     FILTERING
      ============================================================ */
   function getVisiblePosts() {
     var list = ALL_POSTS.slice();
@@ -80,7 +126,8 @@
         var haystack = [
           p.title || '',
           p.excerpt || '',
-          p.category || ''
+          p.category || '',
+          p.author || ''
         ].join(' ').toLowerCase();
         return haystack.indexOf(q) !== -1;
       });
@@ -90,7 +137,7 @@
   }
 
   /* ============================================================
-     5. RENDER
+     RENDER
      ============================================================ */
   function renderFeatured() {
     if (!featuredPostEl) return;
@@ -112,9 +159,14 @@
     var cat = featured.category;
     var icon = featured.icon || 'fa-star';
     var dateStr = formatDate(featured.date);
+    var url = postUrl(featured);
+    var external = isExternalFile(featured);
+    var linkAttrs = external
+      ? ' href="' + escapeHtml(url) + '" target="_blank" rel="noopener"'
+      : ' href="' + escapeHtml(url) + '"';
 
     featuredPostEl.innerHTML =
-      '<a class="featured__card" href="' + postUrl(featured) + '">' +
+      '<a class="featured__card"' + linkAttrs + '>' +
         '<div class="featured__visual">' +
           '<i class="fas ' + escapeHtml(icon) + '"></i>' +
         '</div>' +
@@ -125,12 +177,14 @@
               categoryLabel(cat) +
             '</span>' +
             '<span>' + escapeHtml(dateStr) + '</span>' +
-            '<span>·</span>' +
-            '<span>' + escapeHtml(featured.readTime || '') + '</span>' +
           '</div>' +
           '<h2 class="featured__title">' + escapeHtml(featured.title) + '</h2>' +
           '<p class="featured__excerpt">' + escapeHtml(featured.excerpt) + '</p>' +
-          '<span class="featured__cta">Read post <i class="fas fa-arrow-right"></i></span>' +
+          bylineHtml(featured, 'featured') +
+          '<span class="featured__cta">' +
+            (featured.pdf ? 'Open PDF' : featured.txt ? 'Open text' : 'Read post') +
+            ' <i class="fas fa-arrow-right"></i>' +
+          '</span>' +
         '</div>' +
       '</a>';
   }
@@ -165,9 +219,14 @@
       var p = list[i];
       var cat = p.category;
       var dateStr = formatDate(p.date);
+      var url = postUrl(p);
+      var external = isExternalFile(p);
+      var linkAttrs = external
+        ? ' href="' + escapeHtml(url) + '" target="_blank" rel="noopener"'
+        : ' href="' + escapeHtml(url) + '"';
 
       html +=
-        '<a class="post" href="' + postUrl(p) + '">' +
+        '<a class="post"' + linkAttrs + '>' +
           '<div class="post__meta">' +
             '<span class="post__badge post__badge--' + escapeHtml(cat) + '">' +
               '<span class="dot dot--' + escapeHtml(cat) + '"></span>' +
@@ -177,8 +236,13 @@
           '</div>' +
           '<h3 class="post__title">' + escapeHtml(p.title) + '</h3>' +
           '<p class="post__excerpt">' + escapeHtml(p.excerpt) + '</p>' +
+          bylineHtml(p, 'post') +
           '<div class="post__footer">' +
-            '<span class="post__read">' + escapeHtml(p.readTime || '') + '</span>' +
+            '<span class="post__read">' +
+              (p.pdf ? '<i class="fas fa-file-pdf"></i> PDF'
+               : p.txt ? '<i class="fas fa-file-alt"></i> Text'
+               : 'Read') +
+            '</span>' +
             '<span class="post__arrow"><i class="fas fa-arrow-right"></i></span>' +
           '</div>' +
         '</a>';
@@ -206,7 +270,7 @@
   }
 
   /* ============================================================
-     6. TABS
+     TABS
      ============================================================ */
   function wireTabs() {
     var tabs = document.querySelectorAll('#newsletter-tabs .tab');
@@ -225,7 +289,7 @@
   }
 
   /* ============================================================
-     7. SEARCH
+     SEARCH
      ============================================================ */
   function wireSearch() {
     var input = document.getElementById('newsletter-search');
@@ -264,7 +328,7 @@
   }
 
   /* ============================================================
-     8. SUBSCRIBE + TURNSTILE
+     SUBSCRIBE + TURNSTILE
      ============================================================ */
   function wireSubscribe() {
     var form = document.getElementById('subscribe-form');
@@ -313,9 +377,7 @@
           body: formData
         });
 
-        if (!res.ok) {
-          throw new Error('Verification failed with status ' + res.status);
-        }
+        if (!res.ok) throw new Error('Verification failed');
 
         try {
           var list = JSON.parse(localStorage.getItem('iep:newsletter') || '[]');
@@ -345,7 +407,7 @@
   }
 
   /* ============================================================
-     9. REVEAL ON SCROLL
+     REVEAL ON SCROLL
      ============================================================ */
   function initReveals() {
     if (!('IntersectionObserver' in window)) return;
@@ -372,7 +434,7 @@
   }
 
   /* ============================================================
-     10. BOOT
+     BOOT
      ============================================================ */
   function boot() {
     featuredPostEl = document.getElementById('featured-post');
@@ -407,4 +469,7 @@
   } else {
     boot();
   }
+
+  window.addEventListener('shim:content-loaded', boot);
+
 })();

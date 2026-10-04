@@ -3,9 +3,7 @@
    Depends on: shared/tokens.css, base.css, nav.css
    ============================================================ */
 
-/* ------------------------------------------------------------
-   Background orbs
-   ------------------------------------------------------------ */
+/* Background orbs */
 .bg-orbs {
   position: fixed;
   inset: 0;
@@ -41,12 +39,8 @@
 }
 main, .nav, .footer { position: relative; z-index: 1; }
 
-/* ------------------------------------------------------------
-   Back link
-   ------------------------------------------------------------ */
-.post-back {
-  padding: var(--s-7) 0 var(--s-4);
-}
+/* Back link */
+.post-back { padding: var(--s-7) 0 var(--s-4); }
 .post-back a {
   display: inline-flex;
   align-items: center;
@@ -56,22 +50,15 @@ main, .nav, .footer { position: relative; z-index: 1; }
   font-size: 0.9rem;
   transition: color var(--dur) var(--ease), gap var(--dur) var(--ease);
 }
-.post-back a:hover {
-  color: var(--teal);
-  gap: 12px;
-}
+.post-back a:hover { color: var(--teal); gap: 12px; }
 
-/* ------------------------------------------------------------
-   Article container
-   ------------------------------------------------------------ */
+/* Article container */
 .post-article {
   max-width: 720px;
   padding-bottom: var(--s-9);
 }
 
-/* ------------------------------------------------------------
-   Post header
-   ------------------------------------------------------------ */
+/* Post header */
 .post-header {
   margin-bottom: var(--s-7);
   padding-bottom: var(--s-5);
@@ -102,10 +89,7 @@ main, .nav, .footer { position: relative; z-index: 1; }
 .post-header__badge--research { background: rgba(0, 206, 209, 0.12); color: var(--teal); }
 .post-header__badge--product  { background: rgba(50, 205, 50, 0.14); color: var(--green-dark); }
 .post-header__badge--studio   { background: rgba(30, 144, 255, 0.12); color: var(--blue); }
-.post-header__badge .dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-}
+.post-header__badge .dot { width: 6px; height: 6px; border-radius: 50%; }
 .dot--research { background: var(--cyan); }
 .dot--product  { background: var(--lime); }
 .dot--studio   { background: var(--blue); }
@@ -123,9 +107,62 @@ main, .nav, .footer { position: relative; z-index: 1; }
   margin: 0;
 }
 
-/* ------------------------------------------------------------
-   Post body — markdown-rendered
-   ------------------------------------------------------------ */
+/* Author + license byline */
+.post-header__byline {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: var(--s-5);
+}
+.post-header__avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--surface-alt);
+}
+.post-header__avatar--placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--teal), var(--cyan));
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+.post-header__byline-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+}
+.post-header__author-name {
+  font-size: 1rem;
+  color: var(--ink);
+  font-weight: 600;
+}
+.post-header__license {
+  font-size: 0.8rem;
+  color: var(--muted);
+  font-family: var(--mono);
+  text-decoration: none;
+}
+a.post-header__license:hover { color: var(--teal); text-decoration: underline; }
+
+/* Download buttons */
+.post-downloads {
+  display: flex;
+  gap: var(--s-3);
+  flex-wrap: wrap;
+  margin: var(--s-6) 0;
+  padding: var(--s-5);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+}
+.post-downloads .btn { min-width: 160px; }
+
+/* Post body */
 .post-body {
   font-size: 1.05rem;
   line-height: 1.75;
@@ -133,14 +170,8 @@ main, .nav, .footer { position: relative; z-index: 1; }
   overflow-wrap: break-word;
   word-wrap: break-word;
 }
-
-/* Headings */
-.post-body h1,
-.post-body h2,
-.post-body h3,
-.post-body h4,
-.post-body h5,
-.post-body h6 {
+.post-body h1, .post-body h2, .post-body h3,
+.post-body h4, .post-body h5, .post-body h6 {
   color: var(--ink);
   margin-top: var(--s-7);
   margin-bottom: var(--s-3);
@@ -153,65 +184,31 @@ main, .nav, .footer { position: relative; z-index: 1; }
 .post-body h4 { font-size: 1.1rem; }
 .post-body h5 { font-size: 1rem; }
 .post-body h6 { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
-
-.post-body h1:first-child,
-.post-body h2:first-child,
-.post-body h3:first-child {
-  margin-top: 0;
-}
-
-/* Paragraphs */
-.post-body p {
-  margin-bottom: var(--s-4);
-}
-
-/* Links */
+.post-body h1:first-child, .post-body h2:first-child, .post-body h3:first-child { margin-top: 0; }
+.post-body p { margin-bottom: var(--s-4); }
 .post-body a {
   color: var(--teal);
   text-decoration: underline;
   text-underline-offset: 2px;
   transition: color var(--dur) var(--ease);
 }
-.post-body a:hover {
-  color: var(--teal-deep);
-}
-
-/* Bold + italic */
+.post-body a:hover { color: var(--teal-deep); }
 .post-body strong { color: var(--ink); font-weight: 600; }
 .post-body em { font-style: italic; }
 .post-body del { color: var(--muted); text-decoration: line-through; }
-
-/* Lists */
-.post-body ul,
-.post-body ol {
-  padding-left: var(--s-5);
-  margin-bottom: var(--s-4);
-}
-.post-body li {
-  margin-bottom: var(--s-2);
-}
-.post-body li > p {
-  margin-bottom: var(--s-2);
-}
-.post-body ul ul,
-.post-body ul ol,
-.post-body ol ul,
-.post-body ol ol {
+.post-body ul, .post-body ol { padding-left: var(--s-5); margin-bottom: var(--s-4); }
+.post-body li { margin-bottom: var(--s-2); }
+.post-body li > p { margin-bottom: var(--s-2); }
+.post-body ul ul, .post-body ul ol, .post-body ol ul, .post-body ol ol {
   margin: var(--s-2) 0 var(--s-2) var(--s-4);
 }
-
-/* Task lists (GFM) */
 .post-body ul li input[type="checkbox"] {
-  margin-right: 6px;
-  accent-color: var(--teal);
-  vertical-align: middle;
+  margin-right: 6px; accent-color: var(--teal); vertical-align: middle;
 }
 .post-body ul li:has(input[type="checkbox"]) {
   list-style: none;
   margin-left: calc(-1 * var(--s-4));
 }
-
-/* Blockquote */
 .post-body blockquote {
   border-left: 3px solid var(--cyan);
   padding: var(--s-3) var(--s-4);
@@ -221,11 +218,7 @@ main, .nav, .footer { position: relative; z-index: 1; }
   border-radius: 0 var(--r-md) var(--r-md) 0;
   font-style: italic;
 }
-.post-body blockquote p:last-child {
-  margin-bottom: 0;
-}
-
-/* Inline code */
+.post-body blockquote p:last-child { margin-bottom: 0; }
 .post-body code {
   font-family: var(--mono);
   font-size: 0.9em;
@@ -235,8 +228,6 @@ main, .nav, .footer { position: relative; z-index: 1; }
   color: var(--teal-deep);
   border: 1px solid var(--border-soft);
 }
-
-/* Code blocks */
 .post-body pre {
   background: var(--surface-alt);
   padding: var(--s-4);
@@ -247,113 +238,55 @@ main, .nav, .footer { position: relative; z-index: 1; }
   -webkit-overflow-scrolling: touch;
 }
 .post-body pre code {
-  background: none;
-  padding: 0;
-  border: none;
-  color: var(--ink);
-  font-size: 0.9rem;
-  line-height: 1.6;
+  background: none; padding: 0; border: none;
+  color: var(--ink); font-size: 0.9rem; line-height: 1.6;
 }
-
-/* Horizontal rule */
-.post-body hr {
-  border: none;
-  border-top: 1px solid var(--border);
-  margin: var(--s-6) 0;
-}
-
-/* Images */
+.post-body hr { border: none; border-top: 1px solid var(--border); margin: var(--s-6) 0; }
 .post-body img {
-  max-width: 100%;
-  height: auto;
+  max-width: 100%; height: auto;
   border-radius: var(--r-md);
   margin: var(--s-5) 0;
   box-shadow: var(--shadow-sm);
 }
-
-/* Tables */
 .post-body table {
-  width: 100%;
-  border-collapse: collapse;
+  width: 100%; border-collapse: collapse;
   margin: var(--s-5) 0;
   font-size: 0.95rem;
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   overflow: hidden;
 }
-.post-body th,
-.post-body td {
+.post-body th, .post-body td {
   padding: 10px 14px;
   text-align: left;
   border-bottom: 1px solid var(--border);
 }
-.post-body th {
-  background: var(--surface-alt);
-  font-weight: 600;
-  color: var(--ink);
-}
-.post-body tr:last-child td {
-  border-bottom: none;
-}
+.post-body th { background: var(--surface-alt); font-weight: 600; color: var(--ink); }
+.post-body tr:last-child td { border-bottom: none; }
+.post-body dl { margin: var(--s-4) 0; }
+.post-body dt { font-weight: 600; color: var(--ink); margin-top: var(--s-3); }
+.post-body dd { margin-left: var(--s-4); color: var(--ink-soft); }
 
-/* Definition lists */
-.post-body dl {
-  margin: var(--s-4) 0;
-}
-.post-body dt {
-  font-weight: 600;
-  color: var(--ink);
-  margin-top: var(--s-3);
-}
-.post-body dd {
-  margin-left: var(--s-4);
-  color: var(--ink-soft);
-}
-
-/* ------------------------------------------------------------
-   Error state
-   ------------------------------------------------------------ */
+/* Error */
 .post-error {
   text-align: center;
   padding: var(--s-8) var(--s-5);
   color: var(--muted);
 }
-.post-error i {
-  font-size: 2rem;
-  display: block;
-  margin-bottom: var(--s-4);
-  color: var(--muted);
-}
-.post-error h2 {
-  margin-bottom: var(--s-3);
-  color: var(--ink);
-}
-.post-error a {
-  color: var(--teal);
-  font-weight: 600;
-  text-decoration: underline;
-}
+.post-error i { font-size: 2rem; display: block; margin-bottom: var(--s-4); color: var(--muted); }
+.post-error h2 { margin-bottom: var(--s-3); color: var(--ink); }
+.post-error a { color: var(--teal); font-weight: 600; text-decoration: underline; }
 
-/* ------------------------------------------------------------
-   Responsive
-   ------------------------------------------------------------ */
+/* Responsive */
 @media (max-width: 600px) {
   .post-body { font-size: 1rem; }
   .post-header__title { font-size: 1.6rem; }
-  .post-body table {
-    font-size: 0.85rem;
-  }
-  .post-body th,
-  .post-body td {
-    padding: 8px 10px;
-  }
+  .post-body table { font-size: 0.85rem; }
+  .post-body th, .post-body td { padding: 8px 10px; }
+  .post-downloads { padding: var(--s-4); }
+  .post-downloads .btn { width: 100%; min-width: 0; }
 }
 
-/* ------------------------------------------------------------
-   Reduced motion
-   ------------------------------------------------------------ */
 @media (prefers-reduced-motion: reduce) {
-  .bg-orbs .orb {
-    animation: none !important;
-  }
+  .bg-orbs .orb { animation: none !important; }
 }

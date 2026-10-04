@@ -1,6 +1,6 @@
 /* ============================================================
    Build newsletter/posts.json from newsletter/posts/*.md
-   Runs in GitHub Actions when you publish a post via Decap CMS.
+   Runs in GitHub Actions when you publish via Decap CMS.
    ============================================================ */
 
 const fs = require('fs');
@@ -11,7 +11,6 @@ const OUTPUT_FILE = path.join(__dirname, '..', 'newsletter', 'posts.json');
 
 /* ------------------------------------------------------------
    Minimal frontmatter parser
-   Handles: strings, booleans, dates, quoted strings
    ------------------------------------------------------------ */
 function parseFrontmatter(raw) {
   const match = raw.match(/^---\s*\n([\s\S]*?)\n---\s*\n?([\s\S]*)$/);
@@ -49,16 +48,17 @@ function parseFrontmatter(raw) {
 }
 
 /* ------------------------------------------------------------
-   Estimate read time from body
+   Read time estimation (only relevant if body exists)
    ------------------------------------------------------------ */
 function estimateReadTime(body) {
+  if (!body) return '';
   const words = body.split(/\s+/).filter(Boolean).length;
   const minutes = Math.max(1, Math.round(words / 200));
   return minutes + ' min read';
 }
 
 /* ------------------------------------------------------------
-   Default icon for each category
+   Default icon per category
    ------------------------------------------------------------ */
 function defaultIconFor(category) {
   switch (category) {
@@ -67,6 +67,23 @@ function defaultIconFor(category) {
     case 'studio':   return 'fa-building';
     default:         return 'fa-star';
   }
+}
+
+/* ------------------------------------------------------------
+   License metadata
+   ------------------------------------------------------------ */
+function licenseMeta(key) {
+  const map = {
+    'all-rights-reserved': { label: 'All Rights Reserved', url: null },
+    'cc-by-4.0':           { label: 'CC BY 4.0',           url: 'https://creativecommons.org/licenses/by/4.0/' },
+    'cc-by-sa-4.0':        { label: 'CC BY-SA 4.0',        url: 'https://creativecommons.org/licenses/by-sa/4.0/' },
+    'cc-by-nc-4.0':        { label: 'CC BY-NC 4.0',        url: 'https://creativecommons.org/licenses/by-nc/4.0/' },
+    'cc-by-nc-sa-4.0':     { label: 'CC BY-NC-SA 4.0',     url: 'https://creativecommons.org/licenses/by-nc-sa/4.0/' },
+    'cc0':                 { label: 'CC0 (Public Domain)', url: 'https://creativecommons.org/publicdomain/zero/1.0/' },
+    'mit':                 { label: 'MIT License',          url: 'https://opensource.org/licenses/MIT' },
+    'custom':              { label: 'Custom',               url: null }
+  };
+  return map[key] || map['all-rights-reserved'];
 }
 
 /* ------------------------------------------------------------
@@ -89,13 +106,20 @@ function build() {
     const raw = fs.readFileSync(filePath, 'utf8');
     const { data, body } = parseFrontmatter(raw);
 
-    // Slug derived from filename (strip .md and any date prefix)
+    // Slug from filename (strip .md and any date prefix)
     const slug = file
       .replace(/\.md$/, '')
       .replace(/^\d{4}-\d{2}-\d{2}-/, '');
 
-    // Excerpt: use frontmatter excerpt, or first 160 chars of body
-    const excerpt = data.excerpt || body.replace(/[#*_`]/g, '').slice(0, 160) + '…';
+    // Excerpt from frontmatter or first chars of body
+    const excerpt = data.excerpt || (body ? body.replace(/[#*_`]/g, '').slice(0, 160) + '…' : '');
+
+    // License metadata
+    const licenseKey = data.license || 'all-rights-reserved';
+    const lic = licenseMeta(licenseKey);
+    const licenseLabel = (licenseKey === 'custom' && data.licenseCustom)
+      ? data.licenseCustom
+      : lic.label;
 
     posts.push({
       id: slug,
@@ -104,9 +128,16 @@ function build() {
       category: data.category || 'studio',
       excerpt: excerpt,
       readTime: data.readTime || estimateReadTime(body),
+      author: data.author || '',
+      authorImage: data.authorImage || '',
+      license: licenseKey,
+      licenseLabel: licenseLabel,
+      licenseUrl: lic.url,
+      pdf: data.pdf || '',
+      txt: data.txt || '',
       featured: data.featured === true,
       icon: data.icon || defaultIconFor(data.category),
-      url: '',  // no external URL by default — post detail page is used instead
+      url: '',
       body: body
     });
   }
