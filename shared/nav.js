@@ -1,10 +1,6 @@
 /* ============================================================
-   NAV — nav + footer injection, clean-URL routing
-   Handles:
-     - Injecting nav + footer into every page
-     - Intercepting internal link clicks for clean URLs
-     - Browser back/forward via popstate
-     - Re-running on 'shim:content-loaded' (from 404.html)
+   NAV — nav + footer + clean-URL routing
+   Binds click interception IMMEDIATELY so no clicks are missed.
    ============================================================ */
 
 (function () {
@@ -21,45 +17,25 @@
       '<circle cx="16" cy="16" r="4" fill="currentColor"/>' +
     '</svg>';
 
-  /* ------------------------------------------------------------
-     Nav links — clean URLs
-     Add entries as you build more pages
-     ------------------------------------------------------------ */
   var NAV_LINKS = [
     { href: '/products',   label: 'Products',   key: 'products'   },
     { href: '/newsletter', label: 'Newsletter', key: 'newsletter' }
-    // { href: '/studio',   label: 'Studio',     key: 'studio'    },
-    // { href: '/aboutus',  label: 'About',      key: 'aboutus'   },
-    // { href: '/contact',  label: 'Contact',    key: 'contact'   }
   ];
 
-  /* ------------------------------------------------------------
-     Footer site links — clean URLs
-     ------------------------------------------------------------ */
   var FOOTER_SITE_LINKS = [
     { href: '/home',       label: 'Home'       },
     { href: '/products',   label: 'Products'   },
     { href: '/newsletter', label: 'Newsletter' }
-    // { href: '/studio',   label: 'Studio'   },
-    // { href: '/aboutus',  label: 'About'    },
-    // { href: '/contact',  label: 'Contact'  }
   ];
 
-  /* ------------------------------------------------------------
-     Clean-URL → real file mapping
-     Must match the SECTIONS list in 404.html
-     ------------------------------------------------------------ */
   var SECTIONS = {
     'home':       '/home/index.html',
     'products':   '/products/index.html',
     'newsletter': '/newsletter/index.html'
-    // 'studio':    '/studio/index.html',
-    // 'aboutus':   '/aboutus/index.html',
-    // 'contact':   '/contact/index.html'
   };
 
   /* ============================================================
-     2. NAV + FOOTER TEMPLATES
+     2. BUILD TEMPLATES
      ============================================================ */
 
   function buildNavLinks() {
@@ -102,7 +78,6 @@
   var FOOTER_HTML =
     '<footer class="footer">' +
       '<div class="container footer__inner">' +
-
         '<div class="footer__col">' +
           '<div class="footer__brand">' +
             '<span class="nav__mark">' + LOGO_SVG + '</span>' +
@@ -110,12 +85,10 @@
           '</div>' +
           '<p class="footer__tagline">Tools for student builders. Built by students, for students.</p>' +
         '</div>' +
-
         '<div class="footer__col">' +
           '<h4>Site</h4>' +
           '<ul>' + buildFooterSiteLinks() + '</ul>' +
         '</div>' +
-
         '<div class="footer__col">' +
           '<h4>Follow</h4>' +
           '<ul>' +
@@ -124,16 +97,13 @@
             '<li><a href="https://www.tiktok.com/@innovationearthprojects" target="_blank" rel="noopener"><i class="fab fa-tiktok"></i> TikTok</a></li>' +
           '</ul>' +
         '</div>' +
-
         '<div class="footer__col">' +
           '<h4>Contact</h4>' +
           '<ul>' +
             '<li><a href="mailto:InnovationEarthProjects@gmail.com"><i class="fas fa-envelope"></i> Email us</a></li>' +
           '</ul>' +
         '</div>' +
-
       '</div>' +
-
       '<div class="container footer__bottom">' +
         '<span>&copy; <span id="footer-year"></span> Innovation Earth Projects LLC &middot; Utah, USA</span>' +
         '<span>Built by students.</span>' +
@@ -147,9 +117,7 @@
   function injectNav() {
     var mount = document.getElementById('nav-mount');
     if (!mount) return;
-    // Already injected?
     if (mount.nextElementSibling && mount.nextElementSibling.classList.contains('nav')) return;
-
     var wrapper = document.createElement('div');
     wrapper.innerHTML = NAV_HTML;
     mount.parentNode.replaceChild(wrapper.firstChild, mount);
@@ -158,16 +126,14 @@
   function injectFooter() {
     var mount = document.getElementById('footer-mount');
     if (!mount) return;
-    // Already injected?
     if (mount.nextElementSibling && mount.nextElementSibling.classList.contains('footer')) return;
-
     var wrapper = document.createElement('div');
     wrapper.innerHTML = FOOTER_HTML;
     mount.parentNode.replaceChild(wrapper.firstChild, mount);
   }
 
   /* ============================================================
-     4. ACTIVE LINK / YEAR / MOBILE MENU
+     4. HELPERS
      ============================================================ */
 
   function setActiveLink() {
@@ -243,35 +209,25 @@
      5. CLEAN-URL ROUTING
      ============================================================ */
 
-  /* ------------------------------------------------------------
-     Resolve a clean URL to the real file path
-     Returns null if not a clean-URL route
-     ------------------------------------------------------------ */
   function resolveCleanUrl(href) {
     if (!href || href.charAt(0) !== '/') return null;
 
-    // Strip query/hash for matching
     var clean = href.split('?')[0].split('#')[0];
     var segments = clean.replace(/^\/+|\/+$/g, '').split('/').filter(Boolean);
 
-    if (segments.length === 0) return '/home/index.html';
+    if (segments.length === 0) return SECTIONS['home'];
 
     var section = segments[0].toLowerCase();
     if (!SECTIONS[section]) return null;
 
     var rest = segments.slice(1).join('/');
     if (rest && /\.\w+$/.test(rest)) {
-      // Explicit file: /newsletter/post.html
       return '/' + section + '/' + rest;
     }
 
-    // Folder: /products → /products/index.html
     return SECTIONS[section];
   }
 
-  /* ------------------------------------------------------------
-     Load a page into the current document
-     ------------------------------------------------------------ */
   function loadPage(url, push) {
     return fetch(url, { credentials: 'same-origin' })
       .then(function (res) {
@@ -282,7 +238,7 @@
         var parser = new DOMParser();
         var doc = parser.parseFromString(html, 'text/html');
 
-        // ----- <base> tag -----
+        // <base> for relative assets
         var existingBase = document.head.querySelector('base[data-shim]');
         if (existingBase) existingBase.remove();
         var base = document.createElement('base');
@@ -291,10 +247,10 @@
         base.href = folderMatch ? folderMatch[1] : '/';
         document.head.appendChild(base);
 
-        // ----- Title -----
+        // Title
         if (doc.title) document.title = doc.title;
 
-        // ----- Reset styles -----
+        // Styles
         document.head.querySelectorAll('[data-shim-style]').forEach(function (el) {
           el.remove();
         });
@@ -304,17 +260,17 @@
           document.head.appendChild(clone);
         });
 
-        // ----- Body attributes -----
+        // Body attrs
         Array.from(doc.body.attributes).forEach(function (attr) {
           document.body.setAttribute(attr.name, attr.value);
         });
 
-        // ----- Replace body -----
+        // Body content (without scripts)
         var newBody = doc.body.cloneNode(true);
         newBody.querySelectorAll('script').forEach(function (s) { s.remove(); });
         document.body.innerHTML = newBody.innerHTML;
 
-        // ----- Re-execute scripts -----
+        // Re-execute scripts
         doc.querySelectorAll('script').forEach(function (oldScript) {
           var newScript = document.createElement('script');
           Array.from(oldScript.attributes).forEach(function (attr) {
@@ -324,14 +280,15 @@
           document.body.appendChild(newScript);
         });
 
-        // ----- URL bar -----
+        // URL bar — strip /index.html and trailing slash
         if (push) {
-          var displayUrl = url.replace(/\/index\.html$/, '').replace(/\/$/, '');
-          if (!displayUrl) displayUrl = '/home';
+          var displayUrl = url
+            .replace(/\/index\.html$/i, '')
+            .replace(/\/$/, '');
+          if (!displayUrl || displayUrl === '') displayUrl = '/home';
           history.pushState({ shim: true }, '', displayUrl);
         }
 
-        // ----- Notify + scroll -----
         window.dispatchEvent(new Event('shim:content-loaded'));
         window.scrollTo({ top: 0, behavior: 'instant' });
       })
@@ -341,59 +298,52 @@
       });
   }
 
-  /* ------------------------------------------------------------
-     Intercept internal link clicks
-     ------------------------------------------------------------ */
-  function wireLinkInterception() {
-    if (document.body.dataset.linkIntercept === '1') return;
-    document.body.dataset.linkIntercept = '1';
+  /* ============================================================
+     6. INTERCEPT CLICKS — bind IMMEDIATELY, not on DOMContentLoaded
+     ============================================================ */
 
-    document.addEventListener('click', function (e) {
-      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-      if (e.defaultPrevented) return;
+  document.addEventListener('click', function (e) {
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (e.defaultPrevented) return;
+    if (e.button !== 0) return;
 
-      var link = e.target.closest('a');
-      if (!link) return;
+    var link = e.target.closest('a');
+    if (!link) return;
 
-      var href = link.getAttribute('href');
-      if (!href) return;
+    var href = link.getAttribute('href');
+    if (!href) return;
 
-      // Skip hash, external, mailto, tel
-      if (/^(#|mailto:|tel:|https?:)/i.test(href)) return;
-      if (link.target === '_blank') return;
+    if (/^(#|mailto:|tel:|https?:)/i.test(href)) return;
+    if (link.target === '_blank') return;
+    if (href.indexOf('/admin') === 0) return;
+    if (href.charAt(0) !== '/') return;
 
-      // Skip admin (Decap CMS)
-      if (href.indexOf('/admin') === 0) return;
+    // Skip any .html link unless it's an index.html — those we intercept
+    if (/\.html?(?:\?|#|$)/i.test(href) && !/\/index\.html$/i.test(href)) {
+      return;
+    }
 
-      // Only absolute clean URLs
-      if (href.charAt(0) !== '/') return;
+    var resolved = resolveCleanUrl(href);
+    if (!resolved) return;
 
-      var resolved = resolveCleanUrl(href);
-      if (!resolved) return;
+    e.preventDefault();
+    console.log('🔗 Intercepting clean-URL navigation:', href, '→', resolved);
+    loadPage(resolved, true);
+  }, false);
 
-      // Skip if the href is already a .html file
-      if (/\.html?(?:\?|#|$)/i.test(href) && !/\/index\.html$/i.test(href)) {
-        return;
-      }
-
-      e.preventDefault();
-      loadPage(resolved, true);
-    });
-
-    // Browser back / forward
-    window.addEventListener('popstate', function () {
-      var current = window.location.pathname + window.location.search;
-      var resolved = resolveCleanUrl(current);
-      if (resolved) {
-        loadPage(resolved, false);
-      } else if (current === '/' || current === '') {
-        loadPage('/home/index.html', false);
-      }
-    });
-  }
+  /* Back / forward */
+  window.addEventListener('popstate', function () {
+    var current = window.location.pathname + window.location.search;
+    var resolved = resolveCleanUrl(current);
+    if (resolved) {
+      loadPage(resolved, false);
+    } else if (current === '/' || current === '') {
+      loadPage(SECTIONS['home'], false);
+    }
+  });
 
   /* ============================================================
-     6. BOOT
+     7. BOOT
      ============================================================ */
 
   function boot() {
@@ -405,18 +355,12 @@
     console.log('✅ Nav + footer injected');
   }
 
-  function start() {
-    boot();
-    wireLinkInterception();
-  }
-
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', start);
+    document.addEventListener('DOMContentLoaded', boot);
   } else {
-    start();
+    boot();
   }
 
-  // Re-run after 404 shim injects content
   window.addEventListener('shim:content-loaded', boot);
 
 })();
