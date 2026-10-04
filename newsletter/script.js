@@ -50,11 +50,8 @@
      Decide where a post card links to
      ------------------------------------------------------------ */
   function postUrl(post) {
-    // Prefer PDF
     if (post.pdf) return post.pdf;
-    // Fall back to TXT
     if (post.txt) return post.txt;
-    // Fall back to detail page
     return './post.html?id=' + encodeURIComponent(post.id || '');
   }
 
@@ -64,14 +61,16 @@
 
   /* ------------------------------------------------------------
      Author + license byline HTML
+     variant: 'featured' | 'post'
      ------------------------------------------------------------ */
   function bylineHtml(post, variant) {
-    var prefix = variant === 'featured' ? 'featured' : 'post';
+    var prefix = (variant === 'featured') ? 'featured' : 'post';
     var name = post.author || 'Unknown';
     var initial = name.charAt(0).toUpperCase();
+    var img = post.authorImage;
 
-    var avatarHtml = post.authorImage
-      ? '<img src="' + escapeHtml(post.authorImage) + '" alt="" class="' + prefix + '__avatar" loading="lazy">'
+    var avatarHtml = img
+      ? '<img src="' + escapeHtml(img) + '" alt="" class="' + prefix + '__avatar" loading="lazy">'
       : '<span class="' + prefix + '__avatar ' + prefix + '__avatar--placeholder">' +
           escapeHtml(initial) +
         '</span>';
@@ -91,7 +90,7 @@
     return (
       '<div class="' + prefix + '__byline">' +
         avatarHtml +
-        '<div class="' + prefix + '__byline-text">' +
+        '<div class="' + prefix + '__byline-info">' +
           '<span class="' + prefix + '__author-name">' + escapeHtml(name) + '</span>' +
           licenseHtml +
         '</div>' +
@@ -137,7 +136,7 @@
   }
 
   /* ============================================================
-     RENDER
+     RENDER — FEATURED
      ============================================================ */
   function renderFeatured() {
     if (!featuredPostEl) return;
@@ -181,14 +180,13 @@
           '<h2 class="featured__title">' + escapeHtml(featured.title) + '</h2>' +
           '<p class="featured__excerpt">' + escapeHtml(featured.excerpt) + '</p>' +
           bylineHtml(featured, 'featured') +
-          '<span class="featured__cta">' +
-            (featured.pdf ? 'Open PDF' : featured.txt ? 'Open text' : 'Read post') +
-            ' <i class="fas fa-arrow-right"></i>' +
-          '</span>' +
         '</div>' +
       '</a>';
   }
 
+  /* ============================================================
+     RENDER — POSTS GRID
+     ============================================================ */
   function renderPosts() {
     if (!postsGridEl) return;
 
@@ -250,6 +248,9 @@
     postsGridEl.innerHTML = html;
   }
 
+  /* ============================================================
+     COUNTS
+     ============================================================ */
   function updateCounts() {
     var counts = { all: 0, research: 0, product: 0, studio: 0 };
     for (var i = 0; i < ALL_POSTS.length; i++) {
@@ -439,6 +440,8 @@
   function boot() {
     featuredPostEl = document.getElementById('featured-post');
     postsGridEl = document.getElementById('posts-grid');
+
+    if (!postsGridEl) return;
 
     wireTabs();
     wireSearch();
