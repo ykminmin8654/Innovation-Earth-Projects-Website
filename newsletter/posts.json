@@ -1,14 +1,21 @@
 [
   {
-    "id": "test",
-    "title": "Test",
-    "date": "2026-10-03T18:57:00.000-06:00",
-    "category": "studio",
-    "excerpt": "test",
-    "readTime": "1 min read",
-    "featured": false,
-    "icon": "fa-building",
+    "id": "critical-analysis-of-nuclear-waste-disposal-in-space",
+    "title": "\"A Critical Analysis of Nuclear Waste Disposal in Space: An Assessment of",
+    "date": "2026-10-03",
+    "category": "research",
+    "excerpt": "Since the start of the nuclear age in the mid-20th century, humanity",
+    "readTime": "",
+    "author": "Vamsi Babu, James Che",
+    "authorImage": "",
+    "license": "cc-by-4.0",
+    "licenseLabel": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "pdf": "/newsletter/images/a-critical-analysis-of-nuclear-waste-disposal-in-space_-an-assessment-of-technical-economic-and-legal-viability-1-.pdf",
+    "txt": "",
+    "featured": true,
+    "icon": "fa-flask",
     "url": "",
-    "body": "test"
+    "body": ""
   }
 ]
