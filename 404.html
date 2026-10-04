@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Loading… — Innovation Earth Projects</title>
   <meta name="robots" content="noindex" />
-
   <style>
     :root {
       --teal: #008080;
@@ -77,25 +76,21 @@
     </span>
     <h1 class="loader__title">Loading…</h1>
     <p class="loader__sub" id="loader-sub">Taking you to the right page.</p>
-    <a class="loader__link" id="manual-link" href="/home/index.html">
+    <a class="loader__link" id="manual-link" href="/home">
       Continue <span aria-hidden="true">→</span>
     </a>
   </div>
 
   <script>
     /* ============================================================
-       GitHub Pages 404 shim
-       Loads a known section's index.html content directly into
-       the current page — URL bar stays at whatever the user
-       typed (e.g. /home or /newsletter).
+       GitHub Pages 404 shim — clean URL support
        ============================================================ */
-
     (function () {
       'use strict';
 
-      // ------------------------------------------------------------
-      // Config — sections you want to support at clean URLs
-      // ------------------------------------------------------------
+      /* ------------------------------------------------------------
+         Config — sections that support clean URLs
+         ------------------------------------------------------------ */
       var SECTIONS = {
         'home':       '/home/index.html',
         'products':   '/products/index.html',
@@ -106,14 +101,10 @@
         // 'contact': '/contact/index.html'
       };
 
-      // ------------------------------------------------------------
-      // Parse current URL
-      // ------------------------------------------------------------
       var pathname = window.location.pathname;
       var search   = window.location.search || '';
       var hash     = window.location.hash   || '';
 
-      // Remove leading/trailing slashes and split
       var cleaned  = pathname.replace(/^\/+|\/+$/g, '');
       var segments = cleaned.split('/').filter(Boolean);
 
@@ -121,10 +112,10 @@
       var manualLink = document.getElementById('manual-link');
 
       // ------------------------------------------------------------
-      // Root path → home
+      // Root → home
       // ------------------------------------------------------------
       if (segments.length === 0) {
-        window.location.replace('/home/');
+        window.location.replace('/home');
         return;
       }
 
@@ -136,30 +127,27 @@
       // ------------------------------------------------------------
       if (!target) {
         if (subEl) subEl.textContent = 'Page not found — going home.';
-        manualLink.href = '/home/';
+        manualLink.href = '/home';
         setTimeout(function () {
-          window.location.replace('/home/');
+          window.location.replace('/home');
         }, 800);
         return;
       }
 
       // ------------------------------------------------------------
-      // Build the URL to fetch
-      // If user typed /newsletter/post.html?id=foo — respect the full path
-      // Otherwise, use the section's index.html
+      // Build fetch URL
       // ------------------------------------------------------------
       var rest = segments.slice(1).join('/');
       var fetchUrl;
       if (rest && /\.\w+$/.test(rest)) {
-        // Direct file reference: /newsletter/post.html
+        // e.g. /newsletter/post.html?id=foo
         fetchUrl = '/' + section + '/' + rest + search;
       } else {
-        // Folder: /newsletter → serve index.html
         fetchUrl = target + search;
       }
 
       // ------------------------------------------------------------
-      // Fetch the target HTML and inject it
+      // Fetch and inject
       // ------------------------------------------------------------
       fetch(fetchUrl, { credentials: 'same-origin' })
         .then(function (res) {
@@ -167,47 +155,45 @@
           return res.text();
         })
         .then(function (html) {
-          // Parse the fetched document
           var parser = new DOMParser();
           var doc = parser.parseFromString(html, 'text/html');
 
-          // ----- Replace <title> -----
+          // ----- Set <base> tag so relative paths resolve correctly -----
+          var base = document.createElement('base');
+          base.href = '/' + section + '/';
+          document.head.appendChild(base);
+
+          // ----- Title -----
           if (doc.title) document.title = doc.title;
 
-          // ----- Copy <head> contents (styles, scripts, meta) -----
-          // Remove existing head elements we're going to replace
-          document.head.querySelectorAll('link[rel="stylesheet"], style').forEach(function (el) {
-            // Keep our shim styles so we don't flash unstyled
-            if (el.id !== 'shim-styles') el.remove();
-          });
-
-          // Add fetched head elements (stylesheet links + inline styles)
+          // ----- Copy <head> styles and scripts (link, style) -----
           doc.head.querySelectorAll('link[rel="stylesheet"], style').forEach(function (el) {
+            if (el.id === 'shim-styles') return;
             document.head.appendChild(el.cloneNode(true));
           });
 
-          // Copy meta tags
+          // ----- Copy meta tags -----
           doc.head.querySelectorAll('meta[name], meta[property]').forEach(function (el) {
             document.head.appendChild(el.cloneNode(true));
           });
 
-          // ----- Replace <body> content -----
-          var newBody = doc.body.cloneNode(true);
-
-          // Copy body attributes (data-page, class, etc.)
+          // ----- Copy body attributes -----
           Array.from(doc.body.attributes).forEach(function (attr) {
             document.body.setAttribute(attr.name, attr.value);
           });
 
-          // Replace body contents
+          // ----- Replace body content -----
+          var newBody = doc.body.cloneNode(true);
+
+          // Strip <script> tags from the clone (we'll re-add them properly)
+          newBody.querySelectorAll('script').forEach(function (s) {
+            s.remove();
+          });
+
           document.body.innerHTML = newBody.innerHTML;
 
-          // ------------------------------------------------------------
-          // Re-execute scripts from the fetched document
-          // ------------------------------------------------------------
-          // Any <script> in the fetched body needs to run again
-          var scripts = doc.querySelectorAll('script');
-          scripts.forEach(function (oldScript) {
+          // ----- Re-execute scripts in order -----
+          doc.querySelectorAll('script').forEach(function (oldScript) {
             var newScript = document.createElement('script');
             Array.from(oldScript.attributes).forEach(function (attr) {
               newScript.setAttribute(attr.name, attr.value);
@@ -216,18 +202,14 @@
             document.body.appendChild(newScript);
           });
 
-          // ------------------------------------------------------------
-          // Restore the URL bar to what the user typed
-          // ------------------------------------------------------------
-          // The URL never actually changed — GitHub served 404.html
-          // at the requested path. So the URL bar is already correct.
-          // Nothing to do here.
+          // ----- Notify listeners (nav.js, script.js, etc.) -----
+          window.dispatchEvent(new Event('shim:content-loaded'));
         })
         .catch(function (err) {
           console.error('Failed to load section:', err);
           if (subEl) subEl.textContent = 'Could not load that page — going home.';
           setTimeout(function () {
-            window.location.replace('/home/');
+            window.location.replace('/home');
           }, 800);
         });
 

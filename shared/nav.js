@@ -1,8 +1,7 @@
 /* ============================================================
    NAV — injects top nav + footer into every page
-   - Runs on initial page load
-   - Re-runs when the 404 shim injects a page (shim:content-loaded)
-   No dependencies. Self-contained.
+   Uses clean URLs (/home, /products, /newsletter)
+   Works with the 404 shim: re-runs on 'shim:content-loaded'
    ============================================================ */
 
 (function () {
@@ -19,28 +18,28 @@
     '</svg>';
 
   /* ------------------------------------------------------------
-     Nav links — add pages here as you build them
+     Nav links — clean URLs (no .html, no index)
      ------------------------------------------------------------ */
   var NAV_LINKS = [
-    { href: '../products/index.html',   label: 'Products',   key: 'products'   },
-    { href: '../newsletter/index.html', label: 'Newsletter', key: 'newsletter' }
-    // future:
-    // { href: '../studio/index.html',    label: 'Studio',     key: 'studio'   },
-    // { href: '../aboutus/index.html',   label: 'About',      key: 'aboutus'  },
-    // { href: '../contact/index.html',   label: 'Contact',    key: 'contact'  }
+    { href: '/products',   label: 'Products',   key: 'products'   },
+    { href: '/newsletter', label: 'Newsletter', key: 'newsletter' }
+    // add more as you build them:
+    // { href: '/studio',   label: 'Studio',     key: 'studio'    },
+    // { href: '/aboutus',  label: 'About',      key: 'aboutus'   },
+    // { href: '/contact',  label: 'Contact',    key: 'contact'   }
   ];
 
   /* ------------------------------------------------------------
-     Footer site links
+     Footer site links — clean URLs
      ------------------------------------------------------------ */
   var FOOTER_SITE_LINKS = [
-    { href: '../home/index.html',       label: 'Home'       },
-    { href: '../products/index.html',   label: 'Products'   },
-    { href: '../newsletter/index.html', label: 'Newsletter' }
-    // future:
-    // { href: '../studio/index.html',    label: 'Studio'   },
-    // { href: '../aboutus/index.html',   label: 'About'    },
-    // { href: '../contact/index.html',   label: 'Contact'  }
+    { href: '/home',       label: 'Home'       },
+    { href: '/products',   label: 'Products'   },
+    { href: '/newsletter', label: 'Newsletter' }
+    // add more as you build them:
+    // { href: '/studio',   label: 'Studio'   },
+    // { href: '/aboutus',  label: 'About'    },
+    // { href: '/contact',  label: 'Contact'  }
   ];
 
   /* ------------------------------------------------------------
@@ -70,14 +69,14 @@
   var NAV_HTML =
     '<header class="nav">' +
       '<div class="nav__inner">' +
-        '<a href="../home/index.html" class="nav__brand" aria-label="Innovation Earth Projects — home">' +
+        '<a href="/home" class="nav__brand" aria-label="Innovation Earth Projects — home">' +
           '<span class="nav__mark">' + LOGO_SVG + '</span>' +
           '<span class="nav__wordmark">Innovation&nbsp;Earth</span>' +
         '</a>' +
         '<nav class="nav__links" id="primary-nav" aria-label="Primary">' +
           buildNavLinks() +
         '</nav>' +
-        '<a href="../products/index.html" class="btn btn--ghost nav__cta">' +
+        '<a href="/products" class="btn btn--ghost nav__cta">' +
           'Open tools <i class="fas fa-arrow-right"></i>' +
         '</a>' +
         '<button class="nav__toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="primary-nav">' +
@@ -134,7 +133,7 @@
     var mount = document.getElementById('nav-mount');
     if (!mount) return;
 
-    // If the nav is already injected, don't inject again
+    // Skip if already injected
     if (mount.nextElementSibling && mount.nextElementSibling.classList.contains('nav')) return;
 
     var wrapper = document.createElement('div');
@@ -146,7 +145,7 @@
     var mount = document.getElementById('footer-mount');
     if (!mount) return;
 
-    // If the footer is already injected, don't inject again
+    // Skip if already injected
     if (mount.nextElementSibling && mount.nextElementSibling.classList.contains('footer')) return;
 
     var wrapper = document.createElement('div');
@@ -155,7 +154,7 @@
   }
 
   /* ------------------------------------------------------------
-     Active link — based on <body data-page="...">
+     Active link highlight — based on <body data-page="...">
      ------------------------------------------------------------ */
   function setActiveLink() {
     var page = document.body.getAttribute('data-page');
