@@ -1,5 +1,5 @@
 /* ============================================================
-   NEWSLETTER — posts loaded from posts.json
+   NEWSLETTER — list page
    ============================================================ */
 
 (function () {
@@ -11,7 +11,6 @@
   var featuredPostEl = null;
   var postsGridEl = null;
 
-  /* ---------- Utilities ---------- */
   function escapeHtml(str) {
     if (str == null) return '';
     return String(str)
@@ -26,9 +25,7 @@
     try {
       var d = new Date(dateStr + 'T00:00:00');
       if (isNaN(d.getTime())) return dateStr;
-      return d.toLocaleDateString('en-US', {
-        year: 'numeric', month: 'short', day: 'numeric'
-      });
+      return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
     } catch (e) { return dateStr; }
   }
 
@@ -49,40 +46,38 @@
     return !!(post.pdf || post.txt);
   }
 
-  function bylineHtml(post, prefix) {
+  function renderByline(post, prefix) {
     var name = post.author || 'Unknown';
     var initial = name.charAt(0).toUpperCase();
-    var img = post.authorImage;
+    var avatar;
+    if (post.authorImage) {
+      avatar = '<img src="' + escapeHtml(post.authorImage) + '" alt="" class="' + prefix + '-avatar">';
+    } else {
+      avatar = '<span class="' + prefix + '-avatar ' + prefix + '-avatar--placeholder">' +
+               escapeHtml(initial) + '</span>';
+    }
 
-    var avatarHtml = img
-      ? '<img src="' + escapeHtml(img) + '" alt="" class="' + prefix + '__avatar" loading="lazy">'
-      : '<span class="' + prefix + '__avatar ' + prefix + '__avatar--placeholder">' +
-          escapeHtml(initial) + '</span>';
-
-    var licenseHtml = '';
+    var license = '';
     if (post.licenseLabel) {
       if (post.licenseUrl) {
-        licenseHtml = '<a href="' + escapeHtml(post.licenseUrl) +
-          '" target="_blank" rel="noopener" class="' + prefix + '__license">' +
-          escapeHtml(post.licenseLabel) + '</a>';
+        license = '<a href="' + escapeHtml(post.licenseUrl) + '" target="_blank" rel="noopener" class="' + prefix + '-license">' +
+                  escapeHtml(post.licenseLabel) + '</a>';
       } else {
-        licenseHtml = '<span class="' + prefix + '__license">' +
-          escapeHtml(post.licenseLabel) + '</span>';
+        license = '<span class="' + prefix + '-license">' + escapeHtml(post.licenseLabel) + '</span>';
       }
     }
 
     return (
-      '<div class="' + prefix + '__byline">' +
-        avatarHtml +
-        '<div class="' + prefix + '__byline-info">' +
-          '<span class="' + prefix + '__author-name">' + escapeHtml(name) + '</span>' +
-          licenseHtml +
+      '<div class="' + prefix + '-byline">' +
+        avatar +
+        '<div class="' + prefix + '-byline-text">' +
+          '<span class="' + prefix + '-author">' + escapeHtml(name) + '</span>' +
+          license +
         '</div>' +
       '</div>'
     );
   }
 
-  /* ---------- Load ---------- */
   function loadPosts() {
     return fetch('./posts.json', { cache: 'no-store' })
       .then(function (res) {
@@ -91,49 +86,34 @@
       });
   }
 
-  /* ---------- Filtering ---------- */
   function getVisiblePosts() {
     var list = ALL_POSTS.slice();
-
     if (activeFilter !== 'all') {
       list = list.filter(function (p) { return p.category === activeFilter; });
     }
-
     if (activeSearch) {
       var q = activeSearch.toLowerCase();
       list = list.filter(function (p) {
-        var haystack = [
-          p.title || '',
-          p.excerpt || '',
-          p.category || '',
-          p.author || ''
-        ].join(' ').toLowerCase();
-        return haystack.indexOf(q) !== -1;
+        return [p.title || '', p.excerpt || '', p.category || '', p.author || '']
+          .join(' ').toLowerCase().indexOf(q) !== -1;
       });
     }
-
     return list;
   }
 
-  /* ---------- Render featured ---------- */
   function renderFeatured() {
     if (!featuredPostEl) return;
-
     if (activeFilter !== 'all' || activeSearch) {
       featuredPostEl.innerHTML = '';
       return;
     }
-
     var featured = null;
     for (var i = 0; i < ALL_POSTS.length; i++) {
       if (ALL_POSTS[i].featured) { featured = ALL_POSTS[i]; break; }
     }
-    if (!featured) {
-      featuredPostEl.innerHTML = '';
-      return;
-    }
+    if (!featured) { featuredPostEl.innerHTML = ''; return; }
 
-    var cat = featured.category;
+    var cat = featured.category || 'studio';
     var icon = featured.icon || 'fa-star';
     var dateStr = formatDate(featured.date);
     var url = postUrl(featured);
@@ -143,31 +123,29 @@
       : ' href="' + escapeHtml(url) + '"';
 
     featuredPostEl.innerHTML =
-      '<a class="featured__card"' + linkAttrs + '>' +
-        '<div class="featured__visual">' +
+      '<a class="featured"' + linkAttrs + '>' +
+        '<div class="featured-visual">' +
           '<i class="fas ' + escapeHtml(icon) + '"></i>' +
         '</div>' +
-        '<div class="featured__body">' +
-          '<div class="featured__meta">' +
-            '<span class="featured__badge featured__badge--' + escapeHtml(cat) + '">' +
+        '<div class="featured-body">' +
+          '<div class="featured-meta">' +
+            '<span class="badge badge--' + escapeHtml(cat) + '">' +
               '<span class="dot dot--' + escapeHtml(cat) + '"></span>' +
               categoryLabel(cat) +
             '</span>' +
-            '<span>' + escapeHtml(dateStr) + '</span>' +
+            '<span class="featured-date">' + escapeHtml(dateStr) + '</span>' +
           '</div>' +
-          '<h2 class="featured__title">' + escapeHtml(featured.title) + '</h2>' +
-          '<p class="featured__excerpt">' + escapeHtml(featured.excerpt) + '</p>' +
-          bylineHtml(featured, 'featured') +
+          '<h2 class="featured-title">' + escapeHtml(featured.title) + '</h2>' +
+          '<p class="featured-excerpt">' + escapeHtml(featured.excerpt) + '</p>' +
+          renderByline(featured, 'featured') +
         '</div>' +
       '</a>';
   }
 
-  /* ---------- Render posts grid ---------- */
   function renderPosts() {
     if (!postsGridEl) return;
 
     var list = getVisiblePosts();
-
     if (activeFilter === 'all' && !activeSearch) {
       list = list.filter(function (p) { return !p.featured; });
     }
@@ -177,13 +155,10 @@
       postsGridEl.innerHTML =
         '<div class="newsletter-empty">' +
           '<i class="fas fa-' + (isEmpty ? 'inbox' : 'search') + '"></i>' +
-          '<h3>' + (isEmpty ? 'No posts yet' :
-            activeSearch ? 'No results' : 'No posts here') + '</h3>' +
-          '<p>' + (isEmpty
-            ? 'Check back soon — we\'re working on our first post.'
-            : activeSearch
-              ? 'Nothing matches "' + escapeHtml(activeSearch) + '". Try a different search.'
-              : 'Try a different filter.') + '</p>' +
+          '<h3>' + (isEmpty ? 'No posts yet' : activeSearch ? 'No results' : 'No posts here') + '</h3>' +
+          '<p>' + (isEmpty ? 'Check back soon.' : activeSearch
+            ? 'Nothing matches "' + escapeHtml(activeSearch) + '".'
+            : 'Try a different filter.') + '</p>' +
         '</div>';
       return;
     }
@@ -191,7 +166,7 @@
     var html = '';
     for (var i = 0; i < list.length; i++) {
       var p = list[i];
-      var cat = p.category;
+      var cat = p.category || 'studio';
       var dateStr = formatDate(p.date);
       var url = postUrl(p);
       var external = isExternalFile(p);
@@ -199,32 +174,31 @@
         ? ' href="' + escapeHtml(url) + '" target="_blank" rel="noopener"'
         : ' href="' + escapeHtml(url) + '"';
 
+      var fileLabel = p.pdf ? '<i class="fas fa-file-pdf"></i> PDF'
+                    : p.txt ? '<i class="fas fa-file-alt"></i> Text'
+                    : 'Read';
+
       html +=
-        '<a class="post"' + linkAttrs + '>' +
-          '<div class="post__meta">' +
-            '<span class="post__badge post__badge--' + escapeHtml(cat) + '">' +
+        '<a class="card"' + linkAttrs + '>' +
+          '<div class="card-top">' +
+            '<span class="badge badge--' + escapeHtml(cat) + '">' +
               '<span class="dot dot--' + escapeHtml(cat) + '"></span>' +
               categoryLabel(cat) +
             '</span>' +
-            '<span>' + escapeHtml(dateStr) + '</span>' +
+            '<span class="card-date">' + escapeHtml(dateStr) + '</span>' +
           '</div>' +
-          '<h3 class="post__title">' + escapeHtml(p.title) + '</h3>' +
-          '<p class="post__excerpt">' + escapeHtml(p.excerpt) + '</p>' +
-          bylineHtml(p, 'post') +
-          '<div class="post__footer">' +
-            '<span class="post__read">' +
-              (p.pdf ? '<i class="fas fa-file-pdf"></i> PDF'
-               : p.txt ? '<i class="fas fa-file-alt"></i> Text'
-               : 'Read') +
-            '</span>' +
-            '<span class="post__arrow"><i class="fas fa-arrow-right"></i></span>' +
+          '<h3 class="card-title">' + escapeHtml(p.title) + '</h3>' +
+          '<p class="card-excerpt">' + escapeHtml(p.excerpt) + '</p>' +
+          renderByline(p, 'card') +
+          '<div class="card-footer">' +
+            '<span class="card-read">' + fileLabel + '</span>' +
+            '<span class="card-arrow"><i class="fas fa-arrow-right"></i></span>' +
           '</div>' +
         '</a>';
     }
     postsGridEl.innerHTML = html;
   }
 
-  /* ---------- Counts ---------- */
   function updateCounts() {
     var counts = { all: 0, research: 0, product: 0, studio: 0 };
     for (var i = 0; i < ALL_POSTS.length; i++) {
@@ -244,15 +218,12 @@
     renderPosts();
   }
 
-  /* ---------- Tabs ---------- */
   function wireTabs() {
     var tabs = document.querySelectorAll('#newsletter-tabs .tab');
     for (var i = 0; i < tabs.length; i++) {
       (function (tab) {
         tab.addEventListener('click', function () {
-          for (var j = 0; j < tabs.length; j++) {
-            tabs[j].classList.remove('tab--active');
-          }
+          for (var j = 0; j < tabs.length; j++) tabs[j].classList.remove('tab--active');
           tab.classList.add('tab--active');
           activeFilter = tab.getAttribute('data-filter') || 'all';
           refresh();
@@ -261,7 +232,6 @@
     }
   }
 
-  /* ---------- Search ---------- */
   function wireSearch() {
     var input = document.getElementById('newsletter-search');
     var clearBtn = document.getElementById('newsletter-search-clear');
@@ -287,18 +257,8 @@
         input.focus();
       });
     }
-
-    input.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && input.value) {
-        input.value = '';
-        activeSearch = '';
-        if (clearBtn) clearBtn.hidden = true;
-        refresh();
-      }
-    });
   }
 
-  /* ---------- Subscribe + Turnstile ---------- */
   function wireSubscribe() {
     var form = document.getElementById('subscribe-form');
     var input = document.getElementById('subscribe-email');
@@ -313,15 +273,12 @@
 
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
-
       var email = input.value.trim();
-
       input.classList.remove('is-error');
       note.classList.remove('is-success', 'is-error');
       note.textContent = '';
 
-      var valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-      if (!valid) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         input.classList.add('is-error');
         note.classList.add('is-error');
         note.textContent = 'Please enter a valid email address.';
@@ -338,20 +295,13 @@
       }
 
       note.textContent = 'Verifying…';
-      var formData = new FormData(form);
 
       try {
         var res = await fetch('https://iep-turnstile.ykminmin8654.workers.dev', {
           method: 'POST',
-          body: formData
+          body: new FormData(form)
         });
         if (!res.ok) throw new Error('Verification failed');
-
-        try {
-          var list = JSON.parse(localStorage.getItem('iep:newsletter') || '[]');
-          if (list.indexOf(email) === -1) list.push(email);
-          localStorage.setItem('iep:newsletter', JSON.stringify(list));
-        } catch (err) { /* ignore */ }
 
         note.classList.add('is-success');
         note.textContent = "Thanks — you're on the list.";
@@ -374,32 +324,6 @@
     });
   }
 
-  /* ---------- Reveal on scroll ---------- */
-  function initReveals() {
-    if (!('IntersectionObserver' in window)) return;
-
-    var els = document.querySelectorAll('.post, .featured__card, .subscribe');
-    if (!els.length) return;
-
-    var observer = new IntersectionObserver(function (entries) {
-      for (var i = 0; i < entries.length; i++) {
-        if (entries[i].isIntersecting) {
-          entries[i].target.style.opacity = '1';
-          entries[i].target.style.transform = 'translateY(0)';
-          observer.unobserve(entries[i].target);
-        }
-      }
-    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-
-    for (var i = 0; i < els.length; i++) {
-      els[i].style.opacity = '0';
-      els[i].style.transform = 'translateY(20px)';
-      els[i].style.transition = 'opacity 0.6s cubic-bezier(.2,.7,.2,1), transform 0.6s cubic-bezier(.2,.7,.2,1)';
-      observer.observe(els[i]);
-    }
-  }
-
-  /* ---------- Boot ---------- */
   function boot() {
     featuredPostEl = document.getElementById('featured-post');
     postsGridEl = document.getElementById('posts-grid');
@@ -415,17 +339,11 @@
         updateCounts();
         renderFeatured();
         renderPosts();
-        initReveals();
-        console.log('✅ Newsletter ready — ' + ALL_POSTS.length + ' posts loaded');
+        console.log('✅ Newsletter ready — ' + ALL_POSTS.length + ' posts');
       })
       .catch(function (err) {
         console.error('Failed to load posts:', err);
-        postsGridEl.innerHTML =
-          '<div class="newsletter-empty">' +
-            '<i class="fas fa-exclamation-triangle"></i>' +
-            '<h3>Couldn\'t load posts</h3>' +
-            '<p>Please refresh the page and try again.</p>' +
-          '</div>';
+        postsGridEl.innerHTML = '<div class="newsletter-empty"><i class="fas fa-exclamation-triangle"></i><h3>Couldn\'t load posts</h3><p>Refresh the page and try again.</p></div>';
       });
   }
 
@@ -435,5 +353,4 @@
     boot();
   }
   window.addEventListener('shim:content-loaded', boot);
-
 })();
