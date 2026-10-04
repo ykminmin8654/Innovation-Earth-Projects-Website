@@ -3,33 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>Loading… — Innovation Earth Projects</title>
   <meta name="robots" content="noindex" />
-
-  <!-- Fallback if JS is disabled -->
-  <noscript>
-    <meta http-equiv="refresh" content="0; url=/home/index.html" />
-  </noscript>
 
   <style>
     :root {
       --teal: #008080;
       --teal-deep: #005F5F;
-      --cyan: #00CED1;
-      --lime: #32CD32;
       --ink: #0B1A1F;
-      --ink-soft: #33474D;
       --muted: #6A8085;
       --bg: #F8FBFC;
-      --surface: #FFFFFF;
-      --border: #E1EDEF;
       --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-      --ease: cubic-bezier(.2, .7, .2, 1);
     }
     *, *::before, *::after { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
-
     body {
       font-family: var(--font);
       background: var(--bg);
@@ -38,70 +25,14 @@
       place-items: center;
       text-align: center;
       padding: 2rem;
-      overflow: hidden;
     }
-
-    /* Animated background orbs */
-    .orb {
-      position: fixed;
-      border-radius: 50%;
-      filter: blur(80px);
-      opacity: 0.3;
-      pointer-events: none;
-      z-index: 0;
-    }
-    .orb--teal {
-      width: 400px; height: 400px;
-      background: radial-gradient(circle, var(--teal) 0%, transparent 70%);
-      top: -100px; left: -100px;
-      animation: float1 12s ease-in-out infinite;
-    }
-    .orb--cyan {
-      width: 350px; height: 350px;
-      background: radial-gradient(circle, var(--cyan) 0%, transparent 70%);
-      bottom: -80px; right: -100px;
-      animation: float2 15s ease-in-out infinite;
-    }
-    @keyframes float1 {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      50%      { transform: translate(60px, 40px) scale(1.1); }
-    }
-    @keyframes float2 {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      50%      { transform: translate(-80px, -60px) scale(0.95); }
-    }
-
-    /* Card */
-    .loader {
-      position: relative;
-      z-index: 1;
-      max-width: 420px;
-      padding: 2.5rem 2rem;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      box-shadow: 0 20px 40px -20px rgba(0, 80, 80, 0.15);
-    }
-
-    /* Spinning logo */
+    .loader { max-width: 420px; }
     .loader__mark {
       display: inline-flex;
       color: var(--teal);
       margin-bottom: 1.5rem;
       animation: pulse 1.6s ease-in-out infinite;
     }
-    .loader__mark svg {
-      animation: spin 3s linear infinite;
-      transform-origin: center;
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50%      { transform: scale(1.08); opacity: 0.85; }
-    }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
     .loader__title {
       font-size: 1.25rem;
       font-weight: 700;
@@ -113,7 +44,6 @@
       color: var(--muted);
       font-size: 0.9rem;
       margin: 0 0 1.5rem;
-      line-height: 1.5;
     }
     .loader__link {
       display: inline-flex;
@@ -126,39 +56,18 @@
       border-radius: 8px;
       font-weight: 600;
       font-size: 0.9rem;
-      transition: background 0.2s var(--ease), transform 0.2s var(--ease);
+      transition: background 0.2s ease;
     }
-    .loader__link:hover {
-      background: var(--teal-deep);
-      transform: translateY(-1px);
-    }
-
-    .loader__hint {
-      margin-top: 1.5rem;
-      padding-top: 1.25rem;
-      border-top: 1px solid var(--border);
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-
-    /* Status indicator */
-    .loader__status {
-      display: inline-block;
-      margin-top: 1rem;
-      font-family: monospace;
-      font-size: 0.75rem;
-      color: var(--muted);
-      opacity: 0.7;
+    .loader__link:hover { background: var(--teal-deep); }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(1.08); opacity: 0.85; }
     }
   </style>
 </head>
 
 <body>
-
-  <span class="orb orb--teal" aria-hidden="true"></span>
-  <span class="orb orb--cyan" aria-hidden="true"></span>
-
-  <div class="loader">
+  <div class="loader" id="loader">
     <span class="loader__mark" aria-hidden="true">
       <svg viewBox="0 0 64 64" width="56" height="56">
         <circle cx="32" cy="32" r="28" fill="none" stroke="currentColor" stroke-width="3"/>
@@ -166,130 +75,162 @@
         <circle cx="32" cy="32" r="8" fill="currentColor"/>
       </svg>
     </span>
-
-    <h1 class="loader__title">Finding that page…</h1>
-    <p class="loader__sub">Taking you to the right place.</p>
-
+    <h1 class="loader__title">Loading…</h1>
+    <p class="loader__sub" id="loader-sub">Taking you to the right page.</p>
     <a class="loader__link" id="manual-link" href="/home/index.html">
-      Go to home <span aria-hidden="true">→</span>
+      Continue <span aria-hidden="true">→</span>
     </a>
-
-    <p class="loader__hint">
-      If nothing happens, the page you're looking for may have moved.
-    </p>
-
-    <span class="loader__status" id="status" aria-live="polite"></span>
   </div>
 
   <script>
     /* ============================================================
        GitHub Pages 404 shim
-       - Detects the requested path
-       - If it's a known section, loads that section's index.html
-       - Otherwise, redirects to home
+       Loads a known section's index.html content directly into
+       the current page — URL bar stays at whatever the user
+       typed (e.g. /home or /newsletter).
        ============================================================ */
+
     (function () {
       'use strict';
 
-      /* ------------------------------------------------------------
-         Config: known sections and their real file paths
-         Update this list as you add more sections.
-         ------------------------------------------------------------ */
+      // ------------------------------------------------------------
+      // Config — sections you want to support at clean URLs
+      // ------------------------------------------------------------
       var SECTIONS = {
         'home':       '/home/index.html',
         'products':   '/products/index.html',
         'newsletter': '/newsletter/index.html'
-        // Add more here as you build them:
-        // 'studio':    '/studio/index.html',
-        // 'aboutus':   '/aboutus/index.html',
-        // 'contact':   '/contact/index.html',
+        // Add more as you build them:
+        // 'studio':  '/studio/index.html',
+        // 'aboutus': '/aboutus/index.html',
+        // 'contact': '/contact/index.html'
       };
 
-      var HOME_FALLBACK = '/home/index.html';
-
-      /* ------------------------------------------------------------
-         Parse the current URL
-         ------------------------------------------------------------ */
+      // ------------------------------------------------------------
+      // Parse current URL
+      // ------------------------------------------------------------
       var pathname = window.location.pathname;
-      var search   = window.location.search  || '';
-      var hash     = window.location.hash    || '';
+      var search   = window.location.search || '';
+      var hash     = window.location.hash   || '';
 
-      // Strip leading/trailing slashes and split into segments
+      // Remove leading/trailing slashes and split
       var cleaned  = pathname.replace(/^\/+|\/+$/g, '');
       var segments = cleaned.split('/').filter(Boolean);
 
-      var statusEl = document.getElementById('status');
-      function setStatus(msg) {
-        if (statusEl) statusEl.textContent = msg;
-      }
+      var subEl = document.getElementById('loader-sub');
+      var manualLink = document.getElementById('manual-link');
 
-      /* ------------------------------------------------------------
-         Root path → home
-         ------------------------------------------------------------ */
+      // ------------------------------------------------------------
+      // Root path → home
+      // ------------------------------------------------------------
       if (segments.length === 0) {
-        setStatus('Redirecting to home…');
-        window.location.replace(HOME_FALLBACK + search + hash);
+        window.location.replace('/home/');
         return;
       }
 
-      /* ------------------------------------------------------------
-         First segment is the section
-         ------------------------------------------------------------ */
       var section = segments[0].toLowerCase();
-      var target  = SECTIONS[section];
+      var target = SECTIONS[section];
 
-      /* ------------------------------------------------------------
-         Case 1: Known section
-         Build the target URL, preserving query string and hash.
-         ------------------------------------------------------------ */
-      if (target) {
-        // Build a "rest" of the path after the section (e.g., post.html)
-        var rest = segments.slice(1).join('/');
+      // ------------------------------------------------------------
+      // Unknown section → home
+      // ------------------------------------------------------------
+      if (!target) {
+        if (subEl) subEl.textContent = 'Page not found — going home.';
+        manualLink.href = '/home/';
+        setTimeout(function () {
+          window.location.replace('/home/');
+        }, 800);
+        return;
+      }
 
-        var newPath;
-        if (rest && /\.\w+$/.test(rest)) {
-          // Direct file reference like /newsletter/post.html
-          newPath = '/' + section + '/' + rest;
-        } else {
-          // Folder reference like /newsletter → serve index.html
-          newPath = target;
-        }
+      // ------------------------------------------------------------
+      // Build the URL to fetch
+      // If user typed /newsletter/post.html?id=foo — respect the full path
+      // Otherwise, use the section's index.html
+      // ------------------------------------------------------------
+      var rest = segments.slice(1).join('/');
+      var fetchUrl;
+      if (rest && /\.\w+$/.test(rest)) {
+        // Direct file reference: /newsletter/post.html
+        fetchUrl = '/' + section + '/' + rest + search;
+      } else {
+        // Folder: /newsletter → serve index.html
+        fetchUrl = target + search;
+      }
 
-        // If there was a rest without extension (like /products/foo), treat as file
-        if (rest && !/\.\w+$/.test(rest)) {
-          newPath = '/' + section + '/' + rest + '/index.html';
-        }
+      // ------------------------------------------------------------
+      // Fetch the target HTML and inject it
+      // ------------------------------------------------------------
+      fetch(fetchUrl, { credentials: 'same-origin' })
+        .then(function (res) {
+          if (!res.ok) throw new Error('Not found');
+          return res.text();
+        })
+        .then(function (html) {
+          // Parse the fetched document
+          var parser = new DOMParser();
+          var doc = parser.parseFromString(html, 'text/html');
 
-        var finalUrl = newPath + search + hash;
+          // ----- Replace <title> -----
+          if (doc.title) document.title = doc.title;
 
-        setStatus('Redirecting…');
-
-        // Attempt to serve the content without changing the URL bar
-        fetch(newPath + search, { credentials: 'same-origin' })
-          .then(function (res) {
-            if (!res.ok) throw new Error('Not found');
-            return res.text();
-          })
-          .then(function () {
-            // Content exists — hard-navigate to it
-            window.location.replace(finalUrl);
-          })
-          .catch(function () {
-            // Content doesn't exist — send to home
-            setStatus('Page not found — going home.');
-            window.location.replace(HOME_FALLBACK);
+          // ----- Copy <head> contents (styles, scripts, meta) -----
+          // Remove existing head elements we're going to replace
+          document.head.querySelectorAll('link[rel="stylesheet"], style').forEach(function (el) {
+            // Keep our shim styles so we don't flash unstyled
+            if (el.id !== 'shim-styles') el.remove();
           });
 
-        return;
-      }
+          // Add fetched head elements (stylesheet links + inline styles)
+          doc.head.querySelectorAll('link[rel="stylesheet"], style').forEach(function (el) {
+            document.head.appendChild(el.cloneNode(true));
+          });
 
-      /* ------------------------------------------------------------
-         Case 2: Unknown section — send to home
-         ------------------------------------------------------------ */
-      setStatus('Page not found — going home.');
-      setTimeout(function () {
-        window.location.replace(HOME_FALLBACK);
-      }, 800);
+          // Copy meta tags
+          doc.head.querySelectorAll('meta[name], meta[property]').forEach(function (el) {
+            document.head.appendChild(el.cloneNode(true));
+          });
+
+          // ----- Replace <body> content -----
+          var newBody = doc.body.cloneNode(true);
+
+          // Copy body attributes (data-page, class, etc.)
+          Array.from(doc.body.attributes).forEach(function (attr) {
+            document.body.setAttribute(attr.name, attr.value);
+          });
+
+          // Replace body contents
+          document.body.innerHTML = newBody.innerHTML;
+
+          // ------------------------------------------------------------
+          // Re-execute scripts from the fetched document
+          // ------------------------------------------------------------
+          // Any <script> in the fetched body needs to run again
+          var scripts = doc.querySelectorAll('script');
+          scripts.forEach(function (oldScript) {
+            var newScript = document.createElement('script');
+            Array.from(oldScript.attributes).forEach(function (attr) {
+              newScript.setAttribute(attr.name, attr.value);
+            });
+            newScript.textContent = oldScript.textContent;
+            document.body.appendChild(newScript);
+          });
+
+          // ------------------------------------------------------------
+          // Restore the URL bar to what the user typed
+          // ------------------------------------------------------------
+          // The URL never actually changed — GitHub served 404.html
+          // at the requested path. So the URL bar is already correct.
+          // Nothing to do here.
+        })
+        .catch(function (err) {
+          console.error('Failed to load section:', err);
+          if (subEl) subEl.textContent = 'Could not load that page — going home.';
+          setTimeout(function () {
+            window.location.replace('/home/');
+          }, 800);
+        });
+
     })();
   </script>
 </body>

@@ -1,14 +1,15 @@
 /* ============================================================
    NAV — injects top nav + footer into every page
-   No dependencies. Runs immediately when loaded.
-   Only links to pages that currently exist.
+   - Runs on initial page load
+   - Re-runs when the 404 shim injects a page (shim:content-loaded)
+   No dependencies. Self-contained.
    ============================================================ */
 
 (function () {
   'use strict';
 
   /* ------------------------------------------------------------
-     Logo SVG (inline — no external asset needed)
+     Logo SVG
      ------------------------------------------------------------ */
   var LOGO_SVG =
     '<svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">' +
@@ -17,45 +18,39 @@
       '<circle cx="16" cy="16" r="4" fill="currentColor"/>' +
     '</svg>';
 
-  /* ============================================================
-     NAV LINKS
-     Add/remove entries here as you build new pages.
-     ============================================================ */
+  /* ------------------------------------------------------------
+     Nav links — add pages here as you build them
+     ------------------------------------------------------------ */
   var NAV_LINKS = [
     { href: '../products/index.html',   label: 'Products',   key: 'products'   },
     { href: '../newsletter/index.html', label: 'Newsletter', key: 'newsletter' }
-    // add more here later:
-    // { href: '../resources/index.html', label: 'Resources', key: 'resources' },
-    // { href: '../studio/index.html',    label: 'Studio',    key: 'studio'    },
-    // { href: '../aboutus/index.html',   label: 'About',     key: 'aboutus'   },
-    // { href: '../contact/index.html',   label: 'Contact',   key: 'contact'   },
+    // future:
+    // { href: '../studio/index.html',    label: 'Studio',     key: 'studio'   },
+    // { href: '../aboutus/index.html',   label: 'About',      key: 'aboutus'  },
+    // { href: '../contact/index.html',   label: 'Contact',    key: 'contact'  }
   ];
 
-  /* ============================================================
-     FOOTER LINKS
-     Keep separate from nav so footer can group differently.
-     ============================================================ */
+  /* ------------------------------------------------------------
+     Footer site links
+     ------------------------------------------------------------ */
   var FOOTER_SITE_LINKS = [
     { href: '../home/index.html',       label: 'Home'       },
     { href: '../products/index.html',   label: 'Products'   },
     { href: '../newsletter/index.html', label: 'Newsletter' }
-    // add more here later:
-    // { href: '../resources/index.html', label: 'Resources' },
-    // { href: '../studio/index.html',    label: 'Studio'    },
-    // { href: '../aboutus/index.html',   label: 'About'     },
-    // { href: '../contact/index.html',   label: 'Contact'   },
+    // future:
+    // { href: '../studio/index.html',    label: 'Studio'   },
+    // { href: '../aboutus/index.html',   label: 'About'    },
+    // { href: '../contact/index.html',   label: 'Contact'  }
   ];
 
-  /* ============================================================
-     BUILD MARKUP
-     ============================================================ */
+  /* ------------------------------------------------------------
+     Build link markup
+     ------------------------------------------------------------ */
   function buildNavLinks() {
     var out = '';
     for (var i = 0; i < NAV_LINKS.length; i++) {
       var l = NAV_LINKS[i];
-      out += '<a href="' + l.href + '" data-nav="' + l.key + '">' +
-             l.label +
-             '</a>';
+      out += '<a href="' + l.href + '" data-nav="' + l.key + '">' + l.label + '</a>';
     }
     return out;
   }
@@ -69,6 +64,9 @@
     return out;
   }
 
+  /* ------------------------------------------------------------
+     Templates
+     ------------------------------------------------------------ */
   var NAV_HTML =
     '<header class="nav">' +
       '<div class="nav__inner">' +
@@ -92,7 +90,6 @@
     '<footer class="footer">' +
       '<div class="container footer__inner">' +
 
-        /* Brand column */
         '<div class="footer__col">' +
           '<div class="footer__brand">' +
             '<span class="nav__mark">' + LOGO_SVG + '</span>' +
@@ -101,13 +98,11 @@
           '<p class="footer__tagline">Tools for student builders. Built by students, for students.</p>' +
         '</div>' +
 
-        /* Site column */
         '<div class="footer__col">' +
           '<h4>Site</h4>' +
           '<ul>' + buildFooterSiteLinks() + '</ul>' +
         '</div>' +
 
-        /* Follow column */
         '<div class="footer__col">' +
           '<h4>Follow</h4>' +
           '<ul>' +
@@ -117,7 +112,6 @@
           '</ul>' +
         '</div>' +
 
-        /* Contact column */
         '<div class="footer__col">' +
           '<h4>Contact</h4>' +
           '<ul>' +
@@ -133,12 +127,16 @@
       '</div>' +
     '</footer>';
 
-  /* ============================================================
-     INJECTION
-     ============================================================ */
+  /* ------------------------------------------------------------
+     Injection
+     ------------------------------------------------------------ */
   function injectNav() {
     var mount = document.getElementById('nav-mount');
     if (!mount) return;
+
+    // If the nav is already injected, don't inject again
+    if (mount.nextElementSibling && mount.nextElementSibling.classList.contains('nav')) return;
+
     var wrapper = document.createElement('div');
     wrapper.innerHTML = NAV_HTML;
     mount.parentNode.replaceChild(wrapper.firstChild, mount);
@@ -147,19 +145,25 @@
   function injectFooter() {
     var mount = document.getElementById('footer-mount');
     if (!mount) return;
+
+    // If the footer is already injected, don't inject again
+    if (mount.nextElementSibling && mount.nextElementSibling.classList.contains('footer')) return;
+
     var wrapper = document.createElement('div');
     wrapper.innerHTML = FOOTER_HTML;
     mount.parentNode.replaceChild(wrapper.firstChild, mount);
   }
 
-  /* ============================================================
-     ACTIVE LINK (based on <body data-page="...">)
-     ============================================================ */
+  /* ------------------------------------------------------------
+     Active link — based on <body data-page="...">
+     ------------------------------------------------------------ */
   function setActiveLink() {
     var page = document.body.getAttribute('data-page');
     if (!page) return;
     var links = document.querySelectorAll('[data-nav]');
     for (var i = 0; i < links.length; i++) {
+      links[i].classList.remove('is-active');
+      links[i].removeAttribute('aria-current');
       if (links[i].getAttribute('data-nav') === page) {
         links[i].classList.add('is-active');
         links[i].setAttribute('aria-current', 'page');
@@ -167,28 +171,31 @@
     }
   }
 
-  /* ============================================================
-     FOOTER YEAR
-     ============================================================ */
+  /* ------------------------------------------------------------
+     Footer year
+     ------------------------------------------------------------ */
   function setYear() {
     var el = document.getElementById('footer-year');
     if (el) el.textContent = new Date().getFullYear();
   }
 
-  /* ============================================================
-     MOBILE MENU
-     ============================================================ */
+  /* ------------------------------------------------------------
+     Mobile menu toggle
+     ------------------------------------------------------------ */
   function wireMobileToggle() {
     var toggle = document.getElementById('nav-toggle');
     var links = document.getElementById('primary-nav');
     if (!toggle || !links) return;
+
+    // Prevent double-binding if the nav was re-injected
+    if (toggle.dataset.wired === '1') return;
+    toggle.dataset.wired = '1';
 
     function close() {
       links.classList.remove('is-open');
       toggle.setAttribute('aria-expanded', 'false');
       toggle.innerHTML = '<i class="fas fa-bars"></i>';
     }
-
     function open() {
       links.classList.add('is-open');
       toggle.setAttribute('aria-expanded', 'true');
@@ -200,13 +207,11 @@
       else open();
     });
 
-    // Close when a nav link is clicked
     var anchors = links.querySelectorAll('a');
     for (var i = 0; i < anchors.length; i++) {
       anchors[i].addEventListener('click', close);
     }
 
-    // Close on Escape
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && links.classList.contains('is-open')) {
         close();
@@ -214,28 +219,24 @@
       }
     });
 
-    // Close on outside click
     document.addEventListener('click', function (e) {
       if (!links.classList.contains('is-open')) return;
       if (links.contains(e.target) || toggle.contains(e.target)) return;
       close();
     });
 
-    // Close when resizing to desktop width
     var resizeTimer;
     window.addEventListener('resize', function () {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function () {
-        if (window.innerWidth > 860 && links.classList.contains('is-open')) {
-          close();
-        }
+        if (window.innerWidth > 860 && links.classList.contains('is-open')) close();
       }, 150);
     });
   }
 
-  /* ============================================================
-     BOOT
-     ============================================================ */
+  /* ------------------------------------------------------------
+     Boot
+     ------------------------------------------------------------ */
   function boot() {
     injectNav();
     injectFooter();
@@ -245,9 +246,18 @@
     console.log('✅ Nav + footer injected');
   }
 
+  /* ------------------------------------------------------------
+     Run on initial page load
+     ------------------------------------------------------------ */
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
   } else {
     boot();
   }
+
+  /* ------------------------------------------------------------
+     Re-run when the 404 shim injects a page
+     ------------------------------------------------------------ */
+  window.addEventListener('shim:content-loaded', boot);
+
 })();
