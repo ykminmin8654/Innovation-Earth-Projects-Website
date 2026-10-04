@@ -3,21 +3,33 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Loading… — Innovation Earth Projects</title>
   <meta name="robots" content="noindex" />
+
+  <!-- Fallback if JS is disabled -->
+  <noscript>
+    <meta http-equiv="refresh" content="0; url=/home/index.html" />
+  </noscript>
 
   <style>
     :root {
       --teal: #008080;
       --teal-deep: #005F5F;
+      --cyan: #00CED1;
+      --lime: #32CD32;
       --ink: #0B1A1F;
+      --ink-soft: #33474D;
       --muted: #6A8085;
       --bg: #F8FBFC;
+      --surface: #FFFFFF;
       --border: #E1EDEF;
-      --font: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      --ease: cubic-bezier(.2, .7, .2, 1);
     }
     *, *::before, *::after { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
+
     body {
       font-family: var(--font);
       background: var(--bg);
@@ -26,14 +38,70 @@
       place-items: center;
       text-align: center;
       padding: 2rem;
+      overflow: hidden;
     }
-    .loader { max-width: 420px; }
+
+    /* Animated background orbs */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.3;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .orb--teal {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, var(--teal) 0%, transparent 70%);
+      top: -100px; left: -100px;
+      animation: float1 12s ease-in-out infinite;
+    }
+    .orb--cyan {
+      width: 350px; height: 350px;
+      background: radial-gradient(circle, var(--cyan) 0%, transparent 70%);
+      bottom: -80px; right: -100px;
+      animation: float2 15s ease-in-out infinite;
+    }
+    @keyframes float1 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50%      { transform: translate(60px, 40px) scale(1.1); }
+    }
+    @keyframes float2 {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50%      { transform: translate(-80px, -60px) scale(0.95); }
+    }
+
+    /* Card */
+    .loader {
+      position: relative;
+      z-index: 1;
+      max-width: 420px;
+      padding: 2.5rem 2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 20px 40px -20px rgba(0, 80, 80, 0.15);
+    }
+
+    /* Spinning logo */
     .loader__mark {
       display: inline-flex;
       color: var(--teal);
       margin-bottom: 1.5rem;
       animation: pulse 1.6s ease-in-out infinite;
     }
+    .loader__mark svg {
+      animation: spin 3s linear infinite;
+      transform-origin: center;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%      { transform: scale(1.08); opacity: 0.85; }
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
     .loader__title {
       font-size: 1.25rem;
       font-weight: 700;
@@ -45,6 +113,7 @@
       color: var(--muted);
       font-size: 0.9rem;
       margin: 0 0 1.5rem;
+      line-height: 1.5;
     }
     .loader__link {
       display: inline-flex;
@@ -57,18 +126,38 @@
       border-radius: 8px;
       font-weight: 600;
       font-size: 0.9rem;
-      transition: background 0.2s ease;
+      transition: background 0.2s var(--ease), transform 0.2s var(--ease);
     }
-    .loader__link:hover { background: var(--teal-deep); }
+    .loader__link:hover {
+      background: var(--teal-deep);
+      transform: translateY(-1px);
+    }
 
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50%      { transform: scale(1.08); opacity: 0.85; }
+    .loader__hint {
+      margin-top: 1.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    /* Status indicator */
+    .loader__status {
+      display: inline-block;
+      margin-top: 1rem;
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      opacity: 0.7;
     }
   </style>
 </head>
 
 <body>
+
+  <span class="orb orb--teal" aria-hidden="true"></span>
+  <span class="orb orb--cyan" aria-hidden="true"></span>
+
   <div class="loader">
     <span class="loader__mark" aria-hidden="true">
       <svg viewBox="0 0 64 64" width="56" height="56">
@@ -77,55 +166,130 @@
         <circle cx="32" cy="32" r="8" fill="currentColor"/>
       </svg>
     </span>
-    <h1 class="loader__title">Loading…</h1>
-    <p class="loader__sub">Taking you to the right page.</p>
-    <a class="loader__link" id="manual-link" href="/home/">
-      Continue <span aria-hidden="true">→</span>
+
+    <h1 class="loader__title">Finding that page…</h1>
+    <p class="loader__sub">Taking you to the right place.</p>
+
+    <a class="loader__link" id="manual-link" href="/home/index.html">
+      Go to home <span aria-hidden="true">→</span>
     </a>
+
+    <p class="loader__hint">
+      If nothing happens, the page you're looking for may have moved.
+    </p>
+
+    <span class="loader__status" id="status" aria-live="polite"></span>
   </div>
 
   <script>
     /* ============================================================
-       GitHub Pages clean-URL shim
-       Turns /resources into /resources/ by re-serving from the folder.
+       GitHub Pages 404 shim
+       - Detects the requested path
+       - If it's a known section, loads that section's index.html
+       - Otherwise, redirects to home
        ============================================================ */
     (function () {
-      var KNOWN_ROUTES = ['home', 'products', 'resources', 'studio', 'aboutus', 'contact'];
+      'use strict';
 
-      var pathname = window.location.pathname;            // e.g. /resources
-      var search   = window.location.search || '';        // preserve query string
-      var hash     = window.location.hash || '';          // preserve hash
+      /* ------------------------------------------------------------
+         Config: known sections and their real file paths
+         Update this list as you add more sections.
+         ------------------------------------------------------------ */
+      var SECTIONS = {
+        'home':       '/home/index.html',
+        'products':   '/products/index.html',
+        'newsletter': '/newsletter/index.html'
+        // Add more here as you build them:
+        // 'studio':    '/studio/index.html',
+        // 'aboutus':   '/aboutus/index.html',
+        // 'contact':   '/contact/index.html',
+      };
 
-      // Strip trailing slash and leading slash to get the route segment
-      var cleaned = pathname.replace(/^\/+|\/+$/g, '');   // "resources"
-      var segments = cleaned.split('/').filter(Boolean);  // ["resources"]
+      var HOME_FALLBACK = '/home/index.html';
 
-      // Root path → home
+      /* ------------------------------------------------------------
+         Parse the current URL
+         ------------------------------------------------------------ */
+      var pathname = window.location.pathname;
+      var search   = window.location.search  || '';
+      var hash     = window.location.hash    || '';
+
+      // Strip leading/trailing slashes and split into segments
+      var cleaned  = pathname.replace(/^\/+|\/+$/g, '');
+      var segments = cleaned.split('/').filter(Boolean);
+
+      var statusEl = document.getElementById('status');
+      function setStatus(msg) {
+        if (statusEl) statusEl.textContent = msg;
+      }
+
+      /* ------------------------------------------------------------
+         Root path → home
+         ------------------------------------------------------------ */
       if (segments.length === 0) {
-        window.location.replace('/home/' + search + hash);
+        setStatus('Redirecting to home…');
+        window.location.replace(HOME_FALLBACK + search + hash);
         return;
       }
 
-      // Take the first segment as the route
-      var route = segments[0];
+      /* ------------------------------------------------------------
+         First segment is the section
+         ------------------------------------------------------------ */
+      var section = segments[0].toLowerCase();
+      var target  = SECTIONS[section];
 
-      // If it's a known route and there's no file extension, rewrite to folder
-      if (KNOWN_ROUTES.indexOf(route) !== -1 && !/\.\w+$/.test(segments[segments.length - 1])) {
-        // Rebuild the path with trailing slash
-        var newPath = '/' + route + '/' + segments.slice(1).join('/');
-        if (!newPath.endsWith('/')) newPath += '/';
+      /* ------------------------------------------------------------
+         Case 1: Known section
+         Build the target URL, preserving query string and hash.
+         ------------------------------------------------------------ */
+      if (target) {
+        // Build a "rest" of the path after the section (e.g., post.html)
+        var rest = segments.slice(1).join('/');
 
-        // Update the URL bar silently (no reload), then navigate
-        window.history.replaceState(null, '', newPath + search + hash);
+        var newPath;
+        if (rest && /\.\w+$/.test(rest)) {
+          // Direct file reference like /newsletter/post.html
+          newPath = '/' + section + '/' + rest;
+        } else {
+          // Folder reference like /newsletter → serve index.html
+          newPath = target;
+        }
 
-        // The folder's index.html will be served by GitHub Pages
-        // We can just hard-navigate — GitHub will serve /resources/index.html
-        window.location.replace(newPath + search + hash);
+        // If there was a rest without extension (like /products/foo), treat as file
+        if (rest && !/\.\w+$/.test(rest)) {
+          newPath = '/' + section + '/' + rest + '/index.html';
+        }
+
+        var finalUrl = newPath + search + hash;
+
+        setStatus('Redirecting…');
+
+        // Attempt to serve the content without changing the URL bar
+        fetch(newPath + search, { credentials: 'same-origin' })
+          .then(function (res) {
+            if (!res.ok) throw new Error('Not found');
+            return res.text();
+          })
+          .then(function () {
+            // Content exists — hard-navigate to it
+            window.location.replace(finalUrl);
+          })
+          .catch(function () {
+            // Content doesn't exist — send to home
+            setStatus('Page not found — going home.');
+            window.location.replace(HOME_FALLBACK);
+          });
+
         return;
       }
 
-      // Unknown route → send to home
-      document.getElementById('manual-link').href = '/home/';
+      /* ------------------------------------------------------------
+         Case 2: Unknown section — send to home
+         ------------------------------------------------------------ */
+      setStatus('Page not found — going home.');
+      setTimeout(function () {
+        window.location.replace(HOME_FALLBACK);
+      }, 800);
     })();
   </script>
 </body>
