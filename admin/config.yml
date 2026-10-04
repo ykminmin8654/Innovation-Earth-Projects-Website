@@ -5,17 +5,10 @@ backend:
   base_url: https://decap-proxy.ykminmin8654.workers.dev
   auth_endpoint: /auth
 
-# Media (images + files uploaded from the CMS)
 media_folder: "newsletter/images"
 public_folder: "/newsletter/images"
 
-# Optional: enable editorial workflow (drafts → review → publish)
-# publish_mode: editorial_workflow
-
 collections:
-  # ============================================================
-  # Newsletter posts
-  # ============================================================
   - name: "newsletter"
     label: "Newsletter Posts"
     label_singular: "Post"
@@ -23,106 +16,44 @@ collections:
     folder: "newsletter/posts"
     create: true
     slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
-    preview_path: "newsletter/post.html?id={{slug}}"
-    summary: "{{title}} — {{author}} · {{date | date('YYYY-MM-DD')}}"
 
     fields:
-      # --- Core ---
       - { label: "Title", name: "title", widget: "string" }
 
-      - {
-          label: "Publish Date",
-          name: "date",
-          widget: "datetime",
-          date_format: "YYYY-MM-DD",
-          time_format: false,
-          format: "YYYY-MM-DD"
-        }
+      - { label: "Publish Date", name: "date", widget: "datetime", date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD" }
 
-      - {
-          label: "Category",
-          name: "category",
-          widget: "select",
-          default: "studio",
-          options:
-            - { label: "Research", value: "research" }
-            - { label: "Product",  value: "product"  }
-            - { label: "Studio",   value: "studio"   }
-        }
+      - label: "Category"
+        name: "category"
+        widget: "select"
+        default: "studio"
+        options:
+          - { label: "Research", value: "research" }
+          - { label: "Product", value: "product" }
+          - { label: "Studio", value: "studio" }
 
-      - {
-          label: "Excerpt",
-          name: "excerpt",
-          widget: "text",
-          hint: "Short preview shown on the newsletter page."
-        }
+      - { label: "Excerpt", name: "excerpt", widget: "text" }
 
-      # --- Author ---
-      - {
-          label: "Author Name",
-          name: "author",
-          widget: "string",
-          hint: "e.g. Jordan M."
-        }
+      - { label: "Author Name", name: "author", widget: "string" }
 
-      - {
-          label: "Author Photo",
-          name: "authorImage",
-          widget: "image",
-          required: false,
-          media_library: { config: { multiple: false } },
-          hint: "Square image works best."
-        }
+      - { label: "Author Photo", name: "authorImage", widget: "image", required: false }
 
-      # --- License ---
-      - {
-          label: "License",
-          name: "license",
-          widget: "select",
-          default: "all-rights-reserved",
-          options:
-            - { label: "All Rights Reserved", value: "all-rights-reserved" }
-            - { label: "CC BY 4.0",           value: "cc-by-4.0"           }
-            - { label: "CC BY-SA 4.0",        value: "cc-by-sa-4.0"        }
-            - { label: "CC BY-NC 4.0",        value: "cc-by-nc-4.0"        }
-            - { label: "CC BY-NC-SA 4.0",     value: "cc-by-nc-sa-4.0"     }
-            - { label: "CC0 (Public Domain)", value: "cc0"                }
-            - { label: "MIT",                 value: "mit"                }
-            - { label: "Custom",              value: "custom"             }
-        }
+      - label: "License"
+        name: "license"
+        widget: "select"
+        default: "all-rights-reserved"
+        options:
+          - { label: "All Rights Reserved", value: "all-rights-reserved" }
+          - { label: "CC BY 4.0", value: "cc-by-4.0" }
+          - { label: "CC BY-SA 4.0", value: "cc-by-sa-4.0" }
+          - { label: "CC BY-NC 4.0", value: "cc-by-nc-4.0" }
+          - { label: "CC BY-NC-SA 4.0", value: "cc-by-nc-sa-4.0" }
+          - { label: "CC0 (Public Domain)", value: "cc0" }
+          - { label: "MIT", value: "mit" }
+          - { label: "Custom", value: "custom" }
 
-      - {
-          label: "Custom License",
-          name: "licenseCustom",
-          widget: "string",
-          required: false,
-          hint: "Only used if License is set to Custom."
-        }
+      - { label: "Custom License", name: "licenseCustom", widget: "string", required: false }
 
-      # --- Files ---
-      - {
-          label: "PDF File",
-          name: "pdf",
-          widget: "file",
-          required: false,
-          media_library: { config: { multiple: false } },
-          hint: "Upload the article as a PDF (max ~20 MB recommended)."
-        }
+      - { label: "PDF File", name: "pdf", widget: "file", required: false }
+      - { label: "TXT File", name: "txt", widget: "file", required: false }
 
-      - {
-          label: "TXT File",
-          name: "txt",
-          widget: "file",
-          required: false,
-          media_library: { config: { multiple: false } },
-          hint: "Upload the article as a plain-text file."
-        }
-
-      # --- Options ---
-      - {
-          label: "Featured",
-          name: "featured",
-          widget: "boolean",
-          default: false,
-          hint: "Show this post as the big featured card at the top."
-        }
+      - { label: "Featured", name: "featured", widget: "boolean", default: false }
