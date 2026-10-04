@@ -9,51 +9,89 @@ media_folder: "newsletter/images"
 public_folder: "/newsletter/images"
 
 collections:
-  - name: "newsletter"
-    label: "Newsletter Posts"
-    label_singular: "Post"
-    description: "Articles, research notes, and studio updates."
-    folder: "newsletter/posts"
+  - name: newsletter
+    label: Newsletter Posts
+    label_singular: Post
+    description: Articles, research notes, and studio updates.
+    folder: newsletter/posts
     create: true
     slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
 
     fields:
-      - { label: "Title", name: "title", widget: "string" }
+      - label: Title
+        name: title
+        widget: string
 
-      - { label: "Publish Date", name: "date", widget: "datetime", date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD" }
+      - label: Publish Date
+        name: date
+        widget: datetime
+        date_format: YYYY-MM-DD
+        time_format: false
+        format: YYYY-MM-DD
 
-      - label: "Category"
-        name: "category"
-        widget: "select"
-        default: "studio"
+      - label: Category
+        name: category
+        widget: select
+        default: studio
         options:
-          - { label: "Research", value: "research" }
-          - { label: "Product", value: "product" }
-          - { label: "Studio", value: "studio" }
+          - label: Research
+            value: research
+          - label: Product
+            value: product
+          - label: Studio
+            value: studio
 
-      - { label: "Excerpt", name: "excerpt", widget: "text" }
+      - label: Excerpt
+        name: excerpt
+        widget: text
 
-      - { label: "Author Name", name: "author", widget: "string" }
+      - label: Author Name
+        name: author
+        widget: string
 
-      - { label: "Author Photo", name: "authorImage", widget: "image", required: false }
+      - label: Author Photo
+        name: authorImage
+        widget: image
+        required: false
 
-      - label: "License"
-        name: "license"
-        widget: "select"
-        default: "all-rights-reserved"
+      - label: License
+        name: license
+        widget: select
+        default: all-rights-reserved
         options:
-          - { label: "All Rights Reserved", value: "all-rights-reserved" }
-          - { label: "CC BY 4.0", value: "cc-by-4.0" }
-          - { label: "CC BY-SA 4.0", value: "cc-by-sa-4.0" }
-          - { label: "CC BY-NC 4.0", value: "cc-by-nc-4.0" }
-          - { label: "CC BY-NC-SA 4.0", value: "cc-by-nc-sa-4.0" }
-          - { label: "CC0 (Public Domain)", value: "cc0" }
-          - { label: "MIT", value: "mit" }
-          - { label: "Custom", value: "custom" }
+          - label: All Rights Reserved
+            value: all-rights-reserved
+          - label: CC BY 4.0
+            value: cc-by-4.0
+          - label: CC BY-SA 4.0
+            value: cc-by-sa-4.0
+          - label: CC BY-NC 4.0
+            value: cc-by-nc-4.0
+          - label: CC BY-NC-SA 4.0
+            value: cc-by-nc-sa-4.0
+          - label: CC0 Public Domain
+            value: cc0
+          - label: MIT
+            value: mit
+          - label: Custom
+            value: custom
 
-      - { label: "Custom License", name: "licenseCustom", widget: "string", required: false }
+      - label: Custom License
+        name: licenseCustom
+        widget: string
+        required: false
 
-      - { label: "PDF File", name: "pdf", widget: "file", required: false }
-      - { label: "TXT File", name: "txt", widget: "file", required: false }
+      - label: PDF File
+        name: pdf
+        widget: file
+        required: false
 
-      - { label: "Featured", name: "featured", widget: "boolean", default: false }
+      - label: TXT File
+        name: txt
+        widget: file
+        required: false
+
+      - label: Featured
+        name: featured
+        widget: boolean
+        default: false
