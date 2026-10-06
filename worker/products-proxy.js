@@ -148,6 +148,9 @@ async function handleProducts(request, env, ctx) {
           if (!res.ok) return null;
           const fm = parseFrontMatter(await res.text());
           if (!fm || !fm.title) return null; // README.md etc. -> skip
+          // Normalize list fields (tags) to a comma string so both the
+          // Worker feed and the site's fallback parser handle them the same.
+          if (Array.isArray(fm.tags)) fm.tags = fm.tags.join(', ');
           return { slug: f.name.replace(/\.md$/, ''), ...fm };
         } catch {
           return null;
