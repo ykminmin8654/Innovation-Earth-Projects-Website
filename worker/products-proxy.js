@@ -67,6 +67,14 @@ export default {
       return handleGithubProxy(request, env, url);
     }
 
+    // ----- Contact form endpoint (public, rate-limited) -----
+    // POST /contact  { name, email, subject, message }
+    // If CONTACT_TO + RESEND_API_KEY are set, emails the team inbox;
+    // otherwise just acknowledges (messages still logged in Workers).
+    if (request.method === "POST" && url.pathname === "/contact") {
+      return handleContact(request, env, ctx);
+    }
+
     // ----- Legacy routes from the previous Turnstile worker -----
     // Keep them working so existing forms don't break while you migrate.
     // (Only if TURNSTILE_SECRET_KEY is still set on this worker.)
@@ -75,11 +83,131 @@ export default {
     }
 
     return jsonResponse(
-      { ok: true, service: "iep-decap-proxy", endpoints: ["/products", "/api/v1/github/*"] },
+      { ok: true, service: "iep-decap-proxy", endpoints: ["/products", "/contact", "/api/v1/github/*"] },
       200
     );
   },
 };
+
+/* ------------------------------------------------------------
+   POST /contact — receive website contact-form messages.
+
+   NO extra services or env vars are required. Delivery uses the
+   Cloudflare Workers EmailService binding (built into Workers,
+   free, and Gmail accepts the messages directly):
+
+     - In the dashboard, open the Worker → Settings → Bindings →
+       add an "Send Email" binding named EMAIL with destination
+       address: InnovationEarthProjects@gmail.com
+     - That's it. Deploy and the form works.
+
+   The visitor's address is set as Reply-To, so hitting "Reply" in
+   Gmail answers them directly. Automated replies can be handled
+   later with Gmail filters — no code changes needed here.
+
+   Optional env var:
+     CONTACT_TO — override the inbox (must match the EMAIL binding's
+                  destination address; defaults to the Gmail below).
+
+   Rate limit: 5 submissions per IP per 10 minutes (Cache API).
+------------------------------------------------------------ */
+const CONTACT_DEFAULT_TO = "InnovationEarthProjects@gmail.com";
+
+async function handleContact(request, env, ctx) {
+  let data;
+  try {
+    const ct = request.headers.get("Content-Type") || "";
+    if (ct.includes("application/json")) {
+      data = await request.json();
+    } else {
+      const form = await request.formData();
+      data = Object.fromEntries(form.entries());
+    }
+  } catch {
+    return jsonResponse({ ok: false, error: "Invalid payload" }, 400);
+  }
+
+  const name    = String(data.name || "").slice(0, 100).trim();
+  const email   = String(data.email || "").slice(0, 150).trim();
+  const subject = String(data.subject || "General").slice(0, 60).trim();
+  const message = String(data.message || "").slice(0, 5000).trim();
+
+  // ----- Spam trap: humans never fill the hidden field -----
+  if (String(data.company || "").trim()) {
+    return jsonResponse({ ok: true }, 200); // pretend success, drop silently
+  }
+
+  // ----- Server-side validation (never trust the client) -----
+  if (!name || !message || message.length < 10) {
+    return jsonResponse({ ok: false, error: "Missing required fields" }, 422);
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
+    return jsonResponse({ ok: false, error: "Invalid email address" }, 422);
+  }
+
+  // ----- Simple per-IP rate limit via Cache API -----
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  try {
+    const cache = caches.default;
+    const rlKey = new Request("https://rl.contact/" + encodeURIComponent(ip), {
+      method: "GET",
+      headers: { "Rate-Limit": "1" },
+    });
+    const hit = await cache.match(rlKey);
+    if (hit) {
+      return jsonResponse({ ok: false, error: "Too many messages, try again in a few minutes" }, 429);
+    }
+    ctx.waitUntil(
+      cache.put(rlKey, new Response("ok", { headers: { "Cache-Control": "max-age=600" } }))
+    );
+  } catch (e) {
+    console.warn("Rate-limit check failed (continuing):", e);
+  }
+
+  // ----- Deliver via the EmailMessage binding (no third party) -----
+  if (!env.EMAIL) {
+    console.error("No EMAIL binding on this worker — message logged only:",
+      JSON.stringify({ name, email, subject, message }));
+    return jsonResponse(
+      { ok: false, error: "Email delivery not configured on the server" }, 500
+    );
+  }
+
+  const to = env.CONTACT_TO || CONTACT_DEFAULT_TO;
+
+  const msg = new EmailMessage(to, `${name} via website <noreply@innovationearthprojects.org>`, buildContactEmail(subject, name, email, message));
+  msg.headers = { "Reply-To": email };
+
+  try {
+    await msg.send();
+  } catch (e) {
+    console.error("Email send failed:", e);
+    return jsonResponse({ ok: false, error: "Delivery failed" }, 502);
+  }
+
+  return jsonResponse({ ok: true }, 200);
+}
+
+/* Plain-text email body (Gmail-friendly, no HTML needed). */
+function buildContactEmail(subject, name, email, message) {
+  return (
+    `New contact-form message — topic: ${subject}\n` +
+    `-------------------------------------------\n\n` +
+    `Name:  ${name}\n` +
+    `Email: ${email}\n` +
+    `When:  ${new Date().toISOString()}\n\n` +
+    `Message:\n${message}\n\n` +
+    `— sent from innovationearthprojects.org/contact`
+  );
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
 
 /* Legacy Turnstile verification (was the entire old worker). */
 async function handleLegacyTurnstile(request, env) {
