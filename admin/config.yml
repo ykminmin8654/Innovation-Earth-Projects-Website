@@ -2,8 +2,11 @@ backend:
   name: github
   repo: ykminmin8654/Innovation-Earth-Projects-Website
   branch: main
-  base_url: https://decap-proxy.ykminmin8654.workers.dev
-  auth_endpoint: /auth
+  # Cloudflare Worker OAuth proxy (see worker/products-proxy.js).
+  # Decap appends auth_endpoint to base_url, so with these values the
+  # login flow hits https://decap-proxy.ykminmin8654.workers.dev/api/v1/github/oauth
+  base_url: https://decap-proxy.ykminmin8654.workers.dev/api/v1/github
+  auth_endpoint: oauth
 
 media_folder: "products/images"
 public_folder: "/products/images"

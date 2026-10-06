@@ -69,6 +69,8 @@
      API instead (raw.githubusercontent.com for the file bodies).
      ------------------------------------------------------------ */
   var SITE_HOSTS = ['innovationearthprojects.org', 'www.innovationearthprojects.org'];
+  // Cloudflare Worker feed (cached, CORS-enabled). Preferred source.
+  var WORKER_PRODUCTS_URL = 'https://decap-proxy.ykminmin8654.workers.dev/products';
   var GH_API_DIR = 'https://api.github.com/repos/ykminmin8654/Innovation-Earth-Projects-Website/contents/products/data';
   var GH_RAW_BASE = 'https://raw.githubusercontent.com/ykminmin8654/Innovation-Earth-Projects-Website/main/products/data/';
 
@@ -146,6 +148,23 @@
   }
 
   function loadProductsData(cb) {
+    // Preferred: Cloudflare Worker feed — one cached JSON request.
+    fetch(WORKER_PRODUCTS_URL, { cache: 'no-cache' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (json) {
+        if (!Array.isArray(json)) throw new Error('bad payload');
+        var items = json.filter(function (p) {
+          return p && typeof p.title === 'string' && p.title.trim();
+        });
+        cb(items);
+      })
+      .catch(function () { loadProductsFallback(cb); });
+  }
+
+  function loadProductsFallback(cb) {
     var onCustomDomain = SITE_HOSTS.indexOf(window.location.hostname) !== -1;
 
     // On the live domain the static copies don't exist (Jekyll strips
