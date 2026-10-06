@@ -140,6 +140,8 @@
   // fallbacks in case the site is ever served with real files.
   // ------------------------------------------------------------
   const SITE_HOSTS = ['innovationearthprojects.org', 'www.innovationearthprojects.org'];
+  // Cloudflare Worker feed (cached, CORS-enabled). Preferred source.
+  const WORKER_PRODUCTS_URL = 'https://decap-proxy.ykminmin8654.workers.dev/products';
   const GH_API_DIR = 'https://api.github.com/repos/ykminmin8654/Innovation-Earth-Projects-Website/contents/products/data';
   const GH_RAW_BASE = 'https://raw.githubusercontent.com/ykminmin8654/Innovation-Earth-Projects-Website/main/products/data/';
 
@@ -236,6 +238,32 @@
 
   async function fetchProducts() {
     const dir = dataDir();
+
+    // 0) Preferred: the Cloudflare Worker feed (GET /products). It reads
+    //    the repo server-side, parses front matter and caches the result,
+    //    so one request renders the whole grid without GitHub rate limits.
+    try {
+      const res = await fetch(WORKER_PRODUCTS_URL, { cache: 'no-cache' });
+      if (res.ok) {
+        const json = await res.json();
+        if (Array.isArray(json)) {
+          const items = json
+            .filter((p) => p && typeof p.title === 'string' && p.title.trim())
+            .map((p) => ({ ...p }));
+          items.sort((a, b) => {
+            const ao = Number(a.order ?? 999);
+            const bo = Number(b.order ?? 999);
+            if (ao !== bo) return ao - bo;
+            return String(a.title || '').localeCompare(String(b.title || ''));
+          });
+          try { localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), items })); } catch {}
+          return { items, source: 'cms' };
+        }
+      }
+    } catch {
+      /* worker unreachable — fall back to the GitHub API below */
+    }
+
     const files = await getFileList();
     const onCustomDomain = SITE_HOSTS.indexOf(window.location.hostname) !== -1;
     const items = [];
