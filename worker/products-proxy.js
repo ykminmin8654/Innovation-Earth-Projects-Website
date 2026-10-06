@@ -93,13 +93,26 @@ export default {
    POST /contact — receive website contact-form messages.
 
    NO extra services or env vars are required. Delivery uses the
-   Cloudflare Workers EmailService binding (built into Workers,
+   Cloudflare Workers "Send Email" binding (built into Workers,
    free, and Gmail accepts the messages directly):
 
-     - In the dashboard, open the Worker → Settings → Bindings →
-       add an "Send Email" binding named EMAIL with destination
-       address: InnovationEarthProjects@gmail.com
-     - That's it. Deploy and the form works.
+     - Dashboard → Workers & Pages → your worker → Settings →
+       Bindings → Add → type "Send Email" → variable name exactly
+       EMAIL → destination address: InnovationEarthProjects@gmail.com
+     - IMPORTANT: the sending address must be one you own/verify.
+       If you pick something like noreply@innovationearthprojects.org,
+       first go to Workers & Pages → Settings → Email → "Address
+       authorization" and authorize that address for this zone.
+     - Click Save AND then Deploy — bindings only apply to new deploys.
+     - Optional safety net: bind a KV namespace as MESSAGES_KV; every
+       message is also stored there when delivery isn't configured or
+       fails, so nothing gets lost.
+
+   Test after deploying (from a terminal):
+     curl -X POST https://<worker-url>/contact \
+       -H 'Content-Type: application/json' \
+       -d '{"name":"Test","email":"you@example.com","subject":"General","message":"Testing the contact endpoint 123"}'
+     -> {"ok":true} means it worked and Gmail got the mail.
 
    The visitor's address is set as Reply-To, so hitting "Reply" in
    Gmail answers them directly. Automated replies can be handled
@@ -165,11 +178,26 @@ async function handleContact(request, env, ctx) {
   }
 
   // ----- Deliver via the EmailMessage binding (no third party) -----
+  const payload = { name, email, subject, message };
   if (!env.EMAIL) {
-    console.error("No EMAIL binding on this worker — message logged only:",
-      JSON.stringify({ name, email, subject, message }));
+    // No "Send Email" binding yet. Keep the submission instead of losing it:
+    // stash a copy in KV (if bound) + always write to the Workers log so the
+    // message can be recovered from the dashboard ("View logs").
+    try {
+      if (env.MESSAGES_KV) {
+        await env.MESSAGES_KV.put(
+          "contact:" + Date.now() + ":" + (email || "anon"),
+          JSON.stringify(payload),
+          { expirationTtl: 60 * 60 * 24 * 90 } // keep 90 days
+        );
+      }
+    } catch (e) {
+      console.warn("KV backup failed:", e);
+    }
+    console.log("CONTACT_MESSAGE (email binding missing):", JSON.stringify(payload));
     return jsonResponse(
-      { ok: false, error: "Email delivery not configured on the server" }, 500
+      { ok: false, configured: false, error: "Email delivery is not set up on the server yet." },
+      501
     );
   }
 
@@ -182,7 +210,16 @@ async function handleContact(request, env, ctx) {
     await msg.send();
   } catch (e) {
     console.error("Email send failed:", e);
-    return jsonResponse({ ok: false, error: "Delivery failed" }, 502);
+    try {
+      if (env.MESSAGES_KV) {
+        await env.MESSAGES_KV.put(
+          "contact-failed:" + Date.now() + ":" + email,
+          JSON.stringify(payload),
+          { expirationTtl: 60 * 60 * 24 * 7 }
+        );
+      }
+    } catch (_) {}
+    return jsonResponse({ ok: false, error: "The email service rejected the message (" + String(e && e.message || e) + ")" }, 502);
   }
 
   return jsonResponse({ ok: true }, 200);

@@ -157,7 +157,9 @@
       .then(function (res) {
         return res.json().catch(function () { return {}; }).then(function (body) {
           if (!res.ok) {
-            throw new Error((body && body.error) ? body.error : 'HTTP ' + res.status);
+            var err = new Error((body && body.error) ? body.error : 'HTTP ' + res.status);
+            if (body && body.configured === false) err.notConfigured = true;
+            throw err;
           }
           return body;
         });
@@ -171,9 +173,23 @@
       .catch(function (err) {
         console.error('Contact submit failed:', err);
         setBusy(false);
-        setStatus('error',
-          '<i class="fas fa-triangle-exclamation"></i> Something went wrong sending that. ' +
-          'Please try again in a moment.');
+        // Surface the real reason instead of a generic guess: 501 means the
+        // server's email delivery isn't configured, 429 means rate limited.
+        if (err.notConfigured) {
+          setStatus('error',
+            '<i class="fas fa-triangle-exclamation"></i> Email delivery isn\u2019t set up on ' +
+            'the server yet \u2014 this needs a one-time Cloudflare Worker configuration. ' +
+            'Meanwhile you can reach us directly at InnovationEarthProjects@gmail.com.');
+        } else if (/Too many/i.test(err.message)) {
+          setStatus('error',
+            '<i class="fas fa-triangle-exclamation"></i> Too many messages from your ' +
+            'network \u2014 please wait about ten minutes and try again.');
+        } else {
+          setStatus('error',
+            '<i class="fas fa-triangle-exclamation"></i> Couldn\u2019t send your message (' +
+            err.message + '). Please try again in a moment, or email us at ' +
+            'InnovationEarthProjects@gmail.com.');
+        }
       });
   }
 
