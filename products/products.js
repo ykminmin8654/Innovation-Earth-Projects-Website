@@ -1,6 +1,8 @@
 /* ============================================================
    PRODUCTS — full listing, filterable by status
-   Depends on: shared/firebase.js (window.iepDB)
+   Content source: Decap CMS markdown files in /products/data/
+   (managed exclusively through the Admin page — no hardcoded
+   or placeholder products).
    ============================================================ */
 
 (function () {
@@ -10,7 +12,7 @@
   // Config
   // ------------------------------------------------------------
   const CACHE_KEY = 'iep:products:cache';
-  const COLLECTION = 'products';
+  const CACHE_TTL = 5 * 60 * 1000;            // 5 minutes
 
   // ------------------------------------------------------------
   // State
@@ -41,9 +43,7 @@
   function formatDate(value) {
     if (!value) return '';
     try {
-      const d = value.seconds
-        ? new Date(value.seconds * 1000)
-        : new Date(value);
+      const d = new Date(value);
       if (isNaN(d.getTime())) return '';
       return d.toLocaleDateString('en-US', {
         year: 'numeric',
@@ -74,36 +74,149 @@
   }
 
   // ------------------------------------------------------------
-  // Data fetching
+  // Minimal front-matter parser (YAML subset used by Decap CMS)
   // ------------------------------------------------------------
-  async function fetchProducts() {
-    // Try Firestore
-    if (window.iepDB) {
-      try {
-        const snap = await window.iepDB.collection(COLLECTION).get();
-        const items = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  function parseFrontMatter(text) {
+    const match = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+    if (!match) return {};
+    const data = {};
+    let currentListKey = null;
 
-        // Sort: explicit order first, then title
-        items.sort((a, b) => {
-          const ao = Number(a.order ?? 999);
-          const bo = Number(b.order ?? 999);
-          if (ao !== bo) return ao - bo;
-          return String(a.title || '').localeCompare(String(b.title || ''));
-        });
+    const lines = match[1].split(/\r?\n/);
+    for (const rawLine of lines) {
+      const line = rawLine.replace(/\t/g, '  ');
+      if (!line.trim() || line.trim().startsWith('#')) continue;
 
-        if (items.length) {
-          localStorage.setItem(CACHE_KEY, JSON.stringify(items));
-          return { items, source: 'firestore' };
-        }
-      } catch (err) {
-        console.warn('Firestore failed:', err.message);
+      // List item under a previous key ("  - value")
+      const listItem = line.match(/^\s+-\s+(.*)$/);
+      if (listItem && currentListKey) {
+        data[currentListKey].push(stripQuotes(listItem[1]));
+        continue;
+      }
+
+      const kv = line.match(/^([A-Za-z0-9_]+):\s*(.*)$/);
+      if (!kv) continue;
+      const key = kv[1];
+      const val = kv[2].trim();
+
+      if (val === '') {
+        // Could be start of a list, or empty value
+        currentListKey = key;
+        data[key] = [];
+      } else if (val.startsWith('[') && val.endsWith(']')) {
+        // Inline list: [a, b, c]
+        data[key] = val
+          .slice(1, -1)
+          .split(',')
+          .map((s) => stripQuotes(s.trim()))
+          .filter(Boolean);
+        currentListKey = null;
+      } else {
+        data[key] = stripQuotes(val);
+        currentListKey = null;
       }
     }
 
-    // Fallback: cache
+    // Empty keys that never received list items become ''
+    for (const k of Object.keys(data)) {
+      if (Array.isArray(data[k]) && data[k].length === 0) delete data[k];
+    }
+    return data;
+  }
+
+  function stripQuotes(str) {
+    return String(str).replace(/^["']|["']$/g, '').trim();
+  }
+
+  // ------------------------------------------------------------
+  // Data fetching — manifest.json written by Decap CMS,
+  // with a directory-scrape fallback for safety
+  // ------------------------------------------------------------
+  function siteRoot() {
+    // Works on /products and /products/ (and when nav.js injects a <base>)
+    var base = document.querySelector('base');
+    if (base && base.href) return base.href.replace(/\/$/, '') + '/';
+    var p = window.location.pathname;
+    if (/^\/products(\/.*)?$/.test(p)) return '/';
+    var depth = p.replace(/^\/|\/$/g, '').split('/').length - 1;
+    return depth > 0 ? '../' : './';
+  }
+
+  function dataDir() { return siteRoot() + 'products/data/'; }
+
+  async function fetchWithCache(url) {
+    const res = await fetch(url, { cache: 'no-cache' });
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' for ' + url);
+    return res.text();
+  }
+
+  async function getFileList() {
+    const dir = dataDir();
+    // 1) Try the CMS-generated manifest
     try {
-      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || '[]');
-      if (cached.length) return { items: cached, source: 'cache' };
+      const txt = await fetchWithCache(dir + 'manifest.json');
+      const json = JSON.parse(txt);
+      const files = Array.isArray(json.files) ? json.files : [];
+      const cleaned = files
+        .map((f) => String(f).trim())
+        .filter((f) => f.endsWith('.md') || /\.md\//.test(f))
+        .map((f) => f.replace(/\.md\/$/, '.md'));
+      if (cleaned.length) return cleaned;
+    } catch {
+      /* fall through to scrape */
+    }
+
+    // 2) Fallback: scrape the GitHub Pages directory listing
+    //    (works when Jekyll renders /products/data/ as an index page)
+    try {
+      const html = await fetchWithCache(dir);
+      const re = /href="([^"?#]+\.md)"/gi;
+      const found = new Set();
+      let m;
+      while ((m = re.exec(html)) !== null) found.add(m[1]);
+      if (found.size) return Array.from(found);
+    } catch {
+      /* ignore */
+    }
+
+    return [];
+  }
+
+  async function fetchProducts() {
+    const dir = dataDir();
+    const files = await getFileList();
+    const items = [];
+
+    for (const file of files) {
+      try {
+        const text = await fetchWithCache(dir + encodeURIComponent(file));
+        const fm = parseFrontMatter(text);
+        if (fm.title) items.push(fm);
+      } catch (err) {
+        console.warn('Skipping product file:', file, err.message);
+      }
+    }
+
+    // Sort: explicit order first, then title
+    items.sort((a, b) => {
+      const ao = Number(a.order ?? 999);
+      const bo = Number(b.order ?? 999);
+      if (ao !== bo) return ao - bo;
+      return String(a.title || '').localeCompare(String(b.title || ''));
+    });
+
+    if (items.length) {
+      try { localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), items })); } catch {}
+      return { items, source: 'cms' };
+    }
+
+    // Fallback: recent cache (so the grid isn't blank on a transient network error)
+    try {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+      if (cached && Array.isArray(cached.items) && cached.items.length &&
+          Date.now() - (cached.at || 0) < CACHE_TTL) {
+        return { items: cached.items, source: 'cache' };
+      }
     } catch { /* ignore */ }
 
     return { items: [], source: 'empty' };
@@ -119,13 +232,17 @@
     if (!items.length) {
       const emptyMsg = allProducts.length
         ? 'No products match this filter.'
-        : 'Nothing here yet. Check back soon — we\'re shipping.';
+        : 'No products have been published yet. Add one in the Admin panel and it will appear here instantly.';
 
       grid.innerHTML = `
         <div class="state">
           <i class="fas fa-box-open"></i>
-          <h3>No products</h3>
+          <h3>No products yet</h3>
           <p>${escapeHtml(emptyMsg)}</p>
+          ${allProducts.length ? '' : `
+            <a class="btn btn--secondary" href="/admin/" style="margin-top:var(--s-4)">
+              <i class="fas fa-pencil-alt"></i> Open Admin
+            </a>`}
         </div>
       `;
       return;
@@ -145,9 +262,10 @@
            </div>`
         : '';
 
+      const linkLabel = meta.cls === 'beta' ? 'Try beta' : 'Open';
       const linkHtml = hasUrl
         ? `<a class="product-card__link" href="${escapeHtml(url)}" target="_blank" rel="noopener">
-             Open <i class="fas fa-arrow-right"></i>
+             ${linkLabel} <i class="fas fa-arrow-right"></i>
            </a>`
         : `<span class="product-card__link product-card__link--disabled">
              Coming soon
@@ -248,15 +366,10 @@
 
     allProducts = items;
 
-    if (!items.length && source !== 'firestore' && source !== 'cache') {
-      // Nothing anywhere — show error + retry
-      grid.innerHTML = `
-        <div class="state">
-          <i class="fas fa-exclamation-triangle" style="color:var(--danger)"></i>
-          <h3>Couldn't load products</h3>
-          <p>Please check your connection and try again.</p>
-        </div>
-      `;
+    if (!items.length && source === 'empty') {
+      // Either genuinely nothing published yet, or the network failed.
+      // Show the "no products" state with an Admin link (handled in renderGrid)
+      // plus retry in case it was a transient fetch error.
       showRetry(true);
     } else {
       showRetry(false);
@@ -272,16 +385,7 @@
   function boot() {
     wireTabs();
     wireRetry();
-
-    if (window.iepDB) {
-      load();
-    } else {
-      let done = false;
-      const onReady = () => { if (!done) { done = true; load(); } };
-      window.addEventListener('iep:db-ready', onReady, { once: true });
-      window.addEventListener('iep:db-failed', onReady, { once: true });
-      setTimeout(onReady, 1500);
-    }
+    load();
   }
 
   if (document.readyState === 'loading') {

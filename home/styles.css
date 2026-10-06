@@ -983,3 +983,27 @@ main, .nav, .footer { position: relative; z-index: 1; }
     display: none !important;
   }
 }
+/* ------------------------------------------------------------
+   FEATURED PRODUCTS — empty state (content comes from Admin)
+   ------------------------------------------------------------ */
+.featured-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--s-3);
+  padding: var(--s-8) var(--s-5);
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: var(--r-lg);
+  color: var(--ink-soft);
+}
+.featured-empty i {
+  font-size: 2rem;
+  color: var(--muted);
+}
+.featured-empty h3 { margin: 0; color: var(--ink); }
+.featured-empty p { margin: 0; max-width: 46ch; }
+.featured-empty .btn { margin-top: var(--s-3); }

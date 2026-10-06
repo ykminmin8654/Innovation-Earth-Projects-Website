@@ -46,9 +46,9 @@
         <span class="eyebrow">Products</span>
         <h1 class="page-head__title">Everything we've built</h1>
         <p class="page-head__lede">
-          Free, forever. Built by students, for students.
-          Every tool here is designed to help you compete, learn, or build —
-          with no signup walls and no paywalls.
+          Free, forever. Every product listed here is published through the
+          Admin panel — no placeholders, no vaporware. Each tool runs on its
+          own subdomain of innovationearthprojects.org.
         </p>
       </div>
     </section>
@@ -121,6 +121,56 @@
             </p>
           </div>
         </div>
+
+        <div class="subdomains">
+          <header class="section__head section__head--compact">
+            <span class="eyebrow">How they're hosted</span>
+            <h2 class="section__title">One domain, many tools</h2>
+            <p class="section__lede">
+              Every product lives on its own subdomain of
+              innovationearthprojects.org, managed from the Admin panel.
+            </p>
+          </header>
+
+          <ol class="subdomains__steps">
+            <li class="subdomains__step">
+              <span class="subdomains__num">1</span>
+              <div class="subdomains__text">
+                <h3>Create the DNS record</h3>
+                <p>
+                  Add a <code>CNAME</code> record for your tool, e.g.
+                  <code>toolname &rarr; username.github.io</code>, so
+                  <strong>toolname.innovationearthprojects.org</strong> points
+                  at the tool's repository (which has its own
+                  <code>CNAME</code> file).
+                </p>
+              </div>
+            </li>
+            <li class="subdomains__step">
+              <span class="subdomains__num">2</span>
+              <div class="subdomains__text">
+                <h3>Publish in Admin</h3>
+                <p>
+                  Open the <a href="/admin/">Admin panel</a>, create a Product,
+                  and paste the full URL
+                  (<code>https://toolname.innovationearthprojects.org</code>)
+                  into the URL field.
+                </p>
+              </div>
+            </li>
+            <li class="subdomains__step">
+              <span class="subdomains__num">3</span>
+              <div class="subdomains__text">
+                <h3>It appears here</h3>
+                <p>
+                  Once the CMS saves and the site rebuilds, the card shows up
+                  in the grid above with a live status badge and an
+                  &ldquo;Open&rdquo; button.
+                </p>
+              </div>
+            </li>
+          </ol>
+        </div>
       </div>
     </section>
 
@@ -146,12 +196,7 @@
   <!-- Footer injected by shared/nav.js -->
   <div id="footer-mount"></div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
-
   <!-- Shared JS -->
-  <script src="../shared/firebase.js" defer></script>
   <script src="../shared/nav.js" defer></script>
 
   <!-- Local JS -->

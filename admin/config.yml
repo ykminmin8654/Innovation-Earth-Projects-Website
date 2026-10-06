@@ -42,6 +42,21 @@ collections:
         name: url
         widget: string
         required: false
+        hint: >-
+          Full URL where the product lives. You can point one of your own
+          site's subdomains at a product here, e.g.
+          https://toolname.innovationearthprojects.org — create the CNAME
+          record for the subdomain first (see README), then enter the full
+          https URL here.
+
+      - label: Subdomain
+        name: subdomain
+        widget: string
+        required: false
+        hint: >-
+          Optional shorthand for the subdomain this product is hosted on,
+          without the domain part (e.g. "studypal" for
+          studypal.innovationearthprojects.org). Used only as a note/label.
 
       - label: Icon
         name: icon

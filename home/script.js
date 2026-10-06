@@ -58,6 +58,156 @@
   }
 
   /* ------------------------------------------------------------
+     Featured products — loaded from the Admin-published content
+     (Decap CMS markdown files in /products/data/). No hardcoded
+     or placeholder products.
+     ------------------------------------------------------------ */
+  function esc(str) {
+    if (str == null) return '';
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function parseFrontMatter(text) {
+    var match = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+    if (!match) return {};
+    var data = {};
+    var currentListKey = null;
+    match[1].split(/\r?\n/).forEach(function (rawLine) {
+      var line = rawLine.replace(/\t/g, '  ');
+      if (!line.trim() || line.trim().charAt(0) === '#') return;
+      var listItem = line.match(/^\s+-\s+(.*)$/);
+      if (listItem && currentListKey) {
+        data[currentListKey].push(listItem[1].replace(/^["']|["']$/g, '').trim());
+        return;
+      }
+      var kv = line.match(/^([A-Za-z0-9_]+):\s*(.*)$/);
+      if (!kv) return;
+      var key = kv[1], val = kv[2].trim();
+      if (val === '') { currentListKey = key; data[key] = []; }
+      else if (val.charAt(0) === '[' && val.charAt(val.length - 1) === ']') {
+        data[key] = val.slice(1, -1).split(',')
+          .map(function (s) { return s.replace(/^["']|["']$/g, '').trim(); })
+          .filter(Boolean);
+        currentListKey = null;
+      } else {
+        data[key] = val.replace(/^["']|["']$/g, '').trim();
+        currentListKey = null;
+      }
+    });
+    return data;
+  }
+
+  function initFeaturedProducts() {
+    var mount = document.getElementById('featured-products');
+    if (!mount) return;
+
+    var DATA_DIR = 'products/data/';
+
+    function loadFileList() {
+      return fetch(DATA_DIR + 'manifest.json', { cache: 'no-cache' })
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function (j) {
+          return (j.files || [])
+            .map(function (f) { return String(f).trim(); })
+            .filter(function (f) { return /\.md(\/)?$/.test(f); })
+            .map(function (f) { return f.replace(/\.md\/$/, '.md'); });
+        })
+        .catch(function () {
+          // Fallback: scrape the directory listing
+          return fetch(DATA_DIR, { cache: 'no-cache' })
+            .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+            .then(function (html) {
+              var re = /href="([^"?#]+\.md)"/gi, found = {}, m;
+              while ((m = re.exec(html)) !== null) found[m[1]] = true;
+              return Object.keys(found);
+            });
+        });
+    }
+
+    Promise.resolve()
+      .then(loadFileList)
+      .then(function (files) {
+        return Promise.all(files.map(function (f) {
+          return fetch(DATA_DIR + encodeURIComponent(f), { cache: 'no-cache' })
+            .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+            .then(parseFrontMatter)
+            .catch(function () { return null; });
+        }));
+      })
+      .then(function (items) {
+        items = items.filter(function (p) { return p && p.title; });
+        items.sort(function (a, b) {
+          var ao = Number(a.order != null ? a.order : 999);
+          var bo = Number(b.order != null ? b.order : 999);
+          return ao - bo;
+        });
+        var featured = items.slice(0, 3);
+
+        if (!featured.length) {
+          mount.innerHTML =
+            '<div class="featured-empty">' +
+              '<i class="fas fa-toolbox"></i>' +
+              '<h3>No tools published yet</h3>' +
+              '<p>Everything on this page comes straight from the Admin panel. ' +
+              'Publish your first product and it will appear here.</p>' +
+              '<a class="btn btn--secondary" href="/admin/">Open Admin <i class="fas fa-arrow-right"></i></a>' +
+            '</div>';
+          return;
+        }
+
+        mount.innerHTML = featured.map(function (p, i) {
+          var status = String(p.status || 'live').toLowerCase();
+          var statusCls = (status === 'beta') ? 'beta' : (status.indexOf('soon') === 0 || status.indexOf('coming') === 0) ? 'soon' : 'live';
+          var statusLabel = statusCls === 'beta' ? 'Beta' : statusCls === 'soon' ? 'Coming soon' : 'Live';
+          var iconRaw = String(p.icon || 'fa-cube').trim();
+          var icon = iconRaw.indexOf('fa-') === 0 ? iconRaw : 'fa-' + iconRaw;
+          var url = p.url ? String(p.url).trim() : '';
+          if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
+          var tags = Array.isArray(p.tags) ? p.tags.slice(0, 3) : [];
+          var tagsHtml = tags.length
+            ? '<div class="product-card__tags">' + tags.map(function (t) {
+                return '<span class="product-card__tag">' + esc(t) + '</span>';
+              }).join('') + '</div>'
+            : '';
+          var linkHtml = url
+            ? '<a class="product-card__link" href="' + esc(url) + '" target="_blank" rel="noopener">Open <i class="fas fa-arrow-right"></i></a>'
+            : '<span class="product-card__link product-card__link--disabled">Coming soon</span>';
+
+          return '' +
+            '<article class="product-card reveal" data-delay="' + ((i + 1) * 100) + '">' +
+              '<div class="product-card__top">' +
+                '<span class="product-card__status product-card__status--' + statusCls + '">' + statusLabel + '</span>' +
+                '<span class="product-card__free">Free</span>' +
+              '</div>' +
+              '<div class="product-card__icon"><i class="fas ' + esc(icon) + '"></i></div>' +
+              '<h3 class="product-card__title">' + esc(p.title) + '</h3>' +
+              '<p class="product-card__desc">' + esc(p.description || '') + '</p>' +
+              tagsHtml +
+              '<div class="product-card__footer">' +
+                '<span class="product-card__meta">Free</span>' +
+                linkHtml +
+              '</div>' +
+            '</article>';
+        }).join('');
+
+        // Re-run reveals + tilt for the newly injected cards
+        initScrollReveals();
+        initCardTilt();
+      })
+      .catch(function () {
+        mount.innerHTML =
+          '<div class="featured-empty">' +
+            '<i class="fas fa-box-open"></i>' +
+            '<h3>No tools published yet</h3>' +
+            '<p>Add products in the Admin panel to feature them here.</p>' +
+            '<a class="btn btn--secondary" href="/admin/">Open Admin <i class="fas fa-arrow-right"></i></a>' +
+          '</div>';
+      });
+  }
+
+  /* ------------------------------------------------------------
      Card tilt — subtle 3D rotation on product cards
      ------------------------------------------------------------ */
   function initCardTilt() {
@@ -589,6 +739,7 @@
     // Core behavior
     initScrollReveals();
     initSmoothAnchors();
+    initFeaturedProducts();
     initCardTilt();
     initFaqAccordion();
     initTrustBarMarquee();
