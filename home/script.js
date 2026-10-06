@@ -58,10 +58,20 @@
   }
 
   /* ------------------------------------------------------------
-     Featured products — loaded from the Admin-published content
+     Featured products — loaded from the CMS-published content
      (Decap CMS markdown files in /products/data/). No hardcoded
      or placeholder products.
+
+     IMPORTANT: Jekyll (GitHub Pages default build) EXCLUDES .md
+     files from the published site, so fetching /products/data/*.md
+     returns a 404 page on innovationearthprojects.org. The product
+     files are read from the repo via the public GitHub Contents
+     API instead (raw.githubusercontent.com for the file bodies).
      ------------------------------------------------------------ */
+  var SITE_HOSTS = ['innovationearthprojects.org', 'www.innovationearthprojects.org'];
+  var GH_API_DIR = 'https://api.github.com/repos/ykminmin8654/Innovation-Earth-Projects-Website/contents/products/data';
+  var GH_RAW_BASE = 'https://raw.githubusercontent.com/ykminmin8654/Innovation-Earth-Projects-Website/main/products/data/';
+
   function esc(str) {
     if (str == null) return '';
     return String(str)
@@ -69,8 +79,10 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
+  // Minimal YAML front-matter parser (the subset Decap CMS writes).
+  // Works on the RAW file text — never rely on response.json().
   function parseFrontMatter(text) {
-    var match = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+    var match = String(text).match(/^---\r?\n([\s\S]*?)\r?\n---/);
     if (!match) return {};
     var data = {};
     var currentListKey = null;
@@ -99,112 +111,162 @@
     return data;
   }
 
+  function looksLikeProduct(fm) {
+    return !!(fm && typeof fm.title === 'string' && fm.title.trim());
+  }
+
+  function fetchText(url) {
+    return fetch(url, { cache: 'no-cache' }).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.text();
+    });
+  }
+
+  // List *.md filenames via the GitHub Contents API (public repo, no auth needed)
+  function listProductFilesFromApi(cb) {
+    fetchText(GH_API_DIR)
+      .then(function (txt) { return JSON.parse(txt); })
+      .then(function (entries) {
+        if (!Array.isArray(entries)) return cb([]);
+        cb(entries
+          .filter(function (e) { return e && e.type === 'file' && /\.md$/i.test(e.name); })
+          .map(function (e) { return e.name; }));
+      })
+      .catch(function () { cb([]); });
+  }
+
+  // Fetch one product file body and parse its front matter (null on failure)
+  function fetchProductFile(file, cb) {
+    fetchText(GH_RAW_BASE + encodeURIComponent(file))
+      .then(function (text) {
+        var fm = parseFrontMatter(text);
+        cb(looksLikeProduct(fm) ? fm : null);
+      })
+      .catch(function () { cb(null); });
+  }
+
+  function loadProductsData(cb) {
+    var onCustomDomain = SITE_HOSTS.indexOf(window.location.hostname) !== -1;
+
+    // On the live domain the static copies don't exist (Jekyll strips
+    // .md), so use the API directly. Off-domain (local dev / preview)
+    // try locally-served files first, then fall back to the API.
+    if (onCustomDomain) {
+      listProductFilesFromApi(function (files) { gather(files, true, cb); });
+      return;
+    }
+
+    var localDir = 'products/data/';
+    fetchText(localDir + 'manifest.json')
+      .then(function (txt) {
+        var json = JSON.parse(txt);
+        return (json.files || [])
+          .map(function (f) { return String(f).trim().replace(/\.md\/$/, '.md'); })
+          .filter(function (f) { return /\.md$/i.test(f); });
+      })
+      .then(function (files) {
+        if (files.length) { gather(files, false, cb); }
+        else scrapeAndFallback(localDir, cb);
+      })
+      .catch(function () { scrapeAndFallback(localDir, cb); });
+  }
+
+  function scrapeAndFallback(localDir, cb) {
+    fetchText(localDir)
+      .then(function (html) {
+        var re = /href="([^"?#]+\.md)"/gi, found = {}, m;
+        while ((m = re.exec(html)) !== null) found[m[1]] = true;
+        var files = Object.keys(found);
+        if (files.length) gather(files, false, cb);
+        else listProductFilesFromApi(function (apiFiles) { gather(apiFiles, true, cb); });
+      })
+      .catch(function () { listProductFilesFromApi(function (apiFiles) { gather(apiFiles, true, cb); }); });
+  }
+
+  function gather(files, fromApi, cb) {
+    if (!files.length) { cb([]); return; }
+    var results = [], remaining = files.length;
+    files.forEach(function (f) {
+      var done = function (item) {
+        if (item) results.push(item);
+        if (--remaining === 0) cb(results);
+      };
+      if (fromApi) {
+        fetchProductFile(f, done);
+      } else {
+        fetchText('products/data/' + encodeURIComponent(f))
+          .then(function (text) {
+            var fm = parseFrontMatter(text);
+            if (looksLikeProduct(fm)) { done(fm); }
+            else { fetchProductFile(f, done); }   // fall back to API copy
+          })
+          .catch(function () { fetchProductFile(f, done); });
+      }
+    });
+  }
+
   function initFeaturedProducts() {
     var mount = document.getElementById('featured-products');
     if (!mount) return;
 
-    var DATA_DIR = 'products/data/';
+    loadProductsData(function (items) {
+      items.sort(function (a, b) {
+        var ao = Number(a.order != null ? a.order : 999);
+        var bo = Number(b.order != null ? b.order : 999);
+        return ao - bo;
+      });
+      var featured = items.slice(0, 3);
 
-    function loadFileList() {
-      return fetch(DATA_DIR + 'manifest.json', { cache: 'no-cache' })
-        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-        .then(function (j) {
-          return (j.files || [])
-            .map(function (f) { return String(f).trim(); })
-            .filter(function (f) { return /\.md(\/)?$/.test(f); })
-            .map(function (f) { return f.replace(/\.md\/$/, '.md'); });
-        })
-        .catch(function () {
-          // Fallback: scrape the directory listing
-          return fetch(DATA_DIR, { cache: 'no-cache' })
-            .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
-            .then(function (html) {
-              var re = /href="([^"?#]+\.md)"/gi, found = {}, m;
-              while ((m = re.exec(html)) !== null) found[m[1]] = true;
-              return Object.keys(found);
-            });
-        });
-    }
-
-    Promise.resolve()
-      .then(loadFileList)
-      .then(function (files) {
-        return Promise.all(files.map(function (f) {
-          return fetch(DATA_DIR + encodeURIComponent(f), { cache: 'no-cache' })
-            .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
-            .then(parseFrontMatter)
-            .catch(function () { return null; });
-        }));
-      })
-      .then(function (items) {
-        items = items.filter(function (p) { return p && p.title; });
-        items.sort(function (a, b) {
-          var ao = Number(a.order != null ? a.order : 999);
-          var bo = Number(b.order != null ? b.order : 999);
-          return ao - bo;
-        });
-        var featured = items.slice(0, 3);
-
-        if (!featured.length) {
-          mount.innerHTML =
-            '<div class="featured-empty">' +
-              '<i class="fas fa-toolbox"></i>' +
-              '<h3>No tools published yet</h3>' +
-              '<p>Everything on this page comes straight from the Admin panel. ' +
-              'Publish your first product and it will appear here.</p>' +
-              '<a class="btn btn--secondary" href="/admin/">Open Admin <i class="fas fa-arrow-right"></i></a>' +
-            '</div>';
-          return;
-        }
-
-        mount.innerHTML = featured.map(function (p, i) {
-          var status = String(p.status || 'live').toLowerCase();
-          var statusCls = (status === 'beta') ? 'beta' : (status.indexOf('soon') === 0 || status.indexOf('coming') === 0) ? 'soon' : 'live';
-          var statusLabel = statusCls === 'beta' ? 'Beta' : statusCls === 'soon' ? 'Coming soon' : 'Live';
-          var iconRaw = String(p.icon || 'fa-cube').trim();
-          var icon = iconRaw.indexOf('fa-') === 0 ? iconRaw : 'fa-' + iconRaw;
-          var url = p.url ? String(p.url).trim() : '';
-          if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
-          var tags = Array.isArray(p.tags) ? p.tags.slice(0, 3) : [];
-          var tagsHtml = tags.length
-            ? '<div class="product-card__tags">' + tags.map(function (t) {
-                return '<span class="product-card__tag">' + esc(t) + '</span>';
-              }).join('') + '</div>'
-            : '';
-          var linkHtml = url
-            ? '<a class="product-card__link" href="' + esc(url) + '" target="_blank" rel="noopener">Open <i class="fas fa-arrow-right"></i></a>'
-            : '<span class="product-card__link product-card__link--disabled">Coming soon</span>';
-
-          return '' +
-            '<article class="product-card reveal" data-delay="' + ((i + 1) * 100) + '">' +
-              '<div class="product-card__top">' +
-                '<span class="product-card__status product-card__status--' + statusCls + '">' + statusLabel + '</span>' +
-                '<span class="product-card__free">Free</span>' +
-              '</div>' +
-              '<div class="product-card__icon"><i class="fas ' + esc(icon) + '"></i></div>' +
-              '<h3 class="product-card__title">' + esc(p.title) + '</h3>' +
-              '<p class="product-card__desc">' + esc(p.description || '') + '</p>' +
-              tagsHtml +
-              '<div class="product-card__footer">' +
-                '<span class="product-card__meta">Free</span>' +
-                linkHtml +
-              '</div>' +
-            '</article>';
-        }).join('');
-
-        // Re-run reveals + tilt for the newly injected cards
-        initScrollReveals();
-        initCardTilt();
-      })
-      .catch(function () {
+      if (!featured.length) {
         mount.innerHTML =
           '<div class="featured-empty">' +
-            '<i class="fas fa-box-open"></i>' +
+            '<i class="fas fa-toolbox"></i>' +
             '<h3>No tools published yet</h3>' +
-            '<p>Add products in the Admin panel to feature them here.</p>' +
-            '<a class="btn btn--secondary" href="/admin/">Open Admin <i class="fas fa-arrow-right"></i></a>' +
+            '<p>Everything on this page comes straight from our content ' +
+            'manager. The first published product will appear here.</p>' +
           '</div>';
-      });
+        return;
+      }
+
+      mount.innerHTML = featured.map(function (p, i) {
+        var status = String(p.status || 'live').toLowerCase();
+        var statusCls = (status === 'beta') ? 'beta' : (status.indexOf('soon') === 0 || status.indexOf('coming') === 0) ? 'soon' : 'live';
+        var statusLabel = statusCls === 'beta' ? 'Beta' : statusCls === 'soon' ? 'Coming soon' : 'Live';
+        var iconRaw = String(p.icon || 'fa-cube').trim();
+        var icon = iconRaw.indexOf('fa-') === 0 ? iconRaw : 'fa-' + iconRaw;
+        var url = p.url ? String(p.url).trim() : '';
+        if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
+        var tags = Array.isArray(p.tags) ? p.tags.slice(0, 3) : [];
+        var tagsHtml = tags.length
+          ? '<div class="product-card__tags">' + tags.map(function (t) {
+              return '<span class="product-card__tag">' + esc(t) + '</span>';
+            }).join('') + '</div>'
+          : '';
+        var linkHtml = url
+          ? '<a class="product-card__link" href="' + esc(url) + '" target="_blank" rel="noopener">Open <i class="fas fa-arrow-right"></i></a>'
+          : '<span class="product-card__link product-card__link--disabled">Coming soon</span>';
+
+        return '' +
+          '<article class="product-card reveal" data-delay="' + ((i + 1) * 100) + '">' +
+            '<div class="product-card__top">' +
+              '<span class="product-card__status product-card__status--' + statusCls + '">' + statusLabel + '</span>' +
+              '<span class="product-card__free">Free</span>' +
+            '</div>' +
+            '<div class="product-card__icon"><i class="fas ' + esc(icon) + '"></i></div>' +
+            '<h3 class="product-card__title">' + esc(p.title) + '</h3>' +
+            '<p class="product-card__desc">' + esc(p.description || '') + '</p>' +
+            tagsHtml +
+            '<div class="product-card__footer">' +
+              '<span class="product-card__meta">Free</span>' +
+              linkHtml +
+            '</div>' +
+          '</article>';
+      }).join('');
+
+      // Re-run reveals + tilt for the newly injected cards
+      initScrollReveals();
+      initCardTilt();
+    });
   }
 
   /* ------------------------------------------------------------
