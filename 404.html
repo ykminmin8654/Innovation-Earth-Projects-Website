@@ -93,8 +93,7 @@
          ------------------------------------------------------------ */
       var SECTIONS = {
         'home':       '/home/index.html',
-        'products':   '/products/index.html',
-        'newsletter': '/newsletter/index.html'
+        'products':   '/products/index.html'
         // Add more as you build them:
         // 'studio':  '/studio/index.html',
         // 'aboutus': '/aboutus/index.html',
@@ -140,7 +139,7 @@
       var rest = segments.slice(1).join('/');
       var fetchUrl;
       if (rest && /\.\w+$/.test(rest)) {
-        // e.g. /newsletter/post.html?id=foo
+        // e.g. /products/detail.html?id=foo
         fetchUrl = '/' + section + '/' + rest + search;
       } else {
         fetchUrl = target + search;

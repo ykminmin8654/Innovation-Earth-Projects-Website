@@ -5,93 +5,68 @@ backend:
   base_url: https://decap-proxy.ykminmin8654.workers.dev
   auth_endpoint: /auth
 
-media_folder: "newsletter/images"
-public_folder: "/newsletter/images"
+media_folder: "products/images"
+public_folder: "/products/images"
 
 collections:
-  - name: newsletter
-    label: Newsletter Posts
-    label_singular: Post
-    description: Articles, research notes, and studio updates.
-    folder: newsletter/posts
+  - name: products
+    label: Products
+    label_singular: Product
+    description: Tools and products shown on the Products page.
+    folder: products/data
     create: true
-    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    slug: "{{slug}}"
 
     fields:
       - label: Title
         name: title
         widget: string
 
-      - label: Publish Date
-        name: date
+      - label: Description
+        name: description
+        widget: text
+
+      - label: Status
+        name: status
+        widget: select
+        default: live
+        options:
+          - label: Live
+            value: live
+          - label: Beta
+            value: beta
+          - label: Coming Soon
+            value: soon
+
+      - label: URL
+        name: url
+        widget: string
+        required: false
+
+      - label: Icon
+        name: icon
+        widget: string
+        required: false
+        hint: 'Font Awesome class, e.g. fa-rocket'
+
+      - label: Tags
+        name: tags
+        widget: list
+        required: false
+
+      - label: Order
+        name: order
+        widget: number
+        value_type: int
+        min: 0
+        max: 999
+        step: 1
+        default: 999
+
+      - label: Updated Date
+        name: updatedAt
         widget: datetime
+        required: false
         date_format: YYYY-MM-DD
         time_format: false
         format: YYYY-MM-DD
-
-      - label: Category
-        name: category
-        widget: select
-        default: studio
-        options:
-          - label: Research
-            value: research
-          - label: Product
-            value: product
-          - label: Studio
-            value: studio
-
-      - label: Excerpt
-        name: excerpt
-        widget: text
-
-      - label: Author Name
-        name: author
-        widget: string
-
-      - label: Author Photo
-        name: authorImage
-        widget: image
-        required: false
-
-      - label: License
-        name: license
-        widget: select
-        default: all-rights-reserved
-        options:
-          - label: All Rights Reserved
-            value: all-rights-reserved
-          - label: CC BY 4.0
-            value: cc-by-4.0
-          - label: CC BY-SA 4.0
-            value: cc-by-sa-4.0
-          - label: CC BY-NC 4.0
-            value: cc-by-nc-4.0
-          - label: CC BY-NC-SA 4.0
-            value: cc-by-nc-sa-4.0
-          - label: CC0 Public Domain
-            value: cc0
-          - label: MIT
-            value: mit
-          - label: Custom
-            value: custom
-
-      - label: Custom License
-        name: licenseCustom
-        widget: string
-        required: false
-
-      - label: PDF File
-        name: pdf
-        widget: file
-        required: false
-
-      - label: TXT File
-        name: txt
-        widget: file
-        required: false
-
-      - label: Featured
-        name: featured
-        widget: boolean
-        default: false

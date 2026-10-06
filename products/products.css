@@ -242,6 +242,25 @@
 }
 
 /* ------------------------------------------------------------
+   ADMIN BAR (Decap CMS link)
+   ------------------------------------------------------------ */
+.admin-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+  margin-top: var(--s-7);
+  padding-top: var(--s-5);
+  border-top: 1px dashed var(--border);
+}
+.admin-bar__btn i { margin-right: 4px; }
+.admin-bar__hint {
+  font-size: var(--fs-sm);
+  color: var(--muted);
+}
+
+/* ------------------------------------------------------------
    CALLOUT
    ------------------------------------------------------------ */
 .callout {
