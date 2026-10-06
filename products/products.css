@@ -155,6 +155,12 @@
   border: 1px solid var(--border);
   border-radius: var(--r-sm);
 }
+/* Paid tools show their price in amber instead of the teal "Free" pill */
+.product-card__free--paid {
+  color: var(--warn);
+  background: var(--warn-bg);
+  border-color: transparent;
+}
 
 .product-card__icon {
   width: 44px;
