@@ -129,9 +129,20 @@
   }
 
   // ------------------------------------------------------------
-  // Data fetching — manifest.json written by Decap CMS,
-  // with a directory-scrape fallback for safety
+  // Data fetching
+  //
+  // IMPORTANT: Jekyll (GitHub Pages default build) EXCLUDES .md
+  // files from the published site, so /products/data/*.md returns
+  // 404 on innovationearthprojects.org and a directory listing is
+  // never generated. Decap CMS commits product files straight to
+  // the repo, so we read them via the public GitHub Contents API
+  // instead. manifest.json / directory scraping are kept as cheap
+  // fallbacks in case the site is ever served with real files.
   // ------------------------------------------------------------
+  const SITE_HOSTS = ['innovationearthprojects.org', 'www.innovationearthprojects.org'];
+  const GH_API_DIR = 'https://api.github.com/repos/ykminmin8654/Innovation-Earth-Projects-Website/contents/products/data';
+  const GH_RAW_BASE = 'https://raw.githubusercontent.com/ykminmin8654/Innovation-Earth-Projects-Website/main/products/data/';
+
   function siteRoot() {
     // Works on /products and /products/ (and when nav.js injects a <base>)
     var base = document.querySelector('base');
@@ -150,51 +161,104 @@
     return res.text();
   }
 
+  // List *.md filenames via the GitHub Contents API (public repo, no auth needed)
+  async function getFileListFromApi() {
+    try {
+      const txt = await fetchWithCache(GH_API_DIR);
+      const entries = JSON.parse(txt);
+      if (!Array.isArray(entries)) return [];
+      return entries
+        .filter((e) => e && e.type === 'file' && /\.md$/i.test(e.name))
+        .map((e) => e.name);
+    } catch {
+      return [];
+    }
+  }
+
+  // Fetch one product file: prefer raw.githubusercontent.com (fast),
+  // fall back to the Contents API entry's base64 content.
+  async function fetchProductFile(file) {
+    try {
+      const text = await fetchWithCache(GH_RAW_BASE + encodeURIComponent(file));
+      return parseFrontMatter(text);
+    } catch {
+      try {
+        const txt = await fetchWithCache(GH_API_DIR + '/' + encodeURIComponent(file));
+        const json = JSON.parse(txt);
+        if (json && typeof json.content === 'string') {
+          const decoded = atob(json.content.replace(/\n/g, ''));
+          return parseFrontMatter(decoded);
+        }
+      } catch { /* ignore */ }
+      return null;
+    }
+  }
+
   async function getFileList() {
     const dir = dataDir();
-    // 1) Try the CMS-generated manifest
-    try {
-      const txt = await fetchWithCache(dir + 'manifest.json');
-      const json = JSON.parse(txt);
-      const files = Array.isArray(json.files) ? json.files : [];
-      const cleaned = files
-        .map((f) => String(f).trim())
-        .filter((f) => f.endsWith('.md') || /\.md\//.test(f))
-        .map((f) => f.replace(/\.md\/$/, '.md'));
-      if (cleaned.length) return cleaned;
-    } catch {
-      /* fall through to scrape */
+
+    // 0) On the custom domain, static .md files are stripped by Jekyll —
+    //    go straight to the GitHub API. Off-domain (local dev / preview),
+    //    try local files first.
+    const onCustomDomain = SITE_HOSTS.indexOf(window.location.hostname) !== -1;
+
+    if (!onCustomDomain) {
+      // 1) Try a locally-served manifest
+      try {
+        const txt = await fetchWithCache(dir + 'manifest.json');
+        const json = JSON.parse(txt);
+        const files = Array.isArray(json.files) ? json.files : [];
+        const cleaned = files
+          .map((f) => String(f).trim())
+          .filter((f) => f.endsWith('.md') || /\.md\//.test(f))
+          .map((f) => f.replace(/\.md\/$/, '.md'));
+        if (cleaned.length) return cleaned;
+      } catch {
+        /* fall through */
+      }
+
+      // 2) Fallback: scrape a directory listing (works with a plain static server)
+      try {
+        const html = await fetchWithCache(dir);
+        const re = /href="([^"?#]+\.md)"/gi;
+        const found = new Set();
+        let m;
+        while ((m = re.exec(html)) !== null) found.add(m[1]);
+        if (found.size) return Array.from(found);
+      } catch {
+        /* fall through to API */
+      }
     }
 
-    // 2) Fallback: scrape the GitHub Pages directory listing
-    //    (works when Jekyll renders /products/data/ as an index page)
-    try {
-      const html = await fetchWithCache(dir);
-      const re = /href="([^"?#]+\.md)"/gi;
-      const found = new Set();
-      let m;
-      while ((m = re.exec(html)) !== null) found.add(m[1]);
-      if (found.size) return Array.from(found);
-    } catch {
-      /* ignore */
-    }
-
-    return [];
+    // 3) GitHub Contents API — the reliable source on GitHub Pages
+    return getFileListFromApi();
   }
 
   async function fetchProducts() {
     const dir = dataDir();
     const files = await getFileList();
+    const onCustomDomain = SITE_HOSTS.indexOf(window.location.hostname) !== -1;
     const items = [];
 
     for (const file of files) {
-      try {
-        const text = await fetchWithCache(dir + encodeURIComponent(file));
-        const fm = parseFrontMatter(text);
-        if (fm.title) items.push(fm);
-      } catch (err) {
-        console.warn('Skipping product file:', file, err.message);
+      let fm = null;
+
+      if (!onCustomDomain) {
+        // Local / preview: try the statically-served copy first
+        try {
+          const text = await fetchWithCache(dir + encodeURIComponent(file));
+          fm = parseFrontMatter(text);
+        } catch {
+          fm = null;
+        }
       }
+
+      if (!fm || !fm.title) {
+        fm = await fetchProductFile(file);
+      }
+
+      if (fm && fm.title) items.push(fm);
+      else console.warn('Skipping product file:', file);
     }
 
     // Sort: explicit order first, then title
@@ -232,17 +296,13 @@
     if (!items.length) {
       const emptyMsg = allProducts.length
         ? 'No products match this filter.'
-        : 'No products have been published yet. Add one in the Admin panel and it will appear here instantly.';
+        : 'No products have been published yet. Check back soon — new tools ship every week.';
 
       grid.innerHTML = `
         <div class="state">
           <i class="fas fa-box-open"></i>
           <h3>No products yet</h3>
           <p>${escapeHtml(emptyMsg)}</p>
-          ${allProducts.length ? '' : `
-            <a class="btn btn--secondary" href="/admin/" style="margin-top:var(--s-4)">
-              <i class="fas fa-pencil-alt"></i> Open Admin
-            </a>`}
         </div>
       `;
       return;
@@ -368,8 +428,8 @@
 
     if (!items.length && source === 'empty') {
       // Either genuinely nothing published yet, or the network failed.
-      // Show the "no products" state with an Admin link (handled in renderGrid)
-      // plus retry in case it was a transient fetch error.
+      // Show the "no products" state (handled in renderGrid) plus retry
+      // in case it was a transient fetch error.
       showRetry(true);
     } else {
       showRetry(false);

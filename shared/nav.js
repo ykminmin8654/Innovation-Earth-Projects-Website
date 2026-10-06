@@ -17,9 +17,10 @@
       '<circle cx="16" cy="16" r="4" fill="currentColor"/>' +
     '</svg>';
 
+  /* NOTE: the Admin panel (/admin/) is intentionally NOT linked here.
+     It must only be reachable by typing the URL directly. */
   var NAV_LINKS = [
-    { href: '/products', label: 'Products', key: 'products' },
-    { href: '/admin/',   label: 'Admin',    key: 'admin'    }
+    { href: '/products', label: 'Products', key: 'products' }
   ];
 
   var FOOTER_SITE_LINKS = [
