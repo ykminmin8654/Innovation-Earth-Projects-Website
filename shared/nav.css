@@ -35,6 +35,14 @@
   display: inline-flex;
   color: var(--teal);
 }
+.nav__logo-img {
+  display: block;
+  width: auto;
+  height: 32px;
+}
+.footer .nav__logo-img {
+  height: 28px;
+}
 .nav__wordmark { white-space: nowrap; }
 
 .nav__links {

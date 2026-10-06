@@ -273,83 +273,6 @@
 .callout__body p { margin: 0; color: var(--ink-soft); }
 
 /* ------------------------------------------------------------
-   SUBDOMAINS — "how products are hosted" explainer
-   ------------------------------------------------------------ */
-.subdomains {
-  max-width: 880px;
-  margin: var(--s-7) auto 0;
-}
-.section__head--compact {
-  text-align: center;
-  margin-bottom: var(--s-6);
-}
-.section__head--compact .section__lede {
-  margin-inline: auto;
-}
-.subdomains__steps {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: var(--s-4);
-  counter-reset: step;
-}
-.subdomains__step {
-  display: flex;
-  gap: var(--s-4);
-  align-items: flex-start;
-  padding: var(--s-5);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
-}
-.subdomains__step:hover {
-  border-color: var(--cyan);
-  box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 128, 128, 0.08));
-}
-.subdomains__num {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: var(--teal);
-  color: #fff;
-  font-family: var(--mono);
-  font-weight: 700;
-  font-size: 0.95rem;
-}
-.subdomains__text h3 {
-  margin: 0 0 var(--s-2);
-  font-size: 1.05rem;
-}
-.subdomains__text p {
-  margin: 0;
-  color: var(--ink-soft);
-  font-size: var(--fs-sm);
-  line-height: 1.6;
-}
-.subdomains__text code {
-  font-family: var(--mono);
-  font-size: 0.82em;
-  background: var(--surface-alt);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--r-sm);
-  padding: 2px 6px;
-  color: var(--teal-deep);
-}
-.subdomains__text a {
-  color: var(--teal-deep);
-  font-weight: 600;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.subdomains__text a:hover { color: var(--teal); }
-
-/* ------------------------------------------------------------
    CTA
    ------------------------------------------------------------ */
 .cta {
@@ -377,5 +300,4 @@
   .callout { flex-direction: column; gap: var(--s-3); }
   .cta { padding: var(--s-6); }
   .cta .btn { width: 100%; }
-  .subdomains__step { flex-direction: column; gap: var(--s-3); }
 }

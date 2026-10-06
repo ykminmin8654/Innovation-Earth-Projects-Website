@@ -198,10 +198,9 @@ main, .nav, .footer { position: relative; z-index: 1; }
   margin-bottom: var(--s-5);
 }
 .hero__frame-logo {
-  width: 60px; height: 12px;
+  width: 26px; height: 26px;
   border-radius: 6px;
-  background: var(--teal);
-  opacity: 0.6;
+  background: url('../images/logo.png') center / contain no-repeat;
 }
 .hero__frame-nav { display: flex; gap: 6px; }
 .hero__frame-nav span {
