@@ -67,6 +67,16 @@ collections:
         required: false
         hint: 'Font Awesome class, e.g. fa-rocket'
 
+      - label: Pricing
+        name: pricing
+        widget: text
+        required: false
+        default: Free
+        hint: >-
+          Badge shown on the product card. Leave as "Free" (the default) for
+          no-cost tools, or enter any label you like, e.g. "$5/mo",
+          "Freemium", "One-time $20".
+
       - label: Tags
         name: tags
         widget: list

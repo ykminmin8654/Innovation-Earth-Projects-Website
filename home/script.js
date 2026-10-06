@@ -271,7 +271,7 @@
           '<article class="product-card reveal" data-delay="' + ((i + 1) * 100) + '">' +
             '<div class="product-card__top">' +
               '<span class="product-card__status product-card__status--' + statusCls + '">' + statusLabel + '</span>' +
-              '<span class="product-card__free">Free</span>' +
+              '<span class="product-card__free' + pricingCls + '">' + esc(pricing) + '</span>' +
             '</div>' +
             '<div class="product-card__icon"><i class="fas ' + esc(icon) + '"></i></div>' +
             '<h3 class="product-card__title">' + esc(p.title) + '</h3>' +

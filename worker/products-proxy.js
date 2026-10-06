@@ -26,7 +26,10 @@
  * ==========================================================================*/
 
 const REPO_OWNER = 'ykminmin8654';
-const REPO_NAME = 'innovationearthprojects.github.io';
+// NOTE: must match the repo in admin/config.yml (and the website's fallbacks).
+// The old value "innovationearthprojects.github.io" does not exist, which made
+// GET /products return 502 and the grid fail to load.
+const REPO_NAME = 'Innovation-Earth-Projects-Website';
 const PRODUCTS_DIR = 'products/data';
 const PRODUCTS_CACHE_TTL = 60; // seconds
 

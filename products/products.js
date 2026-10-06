@@ -343,7 +343,7 @@
       return;
     }
 
-    grid.innerHTML = items.map(p => {
+    grid.innerHTML = items.map((p, i) => {
       const meta = statusMeta(p.status);
       const url = normalizeUrl(p.url);
       const hasUrl = !!url;
@@ -371,7 +371,7 @@
         : `<span class="product-card__meta">${escapeHtml(pricingLabel(p))}</span>`;
 
       return `
-        <article class="product-card grad-border" data-reveal style="--reveal-delay:${(i % 6) * 70}ms">
+        <article class="product-card grad-border reveal" data-delay="${(i % 6) * 100}" style="--reveal-delay:${(i % 6) * 100}ms">
           <div class="product-card__top">
             <span class="product-card__status product-card__status--${meta.cls}">
               ${meta.label}
@@ -472,6 +472,15 @@
 
     updateCounts();
     applyFilter(activeFilter);
+
+    // Re-run shared scroll-reveals for the dynamically injected cards.
+    try {
+      if (window.IEPmotion && typeof window.IEPmotion.reveals === 'function') {
+        window.IEPmotion.reveals(grid);
+      } else {
+        grid.querySelectorAll('.reveal').forEach(el => el.classList.add('is-visible'));
+      }
+    } catch { /* motion layer optional */ }
   }
 
   // ------------------------------------------------------------
