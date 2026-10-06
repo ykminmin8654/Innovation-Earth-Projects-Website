@@ -3,17 +3,19 @@
    Client-side validation + submission.
 
    Delivery: messages are POSTed to your Cloudflare Worker
-   (ENDPOINTS.worker below). The Worker sends them straight to
-   the Gmail inbox using its built-in Email binding — no third
-   party, no API keys, and Decap CMS is untouched.
+   (ENDPOINTS.worker below). The Worker forwards them to your
+   Gmail inbox via Formspree — no Cloudflare "Send Email" binding
+   needed, and Decap CMS is untouched.
 
-   Setup (one time, in the Cloudflare dashboard):
-     Workers → decap-proxy → Settings → Bindings →
-     Add "Send Email" binding, variable name EMAIL,
-     destination address InnovationEarthProjects@gmail.com → Deploy
+   Setup (one time):
+     1. formspree.io → free account with InnovationEarthProjects@
+        gmail.com → New Form → copy the endpoint URL
+        (https://formspree.io/f/xxxxxxxx) and confirm activation.
+     2. Workers → decap-proxy → Settings → Variables → add
+        FORMSPREE_ENDPOINT = that URL → Save & Deploy.
 
-   If the Worker is unreachable, the form shows a simple error asking
-   the visitor to try again.
+   If the Worker is unreachable or delivery isn't configured yet,
+   the form shows a simple error asking the visitor to try again.
    ============================================================ */
 
 (function () {
@@ -22,8 +24,8 @@
   /* ---------------- CONFIG ---------------- */
 
   var ENDPOINTS = {
-    worker: 'https://decap-proxy.ykminmin8654.workers.dev/contact',   // your Cloudflare Worker (POST /contact)
-    form: ''      // unused — kept in case you ever switch to Formspree
+    worker: 'https://decap-proxy.ykminmin8654.workers.dev/contact',   // your Cloudflare Worker (POST /contact) — forwards to Formspree -> Gmail
+    form: ''      // unused fallback slot (kept in case you ever point the page directly at a form service)
   };
 
   var DELIVERY_MODE = 'auto';           // 'auto' | 'none' ('none' skips the Worker and always errors)
@@ -157,7 +159,9 @@
       .then(function (res) {
         return res.json().catch(function () { return {}; }).then(function (body) {
           if (!res.ok) {
-            throw new Error((body && body.error) ? body.error : 'HTTP ' + res.status);
+            var err = new Error((body && body.error) ? body.error : 'HTTP ' + res.status);
+            if (body && body.configured === false) err.notConfigured = true;
+            throw err;
           }
           return body;
         });
@@ -171,9 +175,23 @@
       .catch(function (err) {
         console.error('Contact submit failed:', err);
         setBusy(false);
-        setStatus('error',
-          '<i class="fas fa-triangle-exclamation"></i> Something went wrong sending that. ' +
-          'Please try again in a moment.');
+        // Surface the real reason instead of a generic guess: 501 means the
+        // server's email delivery isn't configured, 429 means rate limited.
+        if (err.notConfigured) {
+          setStatus('error',
+            '<i class="fas fa-triangle-exclamation"></i> Email delivery isn\u2019t set up on ' +
+            'the server yet \u2014 this needs a one-time Cloudflare Worker configuration. ' +
+            'Meanwhile you can reach us directly at InnovationEarthProjects@gmail.com.');
+        } else if (/Too many/i.test(err.message)) {
+          setStatus('error',
+            '<i class="fas fa-triangle-exclamation"></i> Too many messages from your ' +
+            'network \u2014 please wait about ten minutes and try again.');
+        } else {
+          setStatus('error',
+            '<i class="fas fa-triangle-exclamation"></i> Couldn\u2019t send your message (' +
+            err.message + '). Please try again in a moment, or email us at ' +
+            'InnovationEarthProjects@gmail.com.');
+        }
       });
   }
 
