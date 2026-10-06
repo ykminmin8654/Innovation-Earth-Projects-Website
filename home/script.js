@@ -287,6 +287,13 @@
       // Re-run reveals + tilt for the newly injected cards
       initScrollReveals();
       initCardTilt();
+
+      // Safety net: force-show any card the reveal observer hasn't
+      // marked visible yet, so products are never hidden by animation.
+      setTimeout(function () {
+        var pending = document.querySelectorAll('.reveal:not(.is-visible)');
+        for (var j = 0; j < pending.length; j++) pending[j].classList.add('is-visible');
+      }, 2500);
     });
   }
 

@@ -474,6 +474,9 @@
     applyFilter(activeFilter);
 
     // Re-run shared scroll-reveals for the dynamically injected cards.
+    // Safety net: if the reveal observer hasn't marked a card visible
+    // within a few seconds (e.g. stale cached JS, missing motion.js),
+    // force-show it so products are NEVER hidden by the animation layer.
     try {
       if (window.IEPmotion && typeof window.IEPmotion.reveals === 'function') {
         window.IEPmotion.reveals(grid);
@@ -481,6 +484,11 @@
         grid.querySelectorAll('.reveal').forEach(el => el.classList.add('is-visible'));
       }
     } catch { /* motion layer optional */ }
+    setTimeout(() => {
+      const g = document.getElementById('products-grid');
+      if (!g) return;
+      g.querySelectorAll('.reveal:not(.is-visible)').forEach(el => el.classList.add('is-visible'));
+    }, 2500);
   }
 
   // ------------------------------------------------------------
