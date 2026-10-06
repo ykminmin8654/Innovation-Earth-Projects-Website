@@ -10,12 +10,9 @@
      1. CONFIG
      ============================================================ */
 
-  var LOGO_SVG =
-    '<svg viewBox="0 0 32 32" width="28" height="28" aria-hidden="true">' +
-      '<circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="2"/>' +
-      '<path d="M16 6 L16 26 M6 16 L26 16" stroke="currentColor" stroke-width="2"/>' +
-      '<circle cx="16" cy="16" r="4" fill="currentColor"/>' +
-    '</svg>';
+  /* Site logo — transparent-background PNG from /images/logo.png
+     (removebg version of the screenshot in images/). */
+  var LOGO_IMG = '<img src="/images/logo.png" alt="" width="32" height="32" class="nav__logo-img" loading="lazy" />';
 
   /* NOTE: the Admin panel (/admin/) is intentionally NOT linked here.
      It must only be reachable by typing the URL directly. */
@@ -59,7 +56,7 @@
     '<header class="nav">' +
       '<div class="nav__inner">' +
         '<a href="/home" class="nav__brand" aria-label="Innovation Earth Projects — home">' +
-          '<span class="nav__mark">' + LOGO_SVG + '</span>' +
+          '<span class="nav__mark">' + LOGO_IMG + '</span>' +
           '<span class="nav__wordmark">Innovation&nbsp;Earth</span>' +
         '</a>' +
         '<nav class="nav__links" id="primary-nav" aria-label="Primary">' +
@@ -79,7 +76,7 @@
       '<div class="container footer__inner">' +
         '<div class="footer__col">' +
           '<div class="footer__brand">' +
-            '<span class="nav__mark">' + LOGO_SVG + '</span>' +
+            '<span class="nav__mark">' + LOGO_IMG + '</span>' +
             '<span>Innovation Earth Projects</span>' +
           '</div>' +
           '<p class="footer__tagline">Tools for student builders. Built by students, for students.</p>' +
