@@ -3,17 +3,19 @@
    Client-side validation + submission.
 
    Delivery: messages are POSTed to your Cloudflare Worker
-   (ENDPOINTS.worker below). The Worker sends them straight to
-   the Gmail inbox using its built-in Email binding — no third
-   party, no API keys, and Decap CMS is untouched.
+   (ENDPOINTS.worker below). The Worker forwards them to your
+   Gmail inbox via Formspree — no Cloudflare "Send Email" binding
+   needed, and Decap CMS is untouched.
 
-   Setup (one time, in the Cloudflare dashboard):
-     Workers → decap-proxy → Settings → Bindings →
-     Add "Send Email" binding, variable name EMAIL,
-     destination address InnovationEarthProjects@gmail.com → Deploy
+   Setup (one time):
+     1. formspree.io → free account with InnovationEarthProjects@
+        gmail.com → New Form → copy the endpoint URL
+        (https://formspree.io/f/xxxxxxxx) and confirm activation.
+     2. Workers → decap-proxy → Settings → Variables → add
+        FORMSPREE_ENDPOINT = that URL → Save & Deploy.
 
-   If the Worker is unreachable, the form shows a simple error asking
-   the visitor to try again.
+   If the Worker is unreachable or delivery isn't configured yet,
+   the form shows a simple error asking the visitor to try again.
    ============================================================ */
 
 (function () {
@@ -22,8 +24,8 @@
   /* ---------------- CONFIG ---------------- */
 
   var ENDPOINTS = {
-    worker: 'https://decap-proxy.ykminmin8654.workers.dev/contact',   // your Cloudflare Worker (POST /contact)
-    form: ''      // unused — kept in case you ever switch to Formspree
+    worker: 'https://decap-proxy.ykminmin8654.workers.dev/contact',   // your Cloudflare Worker (POST /contact) — forwards to Formspree -> Gmail
+    form: ''      // unused fallback slot (kept in case you ever point the page directly at a form service)
   };
 
   var DELIVERY_MODE = 'auto';           // 'auto' | 'none' ('none' skips the Worker and always errors)

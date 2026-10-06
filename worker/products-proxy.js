@@ -92,35 +92,42 @@ export default {
 /* ------------------------------------------------------------
    POST /contact — receive website contact-form messages.
 
-   NO extra services or env vars are required. Delivery uses the
-   Cloudflare Workers "Send Email" binding (built into Workers,
-   free, and Gmail accepts the messages directly):
+   DELIVERY METHOD A (RECOMMENDED — Formspree, no Cloudflare email
+   setup required). Works even if the "Send Email" binding option
+   does not appear in your dashboard:
 
-     - Dashboard → Workers & Pages → your worker → Settings →
-       Bindings → Add → type "Send Email" → variable name exactly
-       EMAIL → destination address: InnovationEarthProjects@gmail.com
-     - IMPORTANT: the sending address must be one you own/verify.
-       If you pick something like noreply@innovationearthprojects.org,
-       first go to Workers & Pages → Settings → Email → "Address
-       authorization" and authorize that address for this zone.
-     - Click Save AND then Deploy — bindings only apply to new deploys.
-     - Optional safety net: bind a KV namespace as MESSAGES_KV; every
-       message is also stored there when delivery isn't configured or
-       fails, so nothing gets lost.
+     1. Go to https://formspree.io  → sign up free with your Gmail
+        (InnovationEarthProjects@gmail.com) → "New Form" → create a
+        form → copy its endpoint URL (looks like
+        https://formspree.io/f/xxxxxxxx).
+     2. In the form's settings add that same Gmail as the recipient
+        and confirm the activation email Formspree sends you.
+     3. Workers dashboard → decap-proxy → Settings → Variables and
+        Secrets → add:  FORMSPREE_ENDPOINT = https://formspree.io/f/xxxxxxxx
+     4. Save and Deploy. Done — every submission now arrives in your
+        Gmail inbox. Free plan allows 50 messages/month.
+
+   DELIVERY METHOD B (Cloudflare "Send Email" binding, if available):
+     Bindings → Add → "Send Email" → variable name exactly EMAIL →
+     destination InnovationEarthProjects@gmail.com. Note: sending
+     requires an authorized sender address/domain in your account;
+     skip this method if that option isn't offered to you.
+
+   Method A takes priority if both are configured.
+
+   Safety net (optional): bind any KV namespace as MESSAGES_KV and
+   every message is also stored there, so nothing is ever lost even
+   if delivery fails.
 
    Test after deploying (from a terminal):
      curl -X POST https://<worker-url>/contact \
        -H 'Content-Type: application/json' \
        -d '{"name":"Test","email":"you@example.com","subject":"General","message":"Testing the contact endpoint 123"}'
-     -> {"ok":true} means it worked and Gmail got the mail.
-
-   The visitor's address is set as Reply-To, so hitting "Reply" in
-   Gmail answers them directly. Automated replies can be handled
-   later with Gmail filters — no code changes needed here.
+     -> {"ok":true,"via":"formspree"} means it worked and Gmail got the mail.
 
    Optional env var:
-     CONTACT_TO — override the inbox (must match the EMAIL binding's
-                  destination address; defaults to the Gmail below).
+     CONTACT_TO — used only by method B (must match the EMAIL
+                  binding's destination; defaults to the Gmail below).
 
    Rate limit: 5 submissions per IP per 10 minutes (Cache API).
 ------------------------------------------------------------ */
@@ -177,12 +184,60 @@ async function handleContact(request, env, ctx) {
     console.warn("Rate-limit check failed (continuing):", e);
   }
 
-  // ----- Deliver via the EmailMessage binding (no third party) -----
+  // ----- Deliver via Formspree (Method A — no Cloudflare email setup) -----
   const payload = { name, email, subject, message };
+  if (env.FORMSPREE_ENDPOINT) {
+    try {
+      const res = await fetch(env.FORMSPREE_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json", // makes Formspree answer with JSON, not HTML
+        },
+        body: JSON.stringify({
+          _subject: `[${subject}] Contact form: ${name}`,
+          name,
+          email,
+          topic: subject,
+          message,
+          // Reply-To so hitting "Reply" in Gmail answers the visitor.
+          replyTo: email,
+          _replyto: email,
+          gotcha: data.company || "", // Formspree's own honeypot field
+        }),
+      });
+      if (!res.ok) throw new Error("Formspree responded " + res.status);
+      // Optional KV safety-net copy.
+      try {
+        if (env.MESSAGES_KV) {
+          await env.MESSAGES_KV.put(
+            "contact:" + Date.now() + ":" + email,
+            JSON.stringify(payload),
+            { expirationTtl: 60 * 60 * 24 * 90 }
+          );
+        }
+      } catch (_) {}
+      return jsonResponse({ ok: true, via: "formspree" }, 200);
+    } catch (e) {
+      console.error("Formspree forward failed:", e);
+      try {
+        if (env.MESSAGES_KV) {
+          await env.MESSAGES_KV.put(
+            "contact-failed:" + Date.now() + ":" + email,
+            JSON.stringify(payload),
+            { expirationTtl: 60 * 60 * 24 * 7 }
+          );
+        }
+      } catch (_) {}
+      return jsonResponse({ ok: false, error: "The mail service rejected the message (" + String((e && e.message) || e) + ")" }, 502);
+    }
+  }
+
+  // ----- Deliver via the EmailMessage binding (no third party) -----
   if (!env.EMAIL) {
-    // No "Send Email" binding yet. Keep the submission instead of losing it:
-    // stash a copy in KV (if bound) + always write to the Workers log so the
-    // message can be recovered from the dashboard ("View logs").
+    // Neither delivery method configured. Keep the submission instead of
+    // losing it: stash a copy in KV (if bound) + always write to the
+    // Workers log so the message can be recovered from the dashboard.
     try {
       if (env.MESSAGES_KV) {
         await env.MESSAGES_KV.put(
@@ -194,7 +249,7 @@ async function handleContact(request, env, ctx) {
     } catch (e) {
       console.warn("KV backup failed:", e);
     }
-    console.log("CONTACT_MESSAGE (email binding missing):", JSON.stringify(payload));
+    console.log("CONTACT_MESSAGE (no delivery configured):", JSON.stringify(payload));
     return jsonResponse(
       { ok: false, configured: false, error: "Email delivery is not set up on the server yet." },
       501
