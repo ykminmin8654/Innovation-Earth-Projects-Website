@@ -17,18 +17,21 @@
   /* NOTE: the Admin panel (/admin/) is intentionally NOT linked here.
      It must only be reachable by typing the URL directly. */
   var NAV_LINKS = [
+    { href: '/about',    label: 'About',    key: 'about' },
     { href: '/products', label: 'Products', key: 'products' },
     { href: '/contact',  label: 'Contact',  key: 'contact' }
   ];
 
   var FOOTER_SITE_LINKS = [
     { href: '/home',     label: 'Home'     },
+    { href: '/about',    label: 'About'    },
     { href: '/products', label: 'Products' },
     { href: '/contact',  label: 'Contact'  }
   ];
 
   var SECTIONS = {
     'home':     '/home/index.html',
+    'about':    '/about/index.html',
     'products': '/products/index.html',
     'contact':  '/contact/index.html'
   };

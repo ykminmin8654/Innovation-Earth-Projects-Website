@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>About — Innovation Earth Projects</title>
+  <meta name="description" content="Innovation Earth Projects is a student-run software studio in Utah. We build free, private tools for students — no ads, no tracking, no accounts required." />
+  <meta name="theme-color" content="#008080" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Icons -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  />
+
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="../shared/tokens.css" />
+  <link rel="stylesheet" href="../shared/base.css" />
+  <link rel="stylesheet" href="../shared/nav.css" />
+
+  <!-- Local styles -->
+  <link rel="stylesheet" href="./about.css" />
+  <link rel="icon" type="image/png" href="/images/logo.png" />
+</head>
+
+<body data-page="about">
+
+  <div class="bg-orbs" aria-hidden="true">
+    <span class="orb orb--teal"></span>
+    <span class="orb orb--cyan"></span>
+  </div>
+
+  <div id="nav-mount"></div>
+
+  <main>
+
+    <!-- ============================================================
+         1. HERO
+         ============================================================ -->
+    <section class="about-hero">
+      <div class="container about-hero__grid">
+
+        <div class="about-hero__copy">
+          <p class="eyebrow"><i class="fas fa-seedling"></i> About us</p>
+          <h1>Built by students,<br /><span class="accent">for students.</span></h1>
+          <p class="lede">
+            Innovation Earth Projects is a small student-run studio in Utah.
+            We got tired of school tools that were either clunky, paywalled,
+            or quietly harvesting our data — so we started building our own.
+            Everything we ship is free to use, works without an account, and
+            respects your privacy by default.
+          </p>
+          <div class="about-hero__actions">
+            <a href="/products" class="btn btn--primary btn--glow">
+              See what we've built <i class="fas fa-arrow-right"></i>
+            </a>
+            <a href="/contact" class="btn btn--secondary">
+              Get in touch
+            </a>
+          </div>
+        </div>
+
+        <aside class="about-card reveal" data-delay="200">
+          <div class="about-card__head">
+            <img src="/images/logo.png" alt="Innovation Earth Projects logo" class="about-card__logo" width="56" height="56" />
+            <div>
+              <h2 class="about-card__name">Innovation Earth Projects LLC</h2>
+              <p class="about-card__sub">Student-run software studio</p>
+            </div>
+          </div>
+          <dl class="about-facts">
+            <div>
+              <dt><i class="fas fa-location-dot"></i> Based in</dt>
+              <dd>Utah, USA</dd>
+            </div>
+            <div>
+              <dt><i class="fas fa-users"></i> Team</dt>
+              <dd>Students, ages 14–18</dd>
+            </div>
+            <div>
+              <dt><i class="fas fa-tag"></i> Pricing</dt>
+              <dd>Every tool is free</dd>
+            </div>
+            <div>
+              <dt><i class="fas fa-shield-halved"></i> Privacy</dt>
+              <dd>No ads, no tracking</dd>
+            </div>
+            <div>
+              <dt><i class="fas fa-globe"></i> Online at</dt>
+              <dd>innovationearthprojects.org</dd>
+            </div>
+          </dl>
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- ============================================================
+         2. PRINCIPLES
+         ============================================================ -->
+    <section class="section section--tint" id="principles">
+      <div class="container">
+        <header class="section__head">
+          <span class="eyebrow">What we stand for</span>
+          <h2 class="section__title">Four rules we don't break</h2>
+          <p class="section__lede">
+            Every product we publish has to pass these before it ships.
+          </p>
+        </header>
+
+        <div class="values-grid">
+          <article class="value-card reveal">
+            <span class="value-card__icon value-card__icon--teal"><i class="fas fa-hand-holding-dollar"></i></span>
+            <h3>Free, always</h3>
+            <p>
+              No paywalls, no trials, no "premium tiers". If a tool helps
+              students, it stays free for every student.
+            </p>
+          </article>
+
+          <article class="value-card reveal" data-delay="100">
+            <span class="value-card__icon value-card__icon--cyan"><i class="fas fa-user-secret"></i></span>
+            <h3>Private by default</h3>
+            <p>
+              No ads, no analytics trackers, no selling data. Most of our
+              tools run entirely in your browser and never send anything
+              to a server.
+            </p>
+          </article>
+
+          <article class="value-card reveal" data-delay="200">
+            <span class="value-card__icon value-card__icon--blue"><i class="fas fa-bolt"></i></span>
+            <h3>Zero friction</h3>
+            <p>
+              Open a link, start working. Accounts are optional everywhere
+              we offer them — you should never have to sign up to get things
+              done.
+            </p>
+          </article>
+
+          <article class="value-card reveal" data-delay="300">
+            <span class="value-card__icon value-card__icon--lime"><i class="fas fa-graduation-cap"></i></span>
+            <h3>Built from real problems</h3>
+            <p>
+              Every tool starts as something one of us actually needed for
+              a class, project, or competition — then we polish it enough
+              to share.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         3. STORY
+         ============================================================ -->
+    <section class="section" id="story">
+      <div class="container story-grid">
+
+        <div class="story-copy">
+          <header class="section__head section__head--left">
+            <span class="eyebrow">Our story</span>
+            <h2 class="section__title">From one homework tool to a studio</h2>
+          </header>
+          <p>
+            It started the way most student projects do: with a deadline.
+            We needed a better way to get one specific thing done for
+            school, couldn't find a tool that didn't nag us for money or
+            personal data, and built a rough version ourselves.
+          </p>
+          <p>
+            Classmates started using it. Then classmates' friends. That
+            taught us the obvious-but-easy-to-forget lesson: students
+            don't want more accounts and dashboards — they want small,
+            fast tools that do one job well and get out of the way.
+          </p>
+          <p>
+            Since then we've grown into a small studio that ships software
+            publicly on this site, keeps everything free, and writes back
+            to everyone who emails us. We're still students first — which
+            means we move quickly, admit mistakes, and build the tools we
+            genuinely wish existed.
+          </p>
+        </div>
+
+        <ol class="timeline">
+          <li class="timeline-item reveal">
+            <span class="timeline-marker" aria-hidden="true"><i class="fas fa-lightbulb"></i></span>
+            <h3>The spark</h3>
+            <p>A single deadline-driven side project solves a problem our own classes hit every week.</p>
+          </li>
+          <li class="timeline-item reveal" data-delay="100">
+            <span class="timeline-marker" aria-hidden="true"><i class="fas fa-share-nodes"></i></span>
+            <h3>Word of mouth</h3>
+            <p>Students around school start using it daily — feedback piles up faster than we can file it.</p>
+          </li>
+          <li class="timeline-item reveal" data-delay="200">
+            <span class="timeline-marker" aria-hidden="true"><i class="fas fa-cube"></i></span>
+            <h3>A real studio</h3>
+            <p>We formalize as Innovation Earth Projects, set the four rules, and keep shipping.</p>
+          </li>
+          <li class="timeline-item reveal" data-delay="300">
+            <span class="timeline-marker" aria-hidden="true"><i class="fas fa-rocket"></i></span>
+            <h3>Now</h3>
+            <p>New tools ship regularly on this site. The roadmap is driven entirely by what students ask for.</p>
+          </li>
+        </ol>
+
+      </div>
+    </section>
+
+    <!-- ============================================================
+         4. HOW WE WORK
+         ============================================================ -->
+    <section class="section section--tint" id="how-we-work">
+      <div class="container">
+        <header class="section__head">
+          <span class="eyebrow">How we work</span>
+          <h2 class="section__title">Small team, honest process</h2>
+          <p class="section__lede">
+            No venture funding, no growth targets — just students
+            shipping tools they use themselves.
+          </p>
+        </header>
+
+        <div class="work-grid">
+          <article class="work-card reveal">
+            <h3><i class="fas fa-comment-dots"></i> You ask</h3>
+            <p>Ideas come from classes, competitions, and messages in the contact form. If enough students hit the same wall, it goes on the list.</p>
+          </article>
+          <article class="work-card reveal" data-delay="100">
+            <h3><i class="fas fa-hammer"></i> We build</h3>
+            <p>Prototypes are built fast and tested on actual students (mostly us, under real deadlines) before anything looks finished.</p>
+          </article>
+          <article class="work-card reveal" data-delay="200">
+            <h3><i class="fas fa-rotate"></i> We keep improving</h3>
+            <p>Tools stay in public view with honest status labels — beta means beta. Feedback directly shapes the next version.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         5. CTA
+         ============================================================ -->
+    <section class="section about-cta">
+      <div class="container">
+        <div class="about-cta__box reveal">
+          <h2>Want a tool we haven't built yet?</h2>
+          <p>
+            Tell us what's slowing you down at school — feature requests,
+            bug reports, and partnership ideas all land in the same inbox,
+            and a real human reads every one.
+          </p>
+          <div class="about-cta__actions">
+            <a href="/contact" class="btn btn--primary btn--lg">
+              <i class="fas fa-paper-plane"></i> Send us a message
+            </a>
+            <a href="/products" class="btn btn--secondary btn--lg">
+              Browse the tools <i class="fas fa-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="footer-mount"></div>
+
+  <script src="../shared/nav.js"></script>
+  <script src="./about.js"></script>
+</body>
+</html>
