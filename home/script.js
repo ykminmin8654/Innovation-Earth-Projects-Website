@@ -278,7 +278,7 @@
             '<p class="product-card__desc">' + esc(p.description || '') + '</p>' +
             tagsHtml +
             '<div class="product-card__footer">' +
-              '<span class="product-card__meta">Free</span>' +
+              '<span class="product-card__meta">' + esc(pricing) + '</span>' +
               linkHtml +
             '</div>' +
           '</article>';

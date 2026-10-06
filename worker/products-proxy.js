@@ -31,7 +31,8 @@ const REPO_OWNER = 'ykminmin8654';
 // GET /products return 502 and the grid fail to load.
 const REPO_NAME = 'Innovation-Earth-Projects-Website';
 const PRODUCTS_DIR = 'products/data';
-const PRODUCTS_CACHE_TTL = 60; // seconds
+const PRODUCTS_CACHE_TTL = 60; // seconds — fresh feed
+const SNAPSHOT_TTL = 3600; // seconds — last-good fallback if GitHub fails
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -116,6 +117,42 @@ function stripQuotes(s) {
 // GET /products — public product feed (Cache API, 60s TTL, ?refresh=1 purges)
 // ---------------------------------------------------------------------------
 
+// Fetch + parse every product .md file from the repo contents API.
+async function buildProductList(env) {
+  const listUrl =
+    `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${PRODUCTS_DIR}`;
+  const listRes = await fetch(listUrl, { headers: ghHeaders(env) });
+  if (!listRes.ok) throw new Error(`GitHub listing failed: ${listRes.status}`);
+  const entries = await listRes.json();
+
+  const files = (Array.isArray(entries) ? entries : []).filter(
+    (e) => e.type === 'file' && e.name.endsWith('.md')
+  );
+
+  const results = await Promise.all(
+    files.map(async (f) => {
+      try {
+        const res = await fetch(f.url, {
+          headers: { ...ghHeaders(env), Accept: 'application/vnd.github.raw+json' },
+        });
+        if (!res.ok) return null;
+        const fm = parseFrontMatter(await res.text());
+        if (!fm || !fm.title) return null; // README.md etc. -> skip
+        // Normalize list fields (tags) to a comma string so both the
+        // Worker feed and the site's fallback parser handle them the same.
+        if (Array.isArray(fm.tags)) fm.tags = fm.tags.join(', ');
+        return { slug: f.name.replace(/\.md$/, ''), ...fm };
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  const items = results.filter(Boolean);
+  items.sort((a, b) => (Number(a.order) || 999) - (Number(b.order) || 999));
+  return items;
+}
+
 async function handleProducts(request, env, ctx) {
   const url = new URL(request.url);
   const cacheKey = new Request(url.toString(), { method: 'GET' });
@@ -129,41 +166,39 @@ async function handleProducts(request, env, ctx) {
 
   let items;
   try {
-    const listUrl =
-      `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${PRODUCTS_DIR}`;
-    const listRes = await fetch(listUrl, { headers: ghHeaders(env) });
-    if (!listRes.ok) throw new Error(`GitHub listing failed: ${listRes.status}`);
-    const entries = await listRes.json();
-
-    const files = (Array.isArray(entries) ? entries : []).filter(
-      (e) => e.type === 'file' && e.name.endsWith('.md')
-    );
-
-    const results = await Promise.all(
-      files.map(async (f) => {
-        try {
-          const res = await fetch(f.url, {
-            headers: { ...ghHeaders(env), Accept: 'application/vnd.github.raw+json' },
-          });
-          if (!res.ok) return null;
-          const fm = parseFrontMatter(await res.text());
-          if (!fm || !fm.title) return null; // README.md etc. -> skip
-          // Normalize list fields (tags) to a comma string so both the
-          // Worker feed and the site's fallback parser handle them the same.
-          if (Array.isArray(fm.tags)) fm.tags = fm.tags.join(', ');
-          return { slug: f.name.replace(/\.md$/, ''), ...fm };
-        } catch {
-          return null;
-        }
-      })
-    );
-
-    items = results.filter(Boolean);
-    items.sort((a, b) => (Number(a.order) || 999) - (Number(b.order) || 999));
+    items = await buildProductList(env);
   } catch (err) {
+    // GitHub is rate-limiting us or momentarily unavailable. Instead of
+    // killing the site with a 502, serve the last good snapshot we have
+    // (stored in the cache under /products-snapshot). If that exists, the
+    // browser sees valid JSON and stale data beats an empty grid.
     console.error('products error:', err);
+    try {
+      const snap = await cache.match(new Request(`${url.origin}/products-snapshot`));
+      if (snap) {
+        return new Response(snap.body, {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json; charset=utf-8',
+            ...CORS_HEADERS,
+            'Cache-Control': 'public, max-age=300',
+            'X-Products-Source': 'snapshot',
+          },
+        });
+      }
+    } catch (e2) {
+      console.error('snapshot read error:', e2);
+    }
     return json({ error: 'Could not load products.' }, 502);
   }
+
+  // Keep a longer-lived copy for the failure path above.
+  ctx.waitUntil(
+    cache.put(
+      new Request(`${url.origin}/products-snapshot`),
+      json(items, 200, { 'Cache-Control': `public, max-age=${SNAPSHOT_TTL}` })
+    )
+  );
 
   const resp = json(items, 200, {
     'Cache-Control': `public, max-age=${PRODUCTS_CACHE_TTL}`,
@@ -179,11 +214,21 @@ async function handleProducts(request, env, ctx) {
 const GH_API = 'https://api.github.com';
 
 async function handleGithubProxy(request, env, url) {
-  if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET) {
-    return json({ error: 'GitHub OAuth is not configured on this Worker.' }, 500);
-  }
+  // Strip either prefix; Decap's github backend appends "/github/..." to
+  // base_url, so both /api/v1/github/* and /github/* must work.
+  const path = url.pathname.replace(/^\/(api\/v1)?\/github\/?/, ''); // oauth | callback | token | <api path>
 
-  const path = url.pathname.replace(/^\/api\/v1\/github\/?/, ''); // oauth | callback | token | <api path>
+  // OAuth endpoints need the GitHub App credentials. The transparent API
+  // proxy (path 4) works without them when the admin sends its own token,
+  // so only fail for auth-specific routes.
+  if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET) {
+    if (['oauth', 'callback', 'token'].includes(path)) {
+      return json(
+        { error: 'GitHub OAuth is not configured on this Worker. Add GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET in Workers → Settings → Variables & Secrets, then Deploy.' },
+        500
+      );
+    }
+  }
 
   // 1) Start login: send browser to GitHub's authorize page
   if (path === 'oauth') {
@@ -340,13 +385,19 @@ export default {
     }
 
     if (url.pathname === '/products') return handleProducts(request, env, ctx);
-    if (url.pathname.startsWith('/api/v1/github')) return handleGithubProxy(request, env, url);
+    // Decap's github backend appends "/github/..." to base_url, so accept
+    // both /api/v1/github/* and /github/*.
+    if (url.pathname.startsWith('/api/v1/github') || url.pathname.startsWith('/github')) {
+      return handleGithubProxy(request, env, url);
+    }
     if (url.pathname === '/contact' && request.method === 'POST') return handleContact(request, env);
 
     if (url.pathname === '/') {
       return json({
         service: 'decap-proxy',
         routes: ['/products', '/contact (POST)', '/api/v1/github/*'],
+        oauth_configured: Boolean(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET),
+        formspree_configured: Boolean(env.FORMSPREE_ENDPOINT),
       });
     }
 
