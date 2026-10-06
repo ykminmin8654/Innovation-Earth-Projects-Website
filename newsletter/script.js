@@ -146,8 +146,18 @@
     if (!postsGridEl) return;
 
     var list = getVisiblePosts();
-    if (activeFilter === 'all' && !activeSearch) {
-      list = list.filter(function (p) { return !p.featured; });
+    // Only hide the featured post from the grid when it is actually being
+    // displayed in the featured slot above. Otherwise (filter/search active,
+    // or no featured slot exists) every post must remain in the grid —
+    // this is what caused "No posts here" with posts loaded (1/1).
+    var featuredShown = false;
+    if (activeFilter === 'all' && !activeSearch && featuredPostEl) {
+      for (var fi = 0; fi < list.length; fi++) {
+        if (list[fi].featured) { featuredShown = true; break; }
+      }
+      if (featuredShown) {
+        list = list.filter(function (p) { return !p.featured; });
+      }
     }
 
     if (!list.length) {
