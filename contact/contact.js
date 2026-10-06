@@ -12,22 +12,21 @@
      Add "Send Email" binding, variable name EMAIL,
      destination address InnovationEarthProjects@gmail.com → Deploy
 
-   If the Worker is unreachable, the form falls back to opening
-   the visitor's email app with the message pre-filled.
+   If the Worker is unreachable, the form shows a simple error asking
+   the visitor to try again.
    ============================================================ */
 
 (function () {
   'use strict';
 
-  /* ---------------- CONFIG (fill me in) ---------------- */
+  /* ---------------- CONFIG ---------------- */
 
   var ENDPOINTS = {
     worker: 'https://decap-proxy.ykminmin8654.workers.dev/contact',   // your Cloudflare Worker (POST /contact)
     form: ''      // unused — kept in case you ever switch to Formspree
   };
 
-  var DELIVERY_MODE = 'auto';           // 'auto' | 'mailto'
-  var FALLBACK_EMAIL = 'InnovationEarthProjects@gmail.com';
+  var DELIVERY_MODE = 'auto';           // 'auto' | 'none' ('none' skips the Worker and always errors)
 
   /* ------------------------------------------------------- */
 
@@ -125,7 +124,7 @@
   }
 
   function activeEndpoint() {
-    if (DELIVERY_MODE === 'mailto') return null;
+    if (DELIVERY_MODE === 'none') return null;
     if (ENDPOINTS.worker) return { url: ENDPOINTS.worker, style: 'json' };
     if (ENDPOINTS.form)   return { url: ENDPOINTS.form,   style: 'html' };
     return null;
@@ -141,7 +140,12 @@
     var payload = collectPayload();
     var endpoint = activeEndpoint();
 
-    if (!endpoint) { sendViaMailto(payload); return; }
+    if (!endpoint) {
+      setStatus('error',
+        '<i class="fas fa-triangle-exclamation"></i> Email delivery isn\u2019t set up yet. ' +
+        'Please try again in a moment.');
+      return;
+    }
 
     setBusy(true);
 
@@ -167,35 +171,10 @@
       .catch(function (err) {
         console.error('Contact submit failed:', err);
         setBusy(false);
-        // Server-side delivery unavailable — hand the composed message
-        // to the visitor's email app instead of dead-ending.
-        sendViaMailto(payload, err.message);
+        setStatus('error',
+          '<i class="fas fa-triangle-exclamation"></i> Something went wrong sending that. ' +
+          'Please try again in a moment.');
       });
-  }
-
-  /* ---------------- Mailto fallback ---------------- */
-
-  function mailtoHref(p) {
-    var body =
-      p.message +
-      '\n\n\u2014\nFrom: ' + p.name + ' <' + p.email + '>' +
-      '\nSent via innovationearthprojects.org/contact';
-    return 'mailto:' + FALLBACK_EMAIL +
-      '?subject=' + encodeURIComponent('[' + p.subject + '] Contact form') +
-      '&body=' + encodeURIComponent(body);
-  }
-
-  function sendViaMailto(p, reason) {
-    // No server endpoint (or delivery failed) — hand off to the user's mail client.
-    var note = reason && /configured/i.test(reason)
-      ? 'Email delivery isn\u2019t set up on our server yet, so '
-      : '';
-    setStatus('success',
-      '<i class="fas fa-circle-check"></i> ' + note + 'Looks good! ' +
-      '<a href="' + mailtoHref(p) + '">Click here to open your email app</a> ' +
-      'and hit send \u2014 the message is already written for you.');
-    var link = statusBox.querySelector('a');
-    if (link) link.focus();
   }
 
   /* ---------------- UI helpers ---------------- */
