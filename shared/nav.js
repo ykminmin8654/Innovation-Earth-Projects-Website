@@ -18,20 +18,18 @@
     '</svg>';
 
   var NAV_LINKS = [
-    { href: '/products',   label: 'Products',   key: 'products'   },
-    { href: '/newsletter', label: 'Newsletter', key: 'newsletter' }
+    { href: '/products', label: 'Products', key: 'products' },
+    { href: '/admin/',   label: 'Admin',    key: 'admin'    }
   ];
 
   var FOOTER_SITE_LINKS = [
-    { href: '/home',       label: 'Home'       },
-    { href: '/products',   label: 'Products'   },
-    { href: '/newsletter', label: 'Newsletter' }
+    { href: '/home',     label: 'Home'     },
+    { href: '/products', label: 'Products' }
   ];
 
   var SECTIONS = {
-    'home':       '/home/index.html',
-    'products':   '/products/index.html',
-    'newsletter': '/newsletter/index.html'
+    'home':     '/home/index.html',
+    'products': '/products/index.html'
   };
 
   /* ============================================================

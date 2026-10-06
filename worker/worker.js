@@ -1,7 +1,7 @@
 /**
  * Cloudflare Worker — Turnstile Verification
  * 
- * Receives form submissions from the newsletter (or any form),
+ * Receives form submissions from any site form,
  * verifies the Turnstile token with Cloudflare's Siteverify API,
  * and returns success/failure.
  * 
