@@ -73,6 +73,13 @@
     return `fas ${cls}`;
   }
 
+  // Pricing: most tools are free; a product can declare its own price label
+  // via the optional "pricing" field in Admin (e.g. "$5 one-time").
+  function pricingLabel(product) {
+    const p = String(product.pricing || '').trim();
+    return p || 'Free';
+  }
+
   // ------------------------------------------------------------
   // Minimal front-matter parser (YAML subset used by Decap CMS)
   // ------------------------------------------------------------
@@ -361,15 +368,15 @@
 
       const metaHtml = dateStr
         ? `<span class="product-card__meta">${escapeHtml(dateStr)}</span>`
-        : `<span class="product-card__meta">Free</span>`;
+        : `<span class="product-card__meta">${escapeHtml(pricingLabel(p))}</span>`;
 
       return `
-        <article class="product-card">
+        <article class="product-card grad-border" data-reveal style="--reveal-delay:${(i % 6) * 70}ms">
           <div class="product-card__top">
             <span class="product-card__status product-card__status--${meta.cls}">
               ${meta.label}
             </span>
-            <span class="product-card__free">Free</span>
+            <span class="product-card__free${pricingLabel(p).toLowerCase() === 'free' ? '' : ' product-card__free--paid'}">${escapeHtml(pricingLabel(p))}</span>
           </div>
 
           <div class="product-card__icon">

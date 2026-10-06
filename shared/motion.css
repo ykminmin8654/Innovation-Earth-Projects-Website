@@ -1,0 +1,163 @@
+/* ============================================================
+   MOTION — shared animation primitives (all pages)
+   Depends on: tokens.css. Class names mirror home/styles.css so
+   the same JS utilities work everywhere.
+   ============================================================ */
+
+/* ---------- Scroll reveal ---------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 0.7s cubic-bezier(.2, .7, .2, 1),
+    transform 0.7s cubic-bezier(.2, .7, .2, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+.reveal[data-delay="100"] { --reveal-delay: 100ms; }
+.reveal[data-delay="200"] { --reveal-delay: 200ms; }
+.reveal[data-delay="300"] { --reveal-delay: 300ms; }
+.reveal[data-delay="400"] { --reveal-delay: 400ms; }
+.reveal[data-delay="500"] { --reveal-delay: 500ms; }
+.reveal[data-delay="600"] { --reveal-delay: 600ms; }
+
+/* Reveal variants */
+.reveal--left  { transform: translateX(-28px); }
+.reveal--right { transform: translateX(28px); }
+.reveal--zoom  { transform: scale(0.92); }
+.reveal--left.is-visible,
+.reveal--right.is-visible,
+.reveal--zoom.is-visible { transform: none; }
+
+/* ---------- Stagger (JS adds .stagger-in to children) ---------- */
+.stagger-in {
+  animation: staggerIn 0.7s cubic-bezier(.2, .7, .2, 1) both;
+  animation-delay: var(--stagger-delay, 0ms);
+}
+@keyframes staggerIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---------- Accent gradient shimmer ---------- */
+.accent-shimmer {
+  background-image: linear-gradient(90deg, var(--teal) 0%, var(--cyan) 50%, var(--lime) 100%);
+  background-size: 200% 100%;
+  background-position: 0% 0%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--teal);
+  animation: accentShimmer 4s ease-in-out infinite;
+}
+@keyframes accentShimmer {
+  0%, 100% { background-position: 0% 0%; }
+  50%      { background-position: 100% 0%; }
+}
+@supports not (-webkit-background-clip: text) {
+  .accent-shimmer {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    color: var(--teal);
+    animation: none;
+  }
+}
+
+/* ---------- Floating elements ---------- */
+.float-slow { animation: floatY 5s ease-in-out infinite; }
+.float-mid  { animation: floatY 6s ease-in-out infinite 0.4s; }
+.float-fast { animation: floatY 4s ease-in-out infinite 0.8s; }
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+
+/* ---------- Icon pop / wiggle on hover ---------- */
+.icon-pop i,
+.icon-pop svg { display: inline-block; transition: transform 0.35s cubic-bezier(.34, 1.56, .64, 1); }
+.icon-pop:hover i,
+.icon-pop:hover svg { transform: scale(1.18) rotate(-6deg); }
+
+/* ---------- Shine sweep across cards/buttons ---------- */
+.shine { position: relative; overflow: hidden; }
+.shine::after {
+  content: "";
+  position: absolute;
+  top: 0; left: -80%;
+  width: 50%; height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transform: skewX(-18deg);
+  pointer-events: none;
+  transition: left 0.7s ease;
+}
+.shine:hover::after { left: 130%; }
+
+/* ---------- Soft pulse ring ---------- */
+.pulse-ring { position: relative; }
+.pulse-ring::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  border: 2px solid var(--cyan);
+  opacity: 0;
+  animation: pulseRing 2.4s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes pulseRing {
+  0%   { transform: scale(0.9); opacity: 0.7; }
+  70%  { transform: scale(1.15); opacity: 0; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+
+/* ---------- Count-up numbers ---------- */
+.countup { font-variant-numeric: tabular-nums; }
+
+/* ---------- Gradient border card (hover) ---------- */
+.grad-border {
+  position: relative;
+  transition: transform 0.35s var(--ease, ease), box-shadow 0.35s var(--ease, ease);
+}
+.grad-border::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(120deg, var(--teal), var(--cyan), var(--lime));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+.grad-border:hover::after { opacity: 1; }
+.grad-border:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 34px -14px rgba(0, 128, 128, 0.35);
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal--left,
+  .reveal--right,
+  .reveal--zoom {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .stagger-in,
+  .float-slow, .float-mid, .float-fast,
+  .accent-shimmer,
+  .shine::after,
+  .pulse-ring::before {
+    animation: none !important;
+  }
+  .grad-border:hover { transform: none; }
+}

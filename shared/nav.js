@@ -68,7 +68,7 @@
         '<nav class="nav__links" id="primary-nav" aria-label="Primary">' +
           buildNavLinks() +
         '</nav>' +
-        '<a href="/products" class="btn btn--ghost nav__cta">' +
+        '<a href="/products" class="btn btn--ghost nav__cta shine">' +
           'Open tools <i class="fas fa-arrow-right"></i>' +
         '</a>' +
         '<button class="nav__toggle" id="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="primary-nav">' +
