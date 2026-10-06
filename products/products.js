@@ -77,10 +77,7 @@
   // via the optional "pricing" field in Admin (e.g. "$5 one-time").
   function pricingLabel(product) {
     const p = String(product.pricing || '').trim();
-    // Admin's default value is literally "Free" — treat that (and blank) as the
-    // friendly "Mostly free" badge; any other text is shown verbatim as a price.
-    if (!p || /^free$/i.test(p)) return 'Mostly free';
-    return p;
+    return p || 'Free';
   }
 
   // ------------------------------------------------------------
@@ -379,7 +376,7 @@
             <span class="product-card__status product-card__status--${meta.cls}">
               ${meta.label}
             </span>
-            <span class="product-card__free${/^free$/i.test(pricingLabel(p)) ? '' : ' product-card__free--paid'}">${escapeHtml(pricingLabel(p))}</span>
+            <span class="product-card__free${pricingLabel(p).toLowerCase() === 'free' ? '' : ' product-card__free--paid'}">${escapeHtml(pricingLabel(p))}</span>
           </div>
 
           <div class="product-card__icon">

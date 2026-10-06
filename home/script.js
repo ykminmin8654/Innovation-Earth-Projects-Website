@@ -253,9 +253,8 @@
         var statusLabel = statusCls === 'beta' ? 'Beta' : statusCls === 'soon' ? 'Coming soon' : 'Live';
         var iconRaw = String(p.icon || 'fa-cube').trim();
         var icon = iconRaw.indexOf('fa-') === 0 ? iconRaw : 'fa-' + iconRaw;
-        var pricingRaw = String(p.pricing || '').trim();
-        var pricing = (!pricingRaw || /^free$/i.test(pricingRaw)) ? 'Mostly free' : pricingRaw;
-        var pricingCls = pricing === 'Mostly free' ? '' : ' product-card__free--paid';
+        var pricing = String(p.pricing || '').trim() || 'Free';
+        var pricingCls = pricing.toLowerCase() === 'free' ? '' : ' product-card__free--paid';
         var url = p.url ? String(p.url).trim() : '';
         if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
         var tags = Array.isArray(p.tags) ? p.tags.slice(0, 3) : [];
@@ -279,7 +278,7 @@
             '<p class="product-card__desc">' + esc(p.description || '') + '</p>' +
             tagsHtml +
             '<div class="product-card__footer">' +
-              '<span class="product-card__meta">' + esc(pricing) + '</span>' +
+              '<span class="product-card__meta">Free</span>' +
               linkHtml +
             '</div>' +
           '</article>';
