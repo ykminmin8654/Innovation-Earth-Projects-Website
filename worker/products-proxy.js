@@ -213,8 +213,11 @@ async function handleProducts(request, env, ctx) {
 
 const GH_API = 'https://api.github.com';
 
-// Bump with every paste+deploy so you can prove which build Cloudflare serves.
-const BUILD_ID = '2026-10-07.6';
+// 2026-10-07.8: callback now speaks Decap's real Netlify-style popup handshake
+// ("authorizing:github" ping/pong + "authorization:github:success:{token,...}"),
+// with the code->token exchange done server-side. Fixes the permanent
+// "Completing sign-in…" hang (old builds sent a message format Decap ignores).
+const BUILD_ID = '2026-10-07.8';
 
 async function handleGithubProxy(request, env, url) {
   // Strip either prefix; Decap's github backend appends "/github/..." to
@@ -276,40 +279,77 @@ async function handleGithubProxy(request, env, url) {
     return Response.redirect(authUrl.toString(), 302);
   }
 
-  // 2) GitHub redirects back here with ?code&state -> hand it to the admin tab.
-  // Decap's OAuth page listens for a message of the form "provider:true?params"
-  // from window.opener. Robust version: retry postMessage until the opener
-  // confirms receipt ("done"), and if there is no opener at all (redirect-only
-  // flow), bounce straight back to the admin page carrying code/state so the
-  // CMS can complete login without a popup.
+  // 2) GitHub redirects back here with ?code&state.
+  // Decap's github backend uses the Netlify-style popup handshake:
+  //   main tab listens for "authorizing:github" FROM the popup (origin = base_url);
+  //   it replies "authorizing:github"; then it waits for
+  //   "authorization:github:success:{json}" where json = {token, token_type}.
+  // FIX vs old builds: the Worker now performs the code->token exchange itself
+  // and sends that exact success message (retried until confirmed), instead of
+  // the previous "github:true?..." relay which Decap never understood — that is
+  // why the popup just hung on "Completing sign-in…" forever.
   if (path === 'callback') {
-    const params = url.search.slice(1) || '';
-    const safeParams = params.replace(/"/g, '%22').replace(/</g, '\\u003c');
+    const code = url.searchParams.get('code') || '';
     const origin = url.origin;
     const basePath = url.pathname.replace(/\/callback$/, '');
+    let accessToken = '';
+    let tokenError = '';
+    if (code && clientId && clientSecret) {
+      try {
+        const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({
+            client_id: clientId,
+            client_secret: clientSecret,
+            code,
+            redirect_uri: `${origin}${basePath}/callback`,
+          }),
+        });
+        const data = await tokenRes.json().catch(() => ({}));
+        if (data.access_token) accessToken = data.access_token;
+        else tokenError = data.error_description || data.error || 'Token exchange failed';
+      } catch (e) {
+        tokenError = String(e);
+      }
+    }
+    const payload = accessToken ? JSON.stringify({ token: accessToken }) : '';
+    // Embed safely in the inline script: escape backslashes, double quotes and
+    // < so the JSON string literal can never break out of its quotes.
+    const safePayload = accessToken
+      ? payload.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/</g, '\\u003c')
+      : '';
+    const errText = String(tokenError).replace(/</g, '&lt;').slice(0, 300);
     const html =
       '<!doctype html><html><head><meta charset="utf-8"><title>Authenticating\u2026</title></head>' +
       '<body style="font-family:sans-serif;padding:2rem">' +
       '<p id="msg">Completing sign-in\u2026 you can close this tab once the admin page loads.</p>' +
-      '<script>(function(){' +
-      'var params="' + safeParams + '";' +
-      'if(window.opener){' +
-      'var tries=0;' +
-      'function send(){if(tries++>40)return;try{window.opener.postMessage("github:true?"+params,"*");}catch(e){}setTimeout(send,250);}' +
-      'window.addEventListener("message",function(ev){if(ev.data==="done"){window.close();}});' +
-      'send();' +
-      'setTimeout(function(){document.getElementById("msg").textContent="Login finished \u2014 refresh the admin tab if it did not load automatically.";} ,11000);' +
-      '}else{' +
-      'location.replace("' + origin + '/admin/#access_token=&' + encodeURIComponent(safeParams) + '");' +
-      'setTimeout(function(){location.replace("' + origin + '/admin/");},1500);' +
+      (accessToken ? '' : `<p style="color:#b00;font-size:.9rem">Token exchange failed: ${errText}</p>`) +
+      '<scr' + 'ipt>(function(){' +
+      'var ok=' + (accessToken ? 'true' : 'false') + ';' +
+      'var payload="' + safePayload + '";' +
+      'if(!window.opener){document.getElementById("msg").textContent="Please return to the admin tab and try Log in again.";return;}' +
+      'var got=false;' +
+      'function succeed(){try{window.opener.postMessage("authorization:github:success:"+payload,"*");}catch(e){}}' +
+      'window.addEventListener("message",function(ev){' +
+      'if(ev.data==="authorizing:github"){' +
+      'got=true;' +
+      'if(!ok){try{window.opener.postMessage("authorization:github:error:"+JSON.stringify({message:"Token exchange failed \u2014 check Worker variables"}),"*");}catch(e){}return;}' +
+      'succeed();var t=0;' +
+      'var iv=setInterval(function(){if(t++>24){clearInterval(iv);document.getElementById("msg").textContent="Login finished \u2014 refresh the admin tab if it did not load automatically.";return;}if(ok)succeed();},400);' +
+      'try{window.close();}catch(e){}' +
       '}' +
-      '})();</script></body></html>';
+      '});' +
+      'function ping(){if(got)return;try{window.opener.postMessage("authorizing:github","*");}catch(e){}setTimeout(ping,500);}' +
+      'ping();' +
+      '})();</scr' + 'ipt></body></html>';
     return new Response(html, {
       headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS_HEADERS },
     });
   }
 
-  // 3) Admin exchanges code for token (client secret stays server-side)
+  // 3) Admin exchanges code for token (kept for compatibility; normally the
+  // callback above already did the exchange and the admin never calls this).
   if (path === 'token') {
     const body = await request.json().catch(() => ({}));
     const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
@@ -319,9 +359,10 @@ async function handleGithubProxy(request, env, url) {
         client_id: clientId,
         client_secret: clientSecret,
         code: body.code || '',
+        redirect_uri: `${url.origin}${url.pathname.replace(/\/token$/, '')}/callback`,
       }),
     });
-    const data = await tokenRes.json();
+    const data = await tokenRes.json().catch(() => ({}));
     if (data.access_token) {
       return json({ access_token: data.access_token, token_type: data.token_type || 'bearer' });
     }
