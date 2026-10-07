@@ -213,6 +213,9 @@ async function handleProducts(request, env, ctx) {
 
 const GH_API = 'https://api.github.com';
 
+// Bump with every paste+deploy so you can prove which build Cloudflare serves.
+const BUILD_ID = '2026-10-07.4';
+
 async function handleGithubProxy(request, env, url) {
   // Strip either prefix; Decap's github backend appends "/github/..." to
   // base_url, so both /api/v1/github/* and /github/* must work.
@@ -227,9 +230,20 @@ async function handleGithubProxy(request, env, url) {
 
   if (!clientId || !clientSecret) {
     if (['oauth', 'callback', 'token'].includes(path)) {
+      // Self-diagnosing error: a deployed build that reaches THIS line is
+      // guaranteed current (the old builds had different text/no diagnosis field),
+      // so the only possible cause is missing/unsaved Production variables.
       return json(
-        { error: 'GitHub OAuth is not configured on this Worker. Add GITHUB_OAUTH_ID and GITHUB_OAUTH_SECRET in Workers → Settings → Variables & Secrets, then Deploy.' },
-        500
+        {
+          error: 'GitHub OAuth variables are missing in the PRODUCTION environment of this Worker.',
+          hint: 'Workers → decap-proxy → Settings → Variables and secrets → confirm you are editing the "Production" environment (not Preview) → add GITHUB_OAUTH_ID + GITHUB_OAUTH_SECRET → Save AND deploy → retry.',
+          diagnosis: {
+            client_id_present: Boolean(clientId),
+            client_secret_present: Boolean(clientSecret),
+            running_build: BUILD_ID, // if this shows an OLD build id, your paste/deploy did not take effect
+          },
+        },
+        501
       );
     }
   }
@@ -324,8 +338,38 @@ async function handleContact(request, env) {
   const topic = String(payload.topic || 'General').trim().slice(0, 60);
   const message = String(payload.message || '').trim().slice(0, 5000);
   const company = String(payload.company || ''); // honeypot — must be empty
+  const turnstileToken = String(payload.turnstile || '');
 
   if (company !== '') return json({ ok: true }); // bot: pretend success, drop it
+
+  // Cloudflare Turnstile: verify the human-ness token when configured.
+  // Set TURNSTILE_SECRET_KEY in Workers → Settings → Variables & Secrets.
+  // While unset, submissions pass through (so the form keeps working before
+  // you create the widget) but we require a token field to exist at all.
+  if (env.TURNSTILE_SECRET_KEY) {
+    if (!turnstileToken) {
+      return json({ ok: false, error: 'Please complete the human check below the form.' }, 400);
+    }
+    let tsRes;
+    try {
+      tsRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          secret: env.TURNSTILE_SECRET_KEY,
+          response: turnstileToken,
+          remoteip: request.headers.get('CF-Connecting-IP') || undefined,
+        }),
+      });
+    } catch {
+      return json({ ok: false, error: 'The human check timed out. Please try again.' }, 502);
+    }
+    const tsData = await tsRes.json().catch(() => ({}));
+    if (!tsData.success) {
+      return json({ ok: false, error: 'The human check failed. Please try again.', codes: tsData['error-codes'] || [] }, 403);
+    }
+  }
+
   if (!name || !validEmail(email) || message.length < 10) {
     return json(
       { ok: false, error: 'Please fill in your name, a valid email, and a message of at least 10 characters.' },
@@ -401,7 +445,8 @@ export default {
       // so you can tell whether Cloudflare is actually serving your latest code.
       return json({
         service: 'decap-proxy',
-        build: '2026-10-07.3',
+        build: BUILD_ID,
+        turnstile_configured: Boolean(env.TURNSTILE_SECRET_KEY),
         routes: ['/products', '/contact (POST)', '/api/v1/github/*', '/github/*'],
         oauth_configured: Boolean((env.GITHUB_OAUTH_ID || env.GITHUB_CLIENT_ID) && (env.GITHUB_OAUTH_SECRET || env.GITHUB_CLIENT_SECRET)),
         client_id_present: Boolean(env.GITHUB_OAUTH_ID || env.GITHUB_CLIENT_ID),

@@ -104,6 +104,14 @@
 
             <div class="form-status" id="form-status" role="status" aria-live="polite"></div>
 
+            <!-- Cloudflare Turnstile human check (invisible fallback: managed) -->
+            <div class="cf-turnstile-wrap" id="cf-turnstile-wrap">
+              <div class="cf-turnstile" id="cf-turnstile"
+                   data-sitekey="0x4AAAAAABgPLACEHOLDER000000"
+                   data-theme="light"
+                   data-size="flex"></div>
+            </div>
+
             <button type="submit" class="btn btn--primary btn--lg btn--block" id="cf-submit">
               <i class="fas fa-paper-plane"></i> Send message
             </button>
@@ -151,6 +159,7 @@
 
   <div id="footer-mount"></div>
 
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
   <script src="../shared/nav.js"></script>
   <script src="../shared/motion.js"></script>
   <script src="./contact.js"></script>

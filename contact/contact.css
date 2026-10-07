@@ -252,3 +252,13 @@
   .field-row { grid-template-columns: 1fr; gap: 0; }
   .contact-hero { padding-top: var(--s-7); }
 }
+
+/* ---- Turnstile human check ---- */
+.cf-turnstile-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 1.25rem;
+  min-height: 0;
+}
+.cf-turnstile-wrap:empty { display: none; }
+#cf-turnstile { transform-origin: top center; }

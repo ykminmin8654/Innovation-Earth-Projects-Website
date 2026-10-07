@@ -30,16 +30,50 @@
 
   var DELIVERY_MODE = 'auto';           // 'auto' | 'none' ('none' skips the Worker and always errors)
 
+  /* ---- Cloudflare Turnstile (human check before sending) ----
+     Create a widget: dash.cloudflare.com → Turnstile → Add widget
+       Hostname: innovationearthprojects.org, Mode: Managed (or Interactive)
+     Then paste its Site Key below (also set in index.html data-sitekey)
+     and add the matching Secret Key to the Worker as TURNSTILE_SECRET_KEY.
+     Until both are configured the form still submits normally. */
+  var TURNSTILE_SITE_KEY = '0x4AAAAAABgPLACEHOLDER000000'; // replace with your widget's site key
+
   /* ------------------------------------------------------- */
 
   var form, statusBox, submitBtn;
   var fields = {};
+  var turnstileWidgetId = null;
+  var turnstileToken = '';
+
+  function initTurnstile() {
+    var mount = document.getElementById('cf-turnstile');
+    if (!mount || !window.turnstile) return;
+    try {
+      turnstileWidgetId = window.turnstile.render(mount, {
+        sitekey: TURNSTILE_SITE_KEY,
+        theme: 'light',
+        size: 'flex',
+        callback: function (token) { turnstileToken = token; },
+        'error-callback': function () { turnstileToken = ''; },
+        'expired-callback': function () { turnstileToken = ''; }
+      });
+    } catch (e) { /* widget failed to render; Worker-side check will still gate */ }
+  }
+
+  function resetTurnstile() {
+    turnstileToken = '';
+    if (window.turnstile && turnstileWidgetId != null) {
+      try { window.turnstile.reset(turnstileWidgetId); } catch (e) {}
+    }
+  }
 
   function init() {
     form = document.getElementById('contact-form');
     statusBox = document.getElementById('form-status');
     submitBtn = document.getElementById('cf-submit');
     if (!form || !statusBox || !submitBtn) return;
+
+    initTurnstile();
 
     fields = {
       name:    document.getElementById('cf-name'),
@@ -120,6 +154,7 @@
       subject: fields.subject ? fields.subject.value : 'General',
       message: fields.message.value.trim(),
       company: hp ? hp.value : '',        // honeypot — bots fill this in
+      turnstile: turnstileToken || (document.querySelector('#cf-turnstile input, #cf-turnstile-response') || {}).value || '',
       url:     window.location.href,
       time:    new Date().toISOString()
     };
@@ -169,6 +204,7 @@
       .then(function () {
         setBusy(false);
         form.reset();
+        resetTurnstile();
         setStatus('success',
           '<i class="fas fa-circle-check"></i> Thanks! Your message is on its way \u2014 we\u2019ll reply within 1\u20133 business days.');
       })
