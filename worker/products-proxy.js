@@ -393,10 +393,16 @@ export default {
     if (url.pathname === '/contact' && request.method === 'POST') return handleContact(request, env);
 
     if (url.pathname === '/') {
+      // Status/diagnostics endpoint. BUILD_ID changes with every paste+deploy,
+      // so you can tell whether Cloudflare is actually serving your latest code.
       return json({
         service: 'decap-proxy',
-        routes: ['/products', '/contact (POST)', '/api/v1/github/*'],
+        build: '2026-10-07.2',
+        routes: ['/products', '/contact (POST)', '/api/v1/github/*', '/github/*'],
         oauth_configured: Boolean(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET),
+        client_id_present: Boolean(env.GITHUB_CLIENT_ID),
+        client_secret_present: Boolean(env.GITHUB_CLIENT_SECRET),
+        github_token_present: Boolean(env.GITHUB_TOKEN),
         formspree_configured: Boolean(env.FORMSPREE_ENDPOINT),
       });
     }
