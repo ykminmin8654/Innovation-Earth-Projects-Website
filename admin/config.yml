@@ -12,9 +12,9 @@ media_folder: "products/images"
 public_folder: "/products/images"
 
 collections:
-  - name: products
-    label: Products
-    label_singular: Product
+  - name: admin
+    label: Admin
+    label_singular: Entry
     description: Tools and products shown on the Products page.
     folder: products/data
     create: true

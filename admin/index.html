@@ -1,12 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Products Manager — Innovation Earth Projects</title>
+  <title>Admin — Innovation Earth Projects</title>
   <meta name="robots" content="noindex" />
+  <style>
+    body { margin: 0; background: #171b21; }
+    #iep-boot {
+      position: fixed; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 14px;
+      font: 600 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: #e6e9ee; background: #171b21; text-align: center; padding: 24px;
+    }
+    #iep-boot img { width: 72px; height: 72px; object-fit: contain; }
+    #iep-boot .sub { font-weight: 400; font-size: 13px; color: #9aa4b2; max-width: 420px; }
+    #iep-boot code {
+      background: #232a33; padding: 2px 6px; border-radius: 4px;
+      font-size: 12px; color: #7dd3c0; word-break: break-all;
+    }
+    #iep-boot a { color: #7dd3c0; }
+    .spinner {
+      width: 26px; height: 26px; border-radius: 50%;
+      border: 3px solid #2c333d; border-top-color: #35d0ba;
+      animation: iep-spin 0.9s linear infinite;
+    }
+    @keyframes iep-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+  </style>
 </head>
 <body>
-  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
+  <!-- Shown while decap-cms.js downloads; replaced by the CMS once it boots. -->
+  <div id="iep-boot">
+    <img src="/images/logo.png" alt="Innovation Earth Projects logo" />
+    <div class="spinner" aria-hidden="true"></div>
+    <div>Loading Admin&hellip;</div>
+    <div class="sub" id="iep-boot-sub">If this message stays for more than a few seconds, the CMS script may be blocked by an ad blocker or your network. Disable it for this page and refresh.</div>
+  </div>
+
+  <script>
+    // Hide the splash as soon as Decap takes over the page.
+    (function () {
+      var done = false;
+      function hide() {
+        if (done) return;
+        done = true;
+        var b = document.getElementById('iep-boot');
+        if (b) b.remove();
+      }
+      var check = setInterval(function () {
+        if (document.querySelector('.nc-app-container, [id^="nc-"]')) { clearInterval(check); hide(); }
+      }, 100);
+      setTimeout(function () { clearInterval(check); }, 20000);
+      window.addEventListener('load', function () { setTimeout(hide, 3000); });
+    })();
+  </script>
+
+  <!-- Multiple CDNs: if unpkg is blocked/slow, jsDelivr takes over. -->
+  <script src="https://unpkg.com/decap-cms@^3.3.3/dist/decap-cms.js"
+          onerror="(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/decap-cms@^3.3.3/dist/decap-cms.js';s.onerror=function(){var sub=document.getElementById('iep-boot-sub');if(sub){sub.innerHTML='Could not load the CMS from any CDN. Check your connection or ad blocker, then refresh.';}};document.body.appendChild(s);})();"></script>
 </body>
 </html>
