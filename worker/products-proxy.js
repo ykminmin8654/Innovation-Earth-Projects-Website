@@ -12,8 +12,8 @@
  *   OPTIONS *                 -> CORS preflight
  *
  * Required environment variables (Worker Settings -> Variables and Secrets):
- *   GITHUB_CLIENT_ID       GitHub OAuth App client id      (already set)
- *   GITHUB_CLIENT_SECRET   GitHub OAuth App secret         (already set)
+ *   GITHUB_OAUTH_ID       GitHub OAuth App client id      (variable names in Cloudflare)
+ *   GITHUB_OAUTH_SECRET   GitHub OAuth App secret         (GITHUB_CLIENT_ID/SECRET also accepted)
  *   FORMSPREE_ENDPOINT     NEW — e.g.
  *                          https://formspree.io/f/xdkazzzz
  *                          1. Sign up free at formspree.io with your Gmail
@@ -221,10 +221,14 @@ async function handleGithubProxy(request, env, url) {
   // OAuth endpoints need the GitHub App credentials. The transparent API
   // proxy (path 4) works without them when the admin sends its own token,
   // so only fail for auth-specific routes.
-  if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET) {
+  // Accept either naming style; Cloudflare vars are GITHUB_OAUTH_ID / GITHUB_OAUTH_SECRET.
+  const clientId = env.GITHUB_OAUTH_ID || env.GITHUB_CLIENT_ID;
+  const clientSecret = env.GITHUB_OAUTH_SECRET || env.GITHUB_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
     if (['oauth', 'callback', 'token'].includes(path)) {
       return json(
-        { error: 'GitHub OAuth is not configured on this Worker. Add GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET in Workers → Settings → Variables & Secrets, then Deploy.' },
+        { error: 'GitHub OAuth is not configured on this Worker. Add GITHUB_OAUTH_ID and GITHUB_OAUTH_SECRET in Workers → Settings → Variables & Secrets, then Deploy.' },
         500
       );
     }
@@ -233,7 +237,7 @@ async function handleGithubProxy(request, env, url) {
   // 1) Start login: send browser to GitHub's authorize page
   if (path === 'oauth') {
     const authUrl = new URL('https://github.com/login/oauth/authorize');
-    authUrl.searchParams.set('client_id', env.GITHUB_CLIENT_ID);
+    authUrl.searchParams.set('client_id', clientId);
     authUrl.searchParams.set('redirect_uri', `${url.origin}/api/v1/github/callback`);
     authUrl.searchParams.set('scope', 'repo,read:user,user:email');
     authUrl.searchParams.set('state', url.searchParams.get('state') || '');
@@ -261,8 +265,8 @@ async function handleGithubProxy(request, env, url) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
       body: JSON.stringify({
-        client_id: env.GITHUB_CLIENT_ID,
-        client_secret: env.GITHUB_CLIENT_SECRET,
+        client_id: clientId,
+        client_secret: clientSecret,
         code: body.code || '',
       }),
     });
@@ -397,11 +401,11 @@ export default {
       // so you can tell whether Cloudflare is actually serving your latest code.
       return json({
         service: 'decap-proxy',
-        build: '2026-10-07.2',
+        build: '2026-10-07.3',
         routes: ['/products', '/contact (POST)', '/api/v1/github/*', '/github/*'],
-        oauth_configured: Boolean(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET),
-        client_id_present: Boolean(env.GITHUB_CLIENT_ID),
-        client_secret_present: Boolean(env.GITHUB_CLIENT_SECRET),
+        oauth_configured: Boolean((env.GITHUB_OAUTH_ID || env.GITHUB_CLIENT_ID) && (env.GITHUB_OAUTH_SECRET || env.GITHUB_CLIENT_SECRET)),
+        client_id_present: Boolean(env.GITHUB_OAUTH_ID || env.GITHUB_CLIENT_ID),
+        client_secret_present: Boolean(env.GITHUB_OAUTH_SECRET || env.GITHUB_CLIENT_SECRET),
         github_token_present: Boolean(env.GITHUB_TOKEN),
         formspree_configured: Boolean(env.FORMSPREE_ENDPOINT),
       });
