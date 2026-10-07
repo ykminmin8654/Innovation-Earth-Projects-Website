@@ -214,7 +214,7 @@ async function handleProducts(request, env, ctx) {
 const GH_API = 'https://api.github.com';
 
 // Bump with every paste+deploy so you can prove which build Cloudflare serves.
-const BUILD_ID = '2026-10-07.4';
+const BUILD_ID = '2026-10-07.5';
 
 async function handleGithubProxy(request, env, url) {
   // Strip either prefix; Decap's github backend appends "/github/..." to
@@ -250,9 +250,27 @@ async function handleGithubProxy(request, env, url) {
 
   // 1) Start login: send browser to GitHub's authorize page
   if (path === 'oauth') {
+    // Guard against the most common setup mistake: pasting the Worker URL
+    // (or some other non-client-id string) into GITHUB_OAUTH_ID. A real
+    // GitHub OAuth App client id looks like Iv1.xxxx / Iv2.xxxx / a 40-hex
+    // char classic id — never a URL. Without this guard GitHub shows a
+    // confusing sign-in/404 page instead of an actionable error.
+    const looksLikeClientId = /^[A-Za-z0-9._-]{15,}$/.test(String(clientId || '')) && !/^https?:\/\//i.test(String(clientId || ''));
+    if (!looksLikeClientId) {
+      return json(
+        {
+          error: 'GITHUB_OAUTH_ID is not a GitHub OAuth App client id.',
+          hint: 'It currently starts with "' + String(clientId).slice(0, 30) + '". Create an OAuth App at https://github.com/settings/developers (Application name/URL: your site; Callback URL: ' + url.origin + '/api/v1/github/callback), then copy its CLIENT ID (looks like Iv1.abc123...) into GITHUB_OAUTH_ID in Workers → Settings → Variables and secrets, and Deploy.',
+          running_build: BUILD_ID,
+        },
+        501
+      );
+    }
     const authUrl = new URL('https://github.com/login/oauth/authorize');
     authUrl.searchParams.set('client_id', clientId);
-    authUrl.searchParams.set('redirect_uri', `${url.origin}/api/v1/github/callback`);
+    // Use the actual incoming base path so both /api/v1/github/* and /github/* aliases work.
+    const basePath = url.pathname.replace(/\/oauth$/, '');
+    authUrl.searchParams.set('redirect_uri', `${url.origin}${basePath}/callback`);
     authUrl.searchParams.set('scope', 'repo,read:user,user:email');
     authUrl.searchParams.set('state', url.searchParams.get('state') || '');
     return Response.redirect(authUrl.toString(), 302);
