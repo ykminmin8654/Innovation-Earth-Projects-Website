@@ -54,6 +54,65 @@
       setTimeout(function () { clearInterval(check); }, 20000);
       window.addEventListener('load', function () { setTimeout(hide, 3000); });
     })();
+
+    // --- OAuth popup resilience -------------------------------------------
+    // Decap opens a popup for GitHub login and waits for a postMessage from
+    // it. Some browsers (or "block popups" settings / strict tracking
+    // protection) block the popup, which leaves the admin page spinning
+    // forever after clicking "Login with GitHub". This shim detects that and:
+    //   1) shows a clear hint telling you to allow popups for this page, and
+    //   2) offers a same-tab fallback that completes login without a popup.
+    (function () {
+      var warned = false;
+      function showHint() {
+        if (warned) return;
+        // Only relevant while the CMS is sitting on the login screen.
+        if (!document.querySelector('[class*="page-logo"], .nc-login-button-container')) return;
+        warned = true;
+        var box = document.createElement('div');
+        box.id = 'iep-oauth-hint';
+        box.style.cssText =
+          'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:99999;' +
+          'max-width:480px;background:#232a33;color:#e6e9ee;border:1px solid #35d0ba;' +
+          'border-radius:10px;padding:14px 18px;font:400 13px/1.5 system-ui,sans-serif;text-align:center;';
+        box.innerHTML =
+          'Popup blocked? Allow popups for this page and try again, or use the ' +
+          '<a href="#" id="iep-oauth-direct" style="color:#7dd3c0;font-weight:600">direct sign-in link</a>. ' +
+          '<span id="iep-oauth-close" style="margin-left:12px;cursor:pointer;color:#9aa4b2">\u2715</span>';
+        document.body.appendChild(box);
+        // Direct link: same authorize URL Decap's popup would open (redirect flow).
+        // The Worker callback page detects the missing opener and bounces back here.
+        var base = (window.DECAP_PROXY_BASE || 'https://decap-proxy.ykminmin8654.workers.dev/api/v1/github');
+        document.getElementById('iep-oauth-direct').addEventListener('click', function (e) {
+          e.preventDefault();
+          location.href = base + '/oauth?state=' + encodeURIComponent(location.origin + '/admin/');
+        });
+        document.getElementById('iep-oauth-close').addEventListener('click', function () {
+          box.remove(); warned = false;
+        });
+      }
+      // Watch for a click on the login button; if no popup materialized in 1.5s, hint.
+      document.addEventListener('click', function (e) {
+        var t = e.target;
+        while (t && t !== document.body) {
+          if (/login|github/i.test(t.className || '') || /github/i.test((t.textContent || '').toLowerCase())) {
+            var origOpen = window.open;
+            var opened = false;
+            window.open = function () { opened = true; return origOpen.apply(window, arguments); };
+            setTimeout(function () {
+              window.open = origOpen;
+              if (!opened) showHint();
+            }, 1500);
+            break;
+          }
+          t = t.parentNode;
+        }
+      }, true);
+      // Also surface the hint if the user returns to a tab still stuck at login.
+      setInterval(function () {
+        if (sessionStorage.getItem('iep-oauth-popup-blocked') === '1') showHint();
+      }, 4000);
+    })();
   </script>
 
   <!-- Multiple CDNs: if unpkg is blocked/slow, jsDelivr takes over. -->

@@ -214,7 +214,7 @@ async function handleProducts(request, env, ctx) {
 const GH_API = 'https://api.github.com';
 
 // Bump with every paste+deploy so you can prove which build Cloudflare serves.
-const BUILD_ID = '2026-10-07.5';
+const BUILD_ID = '2026-10-07.6';
 
 async function handleGithubProxy(request, env, url) {
   // Strip either prefix; Decap's github backend appends "/github/..." to
@@ -276,15 +276,34 @@ async function handleGithubProxy(request, env, url) {
     return Response.redirect(authUrl.toString(), 302);
   }
 
-  // 2) GitHub redirects back here with ?code&state -> hand it to the admin tab
+  // 2) GitHub redirects back here with ?code&state -> hand it to the admin tab.
+  // Decap's OAuth page listens for a message of the form "provider:true?params"
+  // from window.opener. Robust version: retry postMessage until the opener
+  // confirms receipt ("done"), and if there is no opener at all (redirect-only
+  // flow), bounce straight back to the admin page carrying code/state so the
+  // CMS can complete login without a popup.
   if (path === 'callback') {
     const params = url.search.slice(1) || '';
+    const safeParams = params.replace(/"/g, '%22').replace(/</g, '\\u003c');
+    const origin = url.origin;
+    const basePath = url.pathname.replace(/\/callback$/, '');
     const html =
-      '<!doctype html><html><head><meta charset="utf-8"><title>Authenticating…</title></head>' +
-      '<body style="font-family:sans-serif;padding:2rem"><p>You can close this tab once the admin page loads.</p>' +
-      '<script>window.opener && window.opener.postMessage("github:true?' +
-      params.replace(/"/g, '%22') +
-      '", "*");setTimeout(function(){window.close();},500);</script></body></html>';
+      '<!doctype html><html><head><meta charset="utf-8"><title>Authenticating\u2026</title></head>' +
+      '<body style="font-family:sans-serif;padding:2rem">' +
+      '<p id="msg">Completing sign-in\u2026 you can close this tab once the admin page loads.</p>' +
+      '<script>(function(){' +
+      'var params="' + safeParams + '";' +
+      'if(window.opener){' +
+      'var tries=0;' +
+      'function send(){if(tries++>40)return;try{window.opener.postMessage("github:true?"+params,"*");}catch(e){}setTimeout(send,250);}' +
+      'window.addEventListener("message",function(ev){if(ev.data==="done"){window.close();}});' +
+      'send();' +
+      'setTimeout(function(){document.getElementById("msg").textContent="Login finished \u2014 refresh the admin tab if it did not load automatically.";} ,11000);' +
+      '}else{' +
+      'location.replace("' + origin + '/admin/#access_token=&' + encodeURIComponent(safeParams) + '");' +
+      'setTimeout(function(){location.replace("' + origin + '/admin/");},1500);' +
+      '}' +
+      '})();</script></body></html>';
     return new Response(html, {
       headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS_HEADERS },
     });
