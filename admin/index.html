@@ -28,6 +28,97 @@
     @keyframes iep-spin { to { transform: rotate(360deg); } }
     @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
   </style>
+  <script>
+    // ---------------------------------------------------------------------
+    // OAuth popup shim — fixes the permanent "Completing sign-in…" hang.
+    // Decap's github backend opens a popup and waits for a Netlify-style
+    // postMessage handshake ("authorizing:github" / "authorization:github:
+    // success:{token}") that our Cloudflare Worker callback page never
+    // completes reliably. This shim replaces that flow with GitHub's
+    // supported *implicit* OAuth flow, which returns the access token in
+    // the URL fragment (#access_token=...) — no proxy call needed after
+    // login, so it cannot hang. It works entirely on this page:
+    //   1. intercepts window.open() of the Worker authorize popup and
+    //      redirects the tab to github.com/login/oauth/authorize with
+    //      response_type=token instead;
+    //   2. on return, reads #access_token and feeds it back into the CMS
+    //      through the exact message Decap's popup listener expects.
+    // Requires app_id (your GitHub OAuth App client id) in admin/config.yml.
+    // ---------------------------------------------------------------------
+    (function () {
+      var WORKER_BASE = 'https://decap-proxy.ykminmin8654.workers.dev/api/v1/github';
+
+      function startImplicitFlow(appId, scope) {
+        try { sessionStorage.setItem('iep-oauth-nonce', String(Date.now())); } catch (e) {}
+        var u = 'https://github.com/login/oauth/authorize' +
+          '?client_id=' + encodeURIComponent(appId) +
+          '&redirect_uri=' + encodeURIComponent(location.origin + location.pathname) +
+          '&response_type=token' +
+          '&scope=' + encodeURIComponent(scope || 'repo public_repo');
+        location.replace(u);
+      }
+
+      // Deliver a token to Decap via the popup-handshake message format.
+      function deliverToken(token) {
+        var payload = JSON.stringify({ token: token });
+        var tries = 0;
+        var iv = setInterval(function () {
+          window.postMessage('authorization:github:success:' + payload, location.origin);
+          if (++tries > 30) clearInterval(iv);
+        }, 150);
+      }
+
+      // 1) Returning from GitHub with a token in the fragment?
+      var m = /[?&#]access_token=([^&]+)/.exec(location.href);
+      if (m) {
+        var token = decodeURIComponent(m[1]);
+        history.replaceState(null, '', location.pathname + location.search); // clean URL
+        // Keep a copy so later visits don't need to re-login until GitHub expires it.
+        try { localStorage.setItem('iep-oauth-token', token); } catch (e) {}
+        window.addEventListener('message', function (ev) {
+          if (ev.data === 'authorizing:github') deliverToken(token);
+        });
+        setTimeout(function () { deliverToken(token); }, 300);
+        setTimeout(function () { deliverToken(token); }, 1500);
+        return;
+      }
+
+      // 2) Otherwise intercept the login popup once decap-cms.js is loaded.
+      var origOpen = window.open;
+      window.open = function (url) {
+        try {
+          var s = String(url || '');
+          if (s.indexOf(WORKER_BASE + '/oauth') === 0) {
+            var cfg = window.cms && window.cms.backend && window.cms.backend.config;
+            var appId = cfg && cfg.app_id;
+            if (!appId) {
+              try {
+                var raw = localStorage.getItem('localStorageKey:/config');
+                if (raw) { var j = JSON.parse(JSON.parse(raw)); appId = j.backend && j.backend.app_id; }
+              } catch (e) {}
+            }
+            if (appId) {
+              startImplicitFlow(appId, (cfg && cfg.scope) || 'repo public_repo');
+              return null; // suppress the popup that would hang
+            }
+          }
+        } catch (e) {}
+        return origOpen.apply(window, arguments);
+      };
+
+      // 3) If a valid cached token exists, replay it immediately on load so
+      //    the CMS restores the session without any redirect at all.
+      try {
+        var cached = localStorage.getItem('iep-oauth-token');
+        if (cached) {
+          window.addEventListener('message', function (ev) {
+            if (ev.data === 'authorizing:github') deliverToken(cached);
+          });
+          setTimeout(function () { deliverToken(cached); }, 600);
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <!-- Shown while decap-cms.js downloads; replaced by the CMS once it boots. -->

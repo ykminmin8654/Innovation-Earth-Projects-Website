@@ -2,9 +2,14 @@ backend:
   name: github
   repo: ykminmin8654/Innovation-Earth-Projects-Website
   branch: main
-  # Cloudflare Worker OAuth proxy (see worker/products-proxy.js).
-  # Decap appends auth_endpoint to base_url, so with these values the
-  # login flow hits https://decap-proxy.ykminmin8654.workers.dev/api/v1/github/oauth
+  # Login uses GitHub's implicit OAuth flow (token arrives in the URL
+  # fragment) — handled by the shim in admin/index.html. This removes the
+  # popup postMessage handshake that caused the permanent "Completing
+  # sign-in…" hang. The Worker is still used for the products feed.
+  # app_id = your GitHub OAuth App CLIENT ID (github.com/settings/developers).
+  app_id: REPLACE_WITH_GITHUB_OAUTH_CLIENT_ID
+  scope: repo public_repo
+  # Kept so the shim can recognize (and replace) Decap's popup authorize URL.
   base_url: https://decap-proxy.ykminmin8654.workers.dev/api/v1/github
   auth_endpoint: oauth
 
