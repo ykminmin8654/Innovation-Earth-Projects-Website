@@ -47,24 +47,56 @@
     // ---------------------------------------------------------------------
     (function () {
       var WORKER_BASE = 'https://decap-proxy.ykminmin8654.workers.dev/api/v1/github';
+      // Your GitHub OAuth App Client ID (github.com/settings/developers).
+      // Hardcoded here so login works even if config.yml still has a placeholder.
+      var FALLBACK_APP_ID = 'Iv23liYfJrQsBnnhUgVp';
+
+      function normalizeAppId(id) {
+        id = String(id || '').trim().replace(/^["']+|["']+$/g, '');
+        if (!id || /REPLACE_WITH/i.test(id)) return '';
+        return id;
+      }
+
+      function findAppId() {
+        var cfg = window.cms && window.cms.backend && window.cms.backend.config;
+        var id = normalizeAppId(cfg && cfg.app_id);
+        if (id) return id;
+        try {
+          var raw = localStorage.getItem('localStorageKey:/config');
+          if (raw) {
+            var j = JSON.parse(JSON.parse(raw));
+            id = normalizeAppId(j.backend && j.backend.app_id);
+            if (id) return id;
+          }
+        } catch (e) {}
+        return FALLBACK_APP_ID;
+      }
 
       function startImplicitFlow(appId, scope) {
         try { sessionStorage.setItem('iep-oauth-nonce', String(Date.now())); } catch (e) {}
+        var redirect = location.origin + location.pathname; // /admin/ — must match the OAuth App's registered callback URL exactly
         var u = 'https://github.com/login/oauth/authorize' +
-          '?client_id=' + encodeURIComponent(appId) +
-          '&redirect_uri=' + encodeURIComponent(location.origin + location.pathname) +
+          '?client_id=' + encodeURIComponent(normalizeAppId(appId) || FALLBACK_APP_ID) +
+          '&redirect_uri=' + encodeURIComponent(redirect) +
           '&response_type=token' +
-          '&scope=' + encodeURIComponent(scope || 'repo public_repo');
+          '&scope=' + encodeURIComponent(scope || 'public_repo');
         location.replace(u);
       }
 
-      // Deliver a token to Decap via the popup-handshake message format.
+      // Deliver a token to Decap. The CMS listens for *object* messages of
+      // shape { type: 'authorization:github:success', payload: { token } }
+      // (decap-cms 3.x uses window.postMessage with JSON objects; older docs
+      // show colon-strings). Send BOTH formats so either version works.
       function deliverToken(token) {
-        var payload = JSON.stringify({ token: token });
+        var obj = { type: 'authorization:github:success', payload: JSON.stringify({ token: token }) };
+        var str = 'authorization:github:success:' + JSON.stringify({ token: token });
         var tries = 0;
         var iv = setInterval(function () {
-          window.postMessage('authorization:github:success:' + payload, location.origin);
-          if (++tries > 30) clearInterval(iv);
+          try {
+            window.postMessage(obj, location.origin);
+            window.postMessage(str, location.origin);
+          } catch (e) {}
+          if (++tries > 40) clearInterval(iv);
         }, 150);
       }
 
@@ -76,7 +108,10 @@
         // Keep a copy so later visits don't need to re-login until GitHub expires it.
         try { localStorage.setItem('iep-oauth-token', token); } catch (e) {}
         window.addEventListener('message', function (ev) {
-          if (ev.data === 'authorizing:github') deliverToken(token);
+          var d = ev.data;
+          if (typeof d === 'string' ? d === 'authorizing:github' : (d && d.type === 'authorizing:github')) {
+            deliverToken(token);
+          }
         });
         setTimeout(function () { deliverToken(token); }, 300);
         setTimeout(function () { deliverToken(token); }, 1500);
@@ -88,17 +123,13 @@
       window.open = function (url) {
         try {
           var s = String(url || '');
-          if (s.indexOf(WORKER_BASE + '/oauth') === 0) {
+          // Intercept ANY authorize popup: our Worker proxy (/oauth) or a direct
+          // github.com/login/oauth/authorize popup opened by Decap itself.
+          if (s.indexOf(WORKER_BASE + '/oauth') === 0 || s.indexOf('github.com/login/oauth/authorize') !== -1) {
             var cfg = window.cms && window.cms.backend && window.cms.backend.config;
-            var appId = cfg && cfg.app_id;
-            if (!appId) {
-              try {
-                var raw = localStorage.getItem('localStorageKey:/config');
-                if (raw) { var j = JSON.parse(JSON.parse(raw)); appId = j.backend && j.backend.app_id; }
-              } catch (e) {}
-            }
+            var appId = findAppId();
             if (appId) {
-              startImplicitFlow(appId, (cfg && cfg.scope) || 'repo public_repo');
+              startImplicitFlow(appId, (cfg && cfg.scope) || 'public_repo');
               return null; // suppress the popup that would hang
             }
           }
@@ -112,7 +143,10 @@
         var cached = localStorage.getItem('iep-oauth-token');
         if (cached) {
           window.addEventListener('message', function (ev) {
-            if (ev.data === 'authorizing:github') deliverToken(cached);
+            var d = ev.data;
+            if (typeof d === 'string' ? d === 'authorizing:github' : (d && d.type === 'authorizing:github')) {
+              deliverToken(cached);
+            }
           });
           setTimeout(function () { deliverToken(cached); }, 600);
         }
