@@ -72,13 +72,27 @@
         return FALLBACK_APP_ID;
       }
 
-      // FIX for the endless refresh loop: previous builds redirected from the
-      // Worker's /oauth route back to /admin/, where this shim then sent the
-      // browser right back to /oauth — an infinite ping-pong. The Worker now
-      // goes straight to GitHub itself (standard authorization-code flow) and
-      // delivers the finished token back via its /callback page. So this shim
-      // simply forwards logins to the Worker with NO bouncing whatsoever.
-      function workerOAuthUrl(extraQuery) {
+      // FIX for the endless refresh loop (build .15 attempt): the shim used to
+      // immediately location.replace() to the Worker whenever Decap asked for
+      // login. Because that replacement happens *during* the login click, the
+      // browser reloads /admin/ before the redirect chain finishes — and on
+      // every reload the same interception fired again: infinite refresh.
+      // Now the login opens in a SEPARATE popup tab (like Decap intends); the
+      // Worker callback there delivers the token back via postMessage +
+      // localStorage, and THIS tab never reloads during login.
+      var GUARD_KEY = 'iep-login-inflight';
+      function loginGuarded() {
+        try { return sessionStorage.getItem(GUARD_KEY) === '1'; } catch (e) { return false; }
+      }
+      function setLoginGuard(on) {
+        try {
+          if (on) sessionStorage.setItem(GUARD_KEY, '1');
+          else sessionStorage.removeItem(GUARD_KEY);
+        } catch (e) {}
+      }
+
+      function authorizePopupUrl() {
+        // Fresh nonce per attempt; persisted so any return path can match it.
         var nonce = '';
         try {
           var buf = new Uint8Array(16);
@@ -86,22 +100,37 @@
           nonce = Array.prototype.map.call(buf, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
         } catch (e) { nonce = String(Date.now()) + Math.random().toString(36).slice(2); }
         try { sessionStorage.setItem('iep-oauth-state', nonce); } catch (e) {}
-        return WORKER_BASE + '/oauth?state=' + encodeURIComponent(nonce) + (extraQuery || '');
+        return WORKER_BASE + '/oauth?state=' + encodeURIComponent(nonce);
       }
 
-      function startImplicitFlow(appId, scope) {
-        // Name kept for compatibility with older references; this now just
-        // hands the login to the Worker (one redirect, no loop).
-        location.replace(workerOAuthUrl());
+      // Open the GitHub authorize flow in a popup/tab. Returns true on success.
+      function openAuthorizeTab() {
+        var w = null;
+        try { w = origOpenRef(authorizePopupUrl(), 'iep_oauth', 'width=600,height=720'); } catch (e) {}
+        if (!w) {
+          try { w = origOpenRef(authorizePopupUrl(), '_blank'); } catch (e) {}
+        }
+        if (!w) {
+          try { w = window.open(authorizePopupUrl(), '_blank'); } catch (e) {}
+        }
+        if (!w) {
+          // Last resort: same-tab, but guarded so a reload cannot re-trigger it.
+          setLoginGuard(true);
+          setTimeout(function () { setLoginGuard(false); }, 15000);
+          try { location.href = authorizePopupUrl(); } catch (e) {}
+          return false;
+        }
+        return true;
       }
 
-      // Legacy entry point (?iep_login=implicit) from old cached tabs: instead
-      // of rebuilding a GitHub URL here (which caused the loop), forward once
-      // to the Worker and clean the URL first so we can never re-enter.
+      // Keep a plain reference to the native window.open so our interceptor
+      // below can call it without recursion.
+      var origOpenRef = window.open.bind(window);
+
+      // Legacy entry point (?iep_login=implicit) from old cached tabs: just
+      // clean the URL; do NOT auto-redirect (that fed the loop).
       if (/[?&]iep_login=implicit/.test(location.search)) {
         history.replaceState(null, '', location.pathname);
-        location.replace(workerOAuthUrl());
-        return;
       }
 
       // Deliver a token to Decap. The CMS listens for *object* messages of
@@ -150,6 +179,7 @@
       //     localStorage (same origin when the Worker runs under your custom
       //     domain) or fall back to a hard reload after seeding the auth store.
       if (/[?&]iep_token=1/.test(location.search)) {
+        setLoginGuard(false); // login attempt finished
         var payload = '';
         try { payload = localStorage.getItem('iep-oauth-token-cache') || ''; } catch (e) {}
         history.replaceState(null, '', location.pathname);
@@ -165,7 +195,6 @@
           // shared, but the popup postMessage path still delivers the token.
           // Nothing to do here — let the CMS boot normally.
         }
-        return;
       }
 
       // 1b) Legacy implicit-flow return: token in the URL fragment.
@@ -180,20 +209,48 @@
         return;
       }
 
-      // 2) Intercept logins: forward BOTH the popup style and the same-tab
-      //    style to the Worker's /oauth route (one redirect, no bouncing).
-      var origOpen = window.open;
+      // 2) Intercept logins. Decap's github backend calls window.open() with
+      //    the Worker authorize URL and then waits for a postMessage from that
+      //    popup. We let the popup actually open (native window.open), so this
+      //    tab NEVER reloads — breaking the refresh loop. The Worker callback
+      //    page delivers the token to us via postMessage (handled below).
       window.open = function (url) {
         try {
           var s = String(url || '');
-          if (s.indexOf(WORKER_BASE + '/oauth') === 0 || s.indexOf('github.com/login/oauth/authorize') !== -1) {
-            var st = /[?&]state=([^&]+)/.exec(s);
-            location.replace(WORKER_BASE + '/oauth' + (st ? '?state=' + st[1] : ''));
-            return null; // suppress the popup that would hang
+          if (s.indexOf(WORKER_BASE + '/oauth') === 0) {
+            return origOpenRef(s, 'iep_oauth', 'width=600,height=720');
+          }
+          if (s.indexOf('github.com/login/oauth/authorize') !== -1) {
+            // Decap built an authorize URL itself — route it through the
+            // Worker instead so our client id / redirect_uri are used.
+            return openAuthorizeTab(), null;
           }
         } catch (e) {}
-        return origOpen.apply(window, arguments);
+        return origOpenRef.apply(null, arguments);
       };
+
+      // Catch tokens delivered by the Worker callback popup (postMessage) even
+      // if Decap's own listener misses them: store + feed immediately.
+      window.addEventListener('message', function (ev) {
+        try {
+          var d = ev.data;
+          var payload = '';
+          if (typeof d === 'string' && d.indexOf('authorization:github:success:') === 0) {
+            payload = d.slice('authorization:github:success:'.length);
+          } else if (d && d.type === 'authorization:github:success') {
+            payload = typeof d.payload === 'string' ? d.payload : JSON.stringify(d.payload || {});
+          }
+          if (payload) {
+            var t = (JSON.parse(payload) || {}).token || '';
+            if (t) {
+              setLoginGuard(false);
+              try { localStorage.setItem('iep-oauth-token', t); } catch (e) {}
+              seedCmsAuth(t);
+              deliverToken(t);
+            }
+          }
+        } catch (e) {}
+      });
 
       // 3) If a valid cached token exists, replay it immediately on load so
       //    the CMS restores the session without any redirect at all.
@@ -205,20 +262,18 @@
         }
       } catch (e) {}
 
-      // 4) Safety net: if Decap bypasses window.open and navigates THIS tab
-      //    (or a popup it opened) straight to github.com/login/oauth/authorize
-      //    with a response_type parameter, GitHub shows its "Sorry about
-      //    that…" 404 page — that is exactly the hang we saw ("Completing
-      //    sign-in…" forever). This capture-phase listener strips
-      //    response_type from any authorize navigation before it happens, so
-      //    GitHub always receives a URL it accepts.
+      // 4) Safety net: if Decap renders an <a> straight to GitHub's authorize
+      //    endpoint, route the click through our Worker popup instead (never
+      //    navigate this tab — that fed the refresh loop). Also strips any
+      //    response_type param defensively; GitHub 404s on authorize URLs that
+      //    include it.
       document.addEventListener('click', function (e) {
         try {
           var a = e.target && e.target.closest ? e.target.closest('a') : null;
           if (a && /login\/oauth\/authorize/.test(a.href || '')) {
             e.preventDefault();
             e.stopPropagation();
-            startImplicitFlow(findAppId(), (window.cms && window.cms.backend && window.cms.backend.config && window.cms.backend.config.scope) || 'repo public_repo');
+            openAuthorizeTab();
           }
         } catch (err) {}
       }, true);

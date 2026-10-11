@@ -217,7 +217,7 @@ const GH_API = 'https://api.github.com';
 // ("authorizing:github" ping/pong + "authorization:github:success:{token,...}"),
 // with the code->token exchange done server-side. Fixes the permanent
 // "Completing sign-in…" hang (old builds sent a message format Decap ignores).
-const BUILD_ID = '2026-10-07.15';
+const BUILD_ID = '2026-10-07.16';
 
 async function handleGithubProxy(request, env, url) {
   // Strip either prefix; Decap's github backend appends "/github/..." to
@@ -387,6 +387,21 @@ async function handleGithubProxy(request, env, url) {
       "location.replace('/admin/?iep_token=1');return;}" +
       'document.getElementById("msg").textContent="Please return to the admin tab and try Log in again.";return;}' +
       'var got=false;' +
+      // FIX for "popup opens, closes, admin does nothing": the popup may be
+      // blocked or die before Decap's listener attaches, so we ALSO stash the
+      // token in localStorage under keys BOTH the admin shim and Decap itself
+      // read. If postMessage never lands, the next /admin/ load restores the
+      // session from storage — login cannot get stuck either way.
+      'function stash(){' +
+      'if(!ok)return;' +
+      'try{localStorage.setItem("iep-oauth-token-cache",payload);}catch(e){}' +
+      'try{localStorage.setItem("iep-oauth-token",JSON.parse(payload).token);}catch(e){}' +
+      'var obj=JSON.stringify({access_token:JSON.parse(payload).token,token_type:"bearer"});' +
+      '["github","GitHub"].forEach(function(k){' +
+      'try{localStorage.setItem(k+":"+location.origin+"/admin/config.yml",obj);}catch(e){}' +
+      '});' +
+      '}' +
+      'stash();' +
       'function succeed(){try{window.opener.postMessage("authorization:github:success:"+payload,"*");}catch(e){}' +
       'try{window.opener.postMessage({type:"authorization:github:success",payload:payload},"*");}catch(e){}}' +
       'window.addEventListener("message",function(ev){' +
