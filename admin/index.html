@@ -40,7 +40,7 @@
     // login, so it cannot hang. It works entirely on this page:
     //   1. intercepts window.open() of the Worker authorize popup and
     //      redirects the tab to github.com/login/oauth/authorize with
-    //      response_type=token instead;
+    //      a GitHub-accepted authorize URL (no response_type — GitHub 404s on it);
     //   2. on return, reads #access_token and feeds it back into the CMS
     //      through the exact message Decap's popup listener expects.
     // Requires app_id (your GitHub OAuth App client id) in admin/config.yml.
@@ -75,12 +75,25 @@
       function startImplicitFlow(appId, scope) {
         try { sessionStorage.setItem('iep-oauth-nonce', String(Date.now())); } catch (e) {}
         var redirect = location.origin + location.pathname; // /admin/ — must match the OAuth App's registered callback URL exactly
+        // NOTE: GitHub returns a 404 ("Sorry about that…") for ANY authorize
+        // URL that includes a response_type parameter — so we never send one.
+        // Without response_type, GitHub uses its default browser flow and
+        // returns the token in the URL fragment (#access_token=...) anyway,
+        // which is exactly what the handler below reads. Do not re-add it.
         var u = 'https://github.com/login/oauth/authorize' +
           '?client_id=' + encodeURIComponent(normalizeAppId(appId) || FALLBACK_APP_ID) +
           '&redirect_uri=' + encodeURIComponent(redirect) +
-          '&response_type=token' +
-          '&scope=' + encodeURIComponent(scope || 'public_repo');
+          '&scope=' + encodeURIComponent(scope || 'repo public_repo') +
+          '&state=' + encodeURIComponent(String(Date.now()));
         location.replace(u);
+      }
+
+      // If the Worker bounced us back here asking for the implicit flow
+      // (?iep_login=implicit), kick off GitHub's authorize page ourselves.
+      if (/[?&]iep_login=implicit/.test(location.search)) {
+        history.replaceState(null, '', location.pathname); // clean the URL first
+        startImplicitFlow(FALLBACK_APP_ID, 'repo public_repo');
+        return;
       }
 
       // Deliver a token to Decap. The CMS listens for *object* messages of
@@ -150,6 +163,37 @@
           });
           setTimeout(function () { deliverToken(cached); }, 600);
         }
+      } catch (e) {}
+
+      // 4) Safety net: if Decap bypasses window.open and navigates THIS tab
+      //    (or a popup it opened) straight to github.com/login/oauth/authorize
+      //    with a response_type parameter, GitHub shows its "Sorry about
+      //    that…" 404 page — that is exactly the hang we saw ("Completing
+      //    sign-in…" forever). This capture-phase listener strips
+      //    response_type from any authorize navigation before it happens, so
+      //    GitHub always receives a URL it accepts.
+      document.addEventListener('click', function (e) {
+        try {
+          var a = e.target && e.target.closest ? e.target.closest('a') : null;
+          if (a && /login\/oauth\/authorize/.test(a.href || '')) {
+            e.preventDefault();
+            e.stopPropagation();
+            startImplicitFlow(findAppId(), (window.cms && window.cms.backend && window.cms.backend.config && window.cms.backend.config.scope) || 'repo public_repo');
+          }
+        } catch (err) {}
+      }, true);
+      try {
+        var origAssign = window.location.assign.bind(window.location);
+        var origReplace = window.location.replace.bind(window.location);
+        function sanitize(u) {
+          u = String(u || '');
+          if (/login\/oauth\/authorize/.test(u) && /[?&]response_type=/.test(u)) {
+            return u.replace(/[?&]response_type=[^&#]*/g, '').replace(/\?&/, '?').replace(/\?$/, '');
+          }
+          return u;
+        }
+        window.location.assign = function (u) { return origAssign(sanitize(u)); };
+        window.location.replace = function (u) { return origReplace(sanitize(u)); };
       } catch (e) {}
     })();
   </script>

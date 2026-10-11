@@ -217,7 +217,7 @@ const GH_API = 'https://api.github.com';
 // ("authorizing:github" ping/pong + "authorization:github:success:{token,...}"),
 // with the code->token exchange done server-side. Fixes the permanent
 // "Completing sign-in…" hang (old builds sent a message format Decap ignores).
-const BUILD_ID = '2026-10-07.9';
+const BUILD_ID = '2026-10-07.10';
 
 async function handleGithubProxy(request, env, url) {
   // Strip either prefix; Decap's github backend appends "/github/..." to
@@ -270,15 +270,23 @@ async function handleGithubProxy(request, env, url) {
       );
     }
     const authUrl = new URL('https://github.com/login/oauth/authorize');
-    // If the admin requests implicit flow (response_type=token), pass it
-    // straight through to GitHub; the token returns in the URL fragment and
-    // no callback/token exchange is needed.
-    if (url.searchParams.get('response_type') === 'token') {
-      authUrl.searchParams.set('client_id', clientId);
-      authUrl.searchParams.set('scope', url.searchParams.get('scope') || 'repo public_repo');
-      if (url.searchParams.get('redirect_uri')) authUrl.searchParams.set('redirect_uri', url.searchParams.get('redirect_uri'));
-      if (url.searchParams.get('state')) authUrl.searchParams.set('state', url.searchParams.get('state'));
-      return Response.redirect(authUrl.toString(), 302);
+    // FIX for the "404 on github.com/login/oauth/authorize" error: GitHub
+    // REJECTS authorize URLs that carry a response_type parameter at all
+    // (any value -> "Sorry about that..." 404 page). The previous builds
+    // forwarded response_type=token here, which produced exactly that 404.
+    // So: never send response_type. For the implicit flow (requested via
+    // ?flow=implicit or ?response_type=token) we redirect straight from the
+    // Worker to /admin/ — the admin shim there then opens GitHub's authorize
+    // page with only client_id / redirect_uri / scope, which GitHub accepts,
+    // and receives the token back in the URL fragment (#access_token=...).
+    const wantsImplicit =
+      url.searchParams.get('flow') === 'implicit' ||
+      url.searchParams.get('response_type') === 'token';
+    if (wantsImplicit) {
+      const back = new URL(url.origin + '/admin/');
+      back.searchParams.set('iep_login', 'implicit');
+      if (url.searchParams.get('state')) back.searchParams.set('state', url.searchParams.get('state'));
+      return Response.redirect(back.toString(), 302);
     }
     authUrl.searchParams.set('client_id', clientId);
     // Use the actual incoming base path so both /api/v1/github/* and /github/* aliases work.
