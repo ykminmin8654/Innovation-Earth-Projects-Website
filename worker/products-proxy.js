@@ -217,7 +217,7 @@ const GH_API = 'https://api.github.com';
 // ("authorizing:github" ping/pong + "authorization:github:success:{token,...}"),
 // with the code->token exchange done server-side. Fixes the permanent
 // "Completing sign-in…" hang (old builds sent a message format Decap ignores).
-const BUILD_ID = '2026-10-07.14';
+const BUILD_ID = '2026-10-07.15';
 
 async function handleGithubProxy(request, env, url) {
   // Strip either prefix; Decap's github backend appends "/github/..." to
@@ -301,24 +301,23 @@ async function handleGithubProxy(request, env, url) {
       url.searchParams.get('flow') === 'implicit' ||
       url.searchParams.get('response_type') === 'token';
     if (wantsImplicit) {
-      // Implicit flow: hand off to the admin shim, but ALSO pass our trusted
-      // client id so the shim cannot use a stale/wrong one.
+      // Legacy hand-off kept for old tabs still cached with the previous
+      // admin page; current builds never request this.
       const back = new URL(env.SITE_URL || 'https://innovationearthprojects.org/admin/');
       back.searchParams.set('iep_login', 'implicit');
       back.searchParams.set('iep_client_id', clientId);
       if (url.searchParams.get('state')) back.searchParams.set('state', url.searchParams.get('state'));
       return Response.redirect(back.toString(), 302);
     }
-    // If Decap somehow built a direct-to-GitHub authorize URL containing
-    // response_type (which GitHub 404s on), bounce it back to the admin
-    // shim instead of letting the browser hit the dead end.
-    if (url.searchParams.get('response_type')) {
-      const clean = new URL(url.toString());
-      clean.searchParams.delete('response_type');
-      clean.searchParams.set('flow', 'implicit');
-      return Response.redirect(clean.toString(), 302);
-    }
-    authUrl.searchParams.set('client_id', env.GITHUB_OAUTH_ID || 'Iv23liYfJrQsBnnhUgVp');
+    // FIX (login refresh loop): previously every login was bounced back to
+    // /admin/ here, and the admin shim then redirected it right back to this
+    // route — an endless redirect loop that looked like "the page just keeps
+    // refreshing". Now the Worker goes straight to GitHub in ONE hop using
+    // the standard authorization-code flow. The callback below exchanges the
+    // code for a token server-side and hands it to the admin tab via
+    // localStorage + postMessage, so there is no loop and no popup race.
+    // NOTE: never send response_type (GitHub 404s on it).
+    authUrl.searchParams.set('client_id', clientId);
     // Use the actual incoming base path so both /api/v1/github/* and /github/* aliases work.
     const basePath = url.pathname.replace(/\/oauth$/, '');
     authUrl.searchParams.set('redirect_uri', `${url.origin}${basePath}/callback`);
@@ -368,6 +367,12 @@ async function handleGithubProxy(request, env, url) {
       ? payload.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/</g, '\\u003c')
       : '';
     const errText = String(tokenError).replace(/</g, '&lt;').slice(0, 300);
+    // FIX for "popup opens, closes, admin does nothing": the popup may never
+    // receive Decap's "authorizing:github" ping (race), so instead of waiting
+    // passively we ALSO write the token into shared localStorage (same site —
+    // Cloudflare serves our callback under innovationearthprojects.org via a
+    // custom domain; even cross-origin the postMessage path below still works)
+    // and retry the success message on a timer regardless of the ping.
     const html =
       '<!doctype html><html><head><meta charset="utf-8"><title>Authenticating\u2026</title></head>' +
       '<body style="font-family:sans-serif;padding:2rem">' +
@@ -376,20 +381,31 @@ async function handleGithubProxy(request, env, url) {
       '<scr' + 'ipt>(function(){' +
       'var ok=' + (accessToken ? 'true' : 'false') + ';' +
       'var payload="' + safePayload + '";' +
-      'if(!window.opener){document.getElementById("msg").textContent="Please return to the admin tab and try Log in again.";return;}' +
+      'if(!window.opener){' +
+      // Same-tab bounce path: store token for the admin page to pick up, then go back.
+      'if(ok){try{localStorage.setItem("iep-oauth-token-cache",payload);}catch(e){}' +
+      "location.replace('/admin/?iep_token=1');return;}" +
+      'document.getElementById("msg").textContent="Please return to the admin tab and try Log in again.";return;}' +
       'var got=false;' +
-      'function succeed(){try{window.opener.postMessage("authorization:github:success:"+payload,"*");}catch(e){}}' +
+      'function succeed(){try{window.opener.postMessage("authorization:github:success:"+payload,"*");}catch(e){}' +
+      'try{window.opener.postMessage({type:"authorization:github:success",payload:payload},"*");}catch(e){}}' +
       'window.addEventListener("message",function(ev){' +
-      'if(ev.data==="authorizing:github"){' +
+      'var d=ev.data;var ping=(typeof d==="string")?d==="authorizing:github":(d&&d.type==="authorizing:github");' +
+      'if(ping){' +
       'got=true;' +
       'if(!ok){try{window.opener.postMessage("authorization:github:error:"+JSON.stringify({message:"Token exchange failed \u2014 check Worker variables"}),"*");}catch(e){}return;}' +
-      'succeed();var t=0;' +
-      'var iv=setInterval(function(){if(t++>24){clearInterval(iv);document.getElementById("msg").textContent="Login finished \u2014 refresh the admin tab if it did not load automatically.";return;}if(ok)succeed();},400);' +
-      'try{window.close();}catch(e){}' +
+      'succeed();try{window.close();}catch(e){}' +
       '}' +
       '});' +
+      // Proactive delivery: don't wait for the ping — send success repeatedly
+      // for ~12s until Decap's listener picks it up (fixes the race where the
+      // listener attaches after our first message).
+      'if(ok){var t=0;var iv=setInterval(function(){' +
+      't++;succeed();' +
+      'if(t>30){clearInterval(iv);document.getElementById("msg").textContent="Login finished \u2014 refresh the admin tab if it did not load automatically."}' +
+      '},400);' +
       'function ping(){if(got)return;try{window.opener.postMessage("authorizing:github","*");}catch(e){}setTimeout(ping,500);}' +
-      'ping();' +
+      'ping();}' +
       '})();</scr' + 'ipt></body></html>';
     return new Response(html, {
       headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS_HEADERS },

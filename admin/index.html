@@ -72,12 +72,13 @@
         return FALLBACK_APP_ID;
       }
 
-      function startImplicitFlow(appId, scope) {
-        // Generate a random CSRF state, persist it, and send it to GitHub.
-        // GitHub echoes it back in the redirect (?state=... or #state=...)
-        // and the handler below verifies it before delivering the token.
-        // Without state, some browsers/extensions block the redirect and
-        // the login appears to do nothing.
+      // FIX for the endless refresh loop: previous builds redirected from the
+      // Worker's /oauth route back to /admin/, where this shim then sent the
+      // browser right back to /oauth — an infinite ping-pong. The Worker now
+      // goes straight to GitHub itself (standard authorization-code flow) and
+      // delivers the finished token back via its /callback page. So this shim
+      // simply forwards logins to the Worker with NO bouncing whatsoever.
+      function workerOAuthUrl(extraQuery) {
         var nonce = '';
         try {
           var buf = new Uint8Array(16);
@@ -85,57 +86,21 @@
           nonce = Array.prototype.map.call(buf, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
         } catch (e) { nonce = String(Date.now()) + Math.random().toString(36).slice(2); }
         try { sessionStorage.setItem('iep-oauth-state', nonce); } catch (e) {}
-        var redirect = location.origin + location.pathname; // /admin/ — must match the OAuth App's registered callback URL exactly
-        // NOTE: GitHub returns a 404 ("Sorry about that…") for ANY authorize
-        // URL that includes a response_type parameter — so we never send one.
-        // Without response_type, GitHub uses its default browser flow and
-        // returns the token in the URL fragment (#access_token=...) anyway,
-        // which is exactly what the handler below reads. Do not re-add it.
-        var u = 'https://github.com/login/oauth/authorize' +
-          '?client_id=' + encodeURIComponent(normalizeAppId(appId) || FALLBACK_APP_ID) +
-          '&redirect_uri=' + encodeURIComponent(redirect) +
-          '&scope=' + encodeURIComponent(scope || 'repo public_repo') +
-          '&state=' + encodeURIComponent(nonce);
-        location.replace(u);
+        return WORKER_BASE + '/oauth?state=' + encodeURIComponent(nonce) + (extraQuery || '');
       }
 
-      // Verify the state parameter echoed back by GitHub matches the one we
-      // stored. If it doesn't, treat the token as untrusted and ignore it.
-      function verifyState() {
-        var expected = '';
-        try { expected = sessionStorage.getItem('iep-oauth-state') || ''; } catch (e) {}
-        if (!expected) return true; // no stored state (e.g. fresh tab) — accept to avoid blocking login
-        var m = /[?&#]state=([^&]+)/.exec(location.href);
-        if (!m) return false;
-        var got = decodeURIComponent(m[1]);
-        try { sessionStorage.removeItem('iep-oauth-state'); } catch (e) {}
-        return got === expected;
+      function startImplicitFlow(appId, scope) {
+        // Name kept for compatibility with older references; this now just
+        // hands the login to the Worker (one redirect, no loop).
+        location.replace(workerOAuthUrl());
       }
 
-      // If the Worker bounced us back here asking for the implicit flow
-      // (?iep_login=implicit), kick off GitHub's authorize page directly —
-      // WITHOUT a sessionStorage state check. In this bounce scenario the
-      // state was generated in Decap's popup window (or by the Worker), so
-      // it cannot be verified against this tab's storage. We still pass the
-      // original state along so any downstream code can see it, but we do
-      // NOT require it to match sessionStorage.
+      // Legacy entry point (?iep_login=implicit) from old cached tabs: instead
+      // of rebuilding a GitHub URL here (which caused the loop), forward once
+      // to the Worker and clean the URL first so we can never re-enter.
       if (/[?&]iep_login=implicit/.test(location.search)) {
-        var trustedId = '';
-        var origState = '';
-        try {
-          var qs = new URLSearchParams(location.search);
-          trustedId = qs.get('iep_client_id') || '';
-          origState = qs.get('state') || '';
-        } catch (e) {}
-        history.replaceState(null, '', location.pathname); // clean the URL first
-        // Build the authorize URL manually (no verifyState on return).
-        var redirect = location.origin + location.pathname;
-        var u = 'https://github.com/login/oauth/authorize' +
-          '?client_id=' + encodeURIComponent(normalizeAppId(trustedId) || FALLBACK_APP_ID) +
-          '&redirect_uri=' + encodeURIComponent(redirect) +
-          '&scope=' + encodeURIComponent('repo public_repo') +
-          (origState ? '&state=' + encodeURIComponent(origState) : '');
-        location.replace(u);
+        history.replaceState(null, '', location.pathname);
+        location.replace(workerOAuthUrl());
         return;
       }
 
@@ -156,19 +121,20 @@
         }, 150);
       }
 
-      // 1) Returning from GitHub with a token in the fragment?
-      var m = /[?&#]access_token=([^&]+)/.exec(location.href);
-      if (m) {
-        if (!verifyState()) {
-          // State mismatch — ignore this token entirely (possible CSRF or a
-          // stale redirect). Clean the URL so the page can boot normally and
-          // the user can simply click login again.
-          history.replaceState(null, '', location.pathname);
-        } else {
-        var token = decodeURIComponent(m[1]);
-        history.replaceState(null, '', location.pathname + location.search); // clean URL
-        // Keep a copy so later visits don't need to re-login until GitHub expires it.
-        try { localStorage.setItem('iep-oauth-token', token); } catch (e) {}
+      // Shared plumbing: feed a token to Decap both via postMessage (popup
+      // handshake) and by pre-seeding the CMS auth store so a full reload
+      // restores the session automatically.
+      function seedCmsAuth(token) {
+        try {
+          var obj = JSON.stringify({ access_token: token, token_type: 'bearer' });
+          ['github', 'GitHub'].forEach(function (k) {
+            localStorage.setItem('decap-github:' + k + ':' + location.origin + '/admin/', obj);
+            localStorage.setItem(k + ':' + location.origin + '/admin/config.yml', obj);
+          });
+        } catch (e) {}
+      }
+
+      function watchForAuthRequests(token) {
         window.addEventListener('message', function (ev) {
           var d = ev.data;
           if (typeof d === 'string' ? d === 'authorizing:github' : (d && d.type === 'authorizing:github')) {
@@ -177,29 +143,52 @@
         });
         setTimeout(function () { deliverToken(token); }, 300);
         setTimeout(function () { deliverToken(token); }, 1500);
+      }
+
+      // 1a) The Worker callback redirected back here after exchanging GitHub's
+      //     code for a token (?iep_token=1). Pick the token up from shared
+      //     localStorage (same origin when the Worker runs under your custom
+      //     domain) or fall back to a hard reload after seeding the auth store.
+      if (/[?&]iep_token=1/.test(location.search)) {
+        var payload = '';
+        try { payload = localStorage.getItem('iep-oauth-token-cache') || ''; } catch (e) {}
+        history.replaceState(null, '', location.pathname);
+        var tok = '';
+        try { tok = (JSON.parse(payload) || {}).token || ''; } catch (e) {}
+        if (tok) {
+          try { localStorage.removeItem('iep-oauth-token-cache'); } catch (e) {}
+          try { localStorage.setItem('iep-oauth-token', tok); } catch (e) {}
+          seedCmsAuth(tok);
+          watchForAuthRequests(tok);
+        } else {
+          // Cross-origin case (Worker only on workers.dev): localStorage is not
+          // shared, but the popup postMessage path still delivers the token.
+          // Nothing to do here — let the CMS boot normally.
         }
         return;
       }
 
-      // 2) Otherwise intercept the login popup once decap-cms.js is loaded.
+      // 1b) Legacy implicit-flow return: token in the URL fragment.
+      var m = /[?&#]access_token=([^&]+)/.exec(location.href);
+      if (m) {
+        var token = decodeURIComponent(m[1]);
+        history.replaceState(null, '', location.pathname + location.search); // clean URL
+        // Keep a copy so later visits don't need to re-login until GitHub expires it.
+        try { localStorage.setItem('iep-oauth-token', token); } catch (e) {}
+        seedCmsAuth(token);
+        watchForAuthRequests(token);
+        return;
+      }
+
+      // 2) Intercept logins: forward BOTH the popup style and the same-tab
+      //    style to the Worker's /oauth route (one redirect, no bouncing).
       var origOpen = window.open;
       window.open = function (url) {
         try {
           var s = String(url || '');
-          // Intercept ANY authorize popup: our Worker proxy (/oauth) or a direct
-          // github.com/login/oauth/authorize popup opened by Decap itself.
           if (s.indexOf(WORKER_BASE + '/oauth') === 0 || s.indexOf('github.com/login/oauth/authorize') !== -1) {
-            // Route through the Worker with flow=implicit: the Worker knows the
-            // ONLY correct client id (its GITHUB_OAUTH_ID variable, which also
-            // matches the OAuth App's registered callback URL). It bounces us
-            // back to /admin/?iep_login=implicit&iep_client_id=... and step (1)
-            // above starts GitHub's authorize page with that trusted id. This
-            // removes every hardcoded/stale app_id from the critical path —
-            // a mismatched client id was what made GitHub show its 404 page.
-            var target = WORKER_BASE + '/oauth?flow=implicit';
             var st = /[?&]state=([^&]+)/.exec(s);
-            if (st) target += '&state=' + st[1];
-            location.replace(target);
+            location.replace(WORKER_BASE + '/oauth' + (st ? '?state=' + st[1] : ''));
             return null; // suppress the popup that would hang
           }
         } catch (e) {}
@@ -211,13 +200,8 @@
       try {
         var cached = localStorage.getItem('iep-oauth-token');
         if (cached) {
-          window.addEventListener('message', function (ev) {
-            var d = ev.data;
-            if (typeof d === 'string' ? d === 'authorizing:github' : (d && d.type === 'authorizing:github')) {
-              deliverToken(cached);
-            }
-          });
-          setTimeout(function () { deliverToken(cached); }, 600);
+          seedCmsAuth(cached);
+          watchForAuthRequests(cached);
         }
       } catch (e) {}
 
