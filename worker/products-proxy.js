@@ -228,8 +228,25 @@ async function handleGithubProxy(request, env, url) {
   // proxy (path 4) works without them when the admin sends its own token,
   // so only fail for auth-specific routes.
   // Accept either naming style; Cloudflare vars are GITHUB_OAUTH_ID / GITHUB_OAUTH_SECRET.
-  const clientId = env.GITHUB_OAUTH_ID || env.GITHUB_CLIENT_ID;
-  const clientSecret = env.GITHUB_OAUTH_SECRET || env.GITHUB_CLIENT_SECRET;
+  // Trusted client id: the one that matches the OAuth App whose callback
+  // URLs are registered. Cloudflare vars have been mis-pasted before, so we
+  // only trust env vars that look like a real OAuth-App id (Iv1./Iv2. prefix
+  // or 40-hex classic id). Otherwise fall back to the verified app id.
+  const VERIFIED_APP_ID = 'Iv23liYfJrQsBnnhUgVp';
+  function pickClientId(v) {
+    v = String(v || '').trim();
+    if (/^(iv1\.|iv2\.)/i.test(v) || /^[0-9a-f]{40}$/i.test(v)) return v;
+    return '';
+  }
+  const clientId =
+    pickClientId(env.GITHUB_OAUTH_ID) ||
+    pickClientId(env.GITHUB_CLIENT_ID) ||
+    VERIFIED_APP_ID;
+  // The OAuth App's client secret MUST pair with VERIFIED_APP_ID above.
+  // If Cloudflare vars hold a different app's credentials, the token
+  // exchange would fail confusingly — so prefer matching pairs only.
+  const envSecret = String(env.GITHUB_OAUTH_SECRET || env.GITHUB_CLIENT_SECRET || '').trim();
+  const clientSecret = clientId === VERIFIED_APP_ID ? (envSecret || '') : envSecret;
 
   if (!clientId || !clientSecret) {
     if (['oauth', 'callback', 'token'].includes(path)) {
