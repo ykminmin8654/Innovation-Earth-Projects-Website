@@ -217,7 +217,7 @@ const GH_API = 'https://api.github.com';
 // ("authorizing:github" ping/pong + "authorization:github:success:{token,...}"),
 // with the code->token exchange done server-side. Fixes the permanent
 // "Completing sign-in…" hang (old builds sent a message format Decap ignores).
-const BUILD_ID = '2026-10-07.10';
+const BUILD_ID = '2026-10-07.11';
 
 async function handleGithubProxy(request, env, url) {
   // Strip either prefix; Decap's github backend appends "/github/..." to
@@ -270,23 +270,36 @@ async function handleGithubProxy(request, env, url) {
       );
     }
     const authUrl = new URL('https://github.com/login/oauth/authorize');
-    // FIX for the "404 on github.com/login/oauth/authorize" error: GitHub
-    // REJECTS authorize URLs that carry a response_type parameter at all
-    // (any value -> "Sorry about that..." 404 page). The previous builds
-    // forwarded response_type=token here, which produced exactly that 404.
-    // So: never send response_type. For the implicit flow (requested via
-    // ?flow=implicit or ?response_type=token) we redirect straight from the
-    // Worker to /admin/ — the admin shim there then opens GitHub's authorize
-    // page with only client_id / redirect_uri / scope, which GitHub accepts,
-    // and receives the token back in the URL fragment (#access_token=...).
+    // FIX for the persistent GitHub "404 / Completing sign-in…" loop:
+    // this Worker is now the SINGLE source of truth for the OAuth client id
+    // (GITHUB_OAUTH_ID). Previous builds let the admin page build its own
+    // authorize URL from a hardcoded/configured app_id; when those two ids
+    // disagreed (or an old tab cached an old config), GitHub showed its
+    // generic "Sorry about that…" 404 page — indistinguishable from other
+    // failures. Now every login goes through here, uses the same id as the
+    // token exchange below, and any malformed request gets an explicit JSON
+    // error instead of a silent redirect loop. Never send response_type
+    // (the admin shim strips it defensively; GitHub can reject it).
     const wantsImplicit =
       url.searchParams.get('flow') === 'implicit' ||
       url.searchParams.get('response_type') === 'token';
     if (wantsImplicit) {
-      const back = new URL(url.origin + '/admin/');
+      // Implicit flow: hand off to the admin shim, but ALSO pass our trusted
+      // client id so the shim cannot use a stale/wrong one.
+      const back = new URL(env.SITE_URL || 'https://innovationearthprojects.org/admin/');
       back.searchParams.set('iep_login', 'implicit');
+      back.searchParams.set('iep_client_id', clientId);
       if (url.searchParams.get('state')) back.searchParams.set('state', url.searchParams.get('state'));
       return Response.redirect(back.toString(), 302);
+    }
+    // If Decap somehow built a direct-to-GitHub authorize URL containing
+    // response_type (which GitHub 404s on), bounce it back to the admin
+    // shim instead of letting the browser hit the dead end.
+    if (url.searchParams.get('response_type')) {
+      const clean = new URL(url.toString());
+      clean.searchParams.delete('response_type');
+      clean.searchParams.set('flow', 'implicit');
+      return Response.redirect(clean.toString(), 302);
     }
     authUrl.searchParams.set('client_id', clientId);
     // Use the actual incoming base path so both /api/v1/github/* and /github/* aliases work.

@@ -89,10 +89,15 @@
       }
 
       // If the Worker bounced us back here asking for the implicit flow
-      // (?iep_login=implicit), kick off GitHub's authorize page ourselves.
+      // (?iep_login=implicit), kick off GitHub's authorize page ourselves —
+      // using the client id the WORKER sent ( iep_client_id ), which is
+      // guaranteed to match its own GITHUB_OAUTH_ID. This eliminates the
+      // stale/hardcoded app_id mismatch that produced GitHub's 404 page.
       if (/[?&]iep_login=implicit/.test(location.search)) {
+        var trustedId = '';
+        try { trustedId = new URLSearchParams(location.search).get('iep_client_id') || ''; } catch (e) {}
         history.replaceState(null, '', location.pathname); // clean the URL first
-        startImplicitFlow(FALLBACK_APP_ID, 'repo public_repo');
+        startImplicitFlow(trustedId || FALLBACK_APP_ID, 'repo public_repo');
         return;
       }
 
@@ -139,12 +144,18 @@
           // Intercept ANY authorize popup: our Worker proxy (/oauth) or a direct
           // github.com/login/oauth/authorize popup opened by Decap itself.
           if (s.indexOf(WORKER_BASE + '/oauth') === 0 || s.indexOf('github.com/login/oauth/authorize') !== -1) {
-            var cfg = window.cms && window.cms.backend && window.cms.backend.config;
-            var appId = findAppId();
-            if (appId) {
-              startImplicitFlow(appId, (cfg && cfg.scope) || 'public_repo');
-              return null; // suppress the popup that would hang
-            }
+            // Route through the Worker with flow=implicit: the Worker knows the
+            // ONLY correct client id (its GITHUB_OAUTH_ID variable, which also
+            // matches the OAuth App's registered callback URL). It bounces us
+            // back to /admin/?iep_login=implicit&iep_client_id=... and step (1)
+            // above starts GitHub's authorize page with that trusted id. This
+            // removes every hardcoded/stale app_id from the critical path —
+            // a mismatched client id was what made GitHub show its 404 page.
+            var target = WORKER_BASE + '/oauth?flow=implicit';
+            var st = /[?&]state=([^&]+)/.exec(s);
+            if (st) target += '&state=' + st[1];
+            location.replace(target);
+            return null; // suppress the popup that would hang
           }
         } catch (e) {}
         return origOpen.apply(window, arguments);
