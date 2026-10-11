@@ -217,7 +217,7 @@ const GH_API = 'https://api.github.com';
 // ("authorizing:github" ping/pong + "authorization:github:success:{token,...}"),
 // with the code->token exchange done server-side. Fixes the permanent
 // "Completing sign-in…" hang (old builds sent a message format Decap ignores).
-const BUILD_ID = '2026-10-07.12';
+const BUILD_ID = '2026-10-07.14';
 
 async function handleGithubProxy(request, env, url) {
   // Strip either prefix; Decap's github backend appends "/github/..." to
