@@ -217,7 +217,7 @@ const GH_API = 'https://api.github.com';
 // ("authorizing:github" ping/pong + "authorization:github:success:{token,...}"),
 // with the code->token exchange done server-side. Fixes the permanent
 // "Completing sign-in…" hang (old builds sent a message format Decap ignores).
-const BUILD_ID = '2026-10-07.11';
+const BUILD_ID = '2026-10-07.12';
 
 async function handleGithubProxy(request, env, url) {
   // Strip either prefix; Decap's github backend appends "/github/..." to
@@ -301,7 +301,7 @@ async function handleGithubProxy(request, env, url) {
       clean.searchParams.set('flow', 'implicit');
       return Response.redirect(clean.toString(), 302);
     }
-    authUrl.searchParams.set('client_id', clientId);
+    authUrl.searchParams.set('client_id', env.GITHUB_OAUTH_ID || 'Iv23liYfJrQsBnnhUgVp');
     // Use the actual incoming base path so both /api/v1/github/* and /github/* aliases work.
     const basePath = url.pathname.replace(/\/oauth$/, '');
     authUrl.searchParams.set('redirect_uri', `${url.origin}${basePath}/callback`);
