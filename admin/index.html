@@ -92,29 +92,19 @@
       }
 
       function authorizePopupUrl() {
-        // FIX (GitHub "404 / Sorry about that" on login): the Worker used to
-        // bounce back to this page with iep_login=implicit, and the admin then
-        // built its own GitHub authorize URL — but the OAuth App's registered
-        // callback URL is the *Worker's* /callback, not /admin/. Sending a
-        // redirect_uri that isn't registered makes GitHub show its generic 404.
-        // Now the popup goes straight to github.com with the ONE combination
-        // confirmed valid: client_id Iv23liYfJrQsBnnhUgVp + redirect_uri
-        // https://innovationearthprojects.org/admin/ (registered in the OAuth
-        // App settings). The token comes back in the URL fragment (#access_token)
-        // which the handler below feeds into Decap — no Worker hop at all.
-        var nonce = '';
-        try {
-          var buf = new Uint8Array(16);
-          (window.crypto || window.msCrypto).getRandomValues(buf);
-          nonce = Array.prototype.map.call(buf, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
-        } catch (e) { nonce = String(Date.now()) + Math.random().toString(36).slice(2); }
-        try { sessionStorage.setItem('iep-oauth-state', nonce); } catch (e) {}
-        var id = findAppId() || FALLBACK_APP_ID;
-        return 'https://github.com/login/oauth/authorize' +
-          '?client_id=' + encodeURIComponent(id) +
-          '&redirect_uri=' + encodeURIComponent(location.origin + location.pathname.replace(/index\.html$/, '')) +
-          '&scope=' + encodeURIComponent('repo public_repo') +
-          '&state=' + encodeURIComponent(nonce);
+        // FIX (the actual root cause of every failed attempt so far): the
+        // popup must load the WORKER's /oauth route, NOT github.com directly.
+        // Previous builds sent the popup straight to
+        // https://innovationearthprojects.org/admin/ as the redirect_uri —
+        // which is NOT the OAuth App's registered callback URL
+        // (https://decap-proxy.ykminmin8654.workers.dev/api/v1/github/callback),
+        // so GitHub answered with its "Sorry about that…" 404 page. The Worker
+        // now owns the whole flow again: it redirects to GitHub with the
+        // correctly-registered redirect_uri, exchanges the code for a token
+        // server-side, stashes it in localStorage under iep-oauth-token, and
+        // delivers it to this tab via postMessage. This tab never reloads
+        // during login (popup-only flow), so no refresh loop either.
+        return WORKER_BASE + '/oauth?flow=worker&scope=' + encodeURIComponent('repo read:user user:email');
       }
 
       // Open the GitHub authorize flow in a popup/tab. Returns true on success.
@@ -223,10 +213,34 @@
         } catch (e) {}
       }
 
-      // 1a) The Worker callback redirected back here after exchanging GitHub's
-      //     code for a token (?iep_token=1). Pick the token up from shared
-      //     localStorage (same origin when the Worker runs under your custom
-      //     domain) or fall back to a hard reload after seeding the auth store.
+      // 1a2) Worker URL hand-off (the reliable path): the popup tab was
+      //      redirected to /admin/?iep_at=<token>. Two cases:
+      //      - This IS the popup tab (window.opener exists): deliver the token
+      //        to the original admin tab via postMessage, stash it, then close.
+      //      - The popup never opened and this is the main tab itself: seed the
+      //        store and reload into the CMS directly.
+      var iepAt = /[?&]iep_at=([^&]+)/.exec(location.search);
+      if (iepAt) {
+        setLoginGuard(false);
+        var atToken = decodeURIComponent(iepAt[1]);
+        history.replaceState(null, '', location.pathname); // clean URL immediately
+        try { localStorage.setItem('iep-oauth-token', atToken); } catch (e) {}
+        seedCmsAuth(atToken);
+        if (window.opener && !window.opener.closed) {
+          try {
+            window.opener.postMessage(
+              'authorization:github:success:' + JSON.stringify({ token: atToken, token_type: 'bearer' }),
+              '*'
+            );
+          } catch (e) {}
+          setTimeout(function () { try { window.close(); } catch (err) {} }, 800);
+        } else {
+          watchForAuthRequests(atToken);
+          restoreFromStoredToken(); // guaranteed: reload into the management UI
+        }
+      }
+
+      // 1a) Legacy same-tab bounce (?iep_token=1) from older builds.
       if (/[?&]iep_token=1/.test(location.search)) {
         setLoginGuard(false); // login attempt finished
         var payload = '';

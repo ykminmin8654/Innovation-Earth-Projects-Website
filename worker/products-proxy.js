@@ -217,7 +217,7 @@ const GH_API = 'https://api.github.com';
 // ("authorizing:github" ping/pong + "authorization:github:success:{token,...}"),
 // with the code->token exchange done server-side. Fixes the permanent
 // "Completing sign-in…" hang (old builds sent a message format Decap ignores).
-const BUILD_ID = '2026-10-07.17';
+const BUILD_ID = '2026-10-07.18';
 
 async function handleGithubProxy(request, env, url) {
   // Strip either prefix; Decap's github backend appends "/github/..." to
@@ -347,23 +347,51 @@ async function handleGithubProxy(request, env, url) {
     // back to /admin/?iep_token=1 — where the shim seeds the CMS auth store and
     // reloads straight into the management UI. Popup deliveries still use the
     // original path below.
-    let fromPopup = false;
-    try { fromPopup = !!(window.opener && window.opener !== window); } catch (e) { fromPopup = true; }
-    if (!fromPopup && code) {
+    // FIX (root cause of the permanent "Completing sign-in…"): this page runs
+    // on workers.dev, so it CANNOT write to innovationearthprojects.org's
+    // localStorage and Decap's popup listener may miss our postMessage. The
+    // reliable channel is the URL itself: GitHub sends the popup here with
+    // ?code, we exchange it SERVER-SIDE (this Worker has the client secret),
+    // then redirect the popup tab to /admin/?iep_at=<token> — a same-tab
+    // hand-off that works no matter how flaky popups/postMessage are. If the
+    // popup still has an opener we ALSO run the classic handshake as backup.
+    if (code) {
+      let earlyToken = '';
+      let earlyErr = '';
+      if (clientId && clientSecret) {
+        try {
+          const tr = await fetch('https://github.com/login/oauth/access_token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+            body: JSON.stringify({
+              client_id: clientId,
+              client_secret: clientSecret,
+              code,
+              redirect_uri: `${origin}${basePath}/callback`,
+            }),
+          });
+          const td = await tr.json().catch(() => ({}));
+          if (td.access_token) earlyToken = td.access_token;
+          else earlyErr = td.error_description || td.error || 'Token exchange failed';
+        } catch (e) {
+          earlyErr = String(e);
+        }
+      } else {
+        earlyErr = 'Worker is missing GITHUB_OAUTH_ID / GITHUB_OAUTH_SECRET variables.';
+      }
+      if (earlyToken) {
+        const adminUrl = new URL(env.SITE_URL || 'https://innovationearthprojects.org/admin/');
+        adminUrl.searchParams.set('iep_at', earlyToken);
+        // Keep the popup open for a moment as a fallback delivery surface, but
+        // navigate it to the admin page — where the shim reads iep_at and logs
+        // the CMS in even if the original admin tab vanished or blocked us.
+        return Response.redirect(adminUrl.toString(), 302);
+      }
       return new Response(
-        '<!doctype html><html><head><meta charset="utf-8"><title>Signing in\u2026</title></head>' +
-        '<body style="font-family:sans-serif;padding:2rem">Completing sign-in\u2026' +
-        '<scr' + 'ipt>(function(){var c=' + JSON.stringify(code) + ';' +
-        'fetch("/api/v1/github/token?client_id=' + encodeURIComponent(clientId) + '",{' +
-        "method:'POST',headers:{'Content-Type':'application/json'}," +
-        'body:JSON.stringify({code:c})' +
-        '}).then(function(r){return r.json();}).then(function(j){' +
-        'var t=(j&&(j.access_token||j.token))||"";' +
-        'if(t){try{localStorage.setItem("iep-oauth-token",t);}catch(e){}' +
-        "location.replace('/admin/?iep_token=1');}else{" +
-        "document.body.textContent='Sign-in failed: '+((j&&(j.error_description||j.error))||'no token returned');" +
-        '}}).catch(function(err){document.body.textContent="Sign-in failed: "+err;});' +
-        '})();</scr' + 'ipt></body></html>',
+        '<!doctype html><html><head><meta charset="utf-8"><title>Sign-in failed</title></head>' +
+        '<body style="font-family:sans-serif;padding:2rem">Sign-in failed: ' +
+        String(earlyErr).replace(/</g, '&lt;').slice(0, 300) +
+        '<br><a href="/admin/">Return to admin</a></body></html>',
         { headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS_HEADERS } }
       );
     }
