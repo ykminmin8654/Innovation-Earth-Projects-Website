@@ -217,7 +217,7 @@ const GH_API = 'https://api.github.com';
 // ("authorizing:github" ping/pong + "authorization:github:success:{token,...}"),
 // with the code->token exchange done server-side. Fixes the permanent
 // "Completing sign-in…" hang (old builds sent a message format Decap ignores).
-const BUILD_ID = '2026-10-07.16';
+const BUILD_ID = '2026-10-07.17';
 
 async function handleGithubProxy(request, env, url) {
   // Strip either prefix; Decap's github backend appends "/github/..." to
@@ -339,6 +339,34 @@ async function handleGithubProxy(request, env, url) {
     const code = url.searchParams.get('code') || '';
     const origin = url.origin;
     const basePath = url.pathname.replace(/\/callback$/, '');
+    // FIX (login stuck forever): the popup postMessage handshake only works
+    // when the callback page is SAME-ORIGIN with /admin/. On workers.dev it can
+    // never share localStorage or reliably reach Decap's listener, so when the
+    // callback lands in a top-level tab we finish login here: exchange the code
+    // server-side via /token, stash the token in shared localStorage, and bounce
+    // back to /admin/?iep_token=1 — where the shim seeds the CMS auth store and
+    // reloads straight into the management UI. Popup deliveries still use the
+    // original path below.
+    let fromPopup = false;
+    try { fromPopup = !!(window.opener && window.opener !== window); } catch (e) { fromPopup = true; }
+    if (!fromPopup && code) {
+      return new Response(
+        '<!doctype html><html><head><meta charset="utf-8"><title>Signing in\u2026</title></head>' +
+        '<body style="font-family:sans-serif;padding:2rem">Completing sign-in\u2026' +
+        '<scr' + 'ipt>(function(){var c=' + JSON.stringify(code) + ';' +
+        'fetch("/api/v1/github/token?client_id=' + encodeURIComponent(clientId) + '",{' +
+        "method:'POST',headers:{'Content-Type':'application/json'}," +
+        'body:JSON.stringify({code:c})' +
+        '}).then(function(r){return r.json();}).then(function(j){' +
+        'var t=(j&&(j.access_token||j.token))||"";' +
+        'if(t){try{localStorage.setItem("iep-oauth-token",t);}catch(e){}' +
+        "location.replace('/admin/?iep_token=1');}else{" +
+        "document.body.textContent='Sign-in failed: '+((j&&(j.error_description||j.error))||'no token returned');" +
+        '}}).catch(function(err){document.body.textContent="Sign-in failed: "+err;});' +
+        '})();</scr' + 'ipt></body></html>',
+        { headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS_HEADERS } }
+      );
+    }
     let accessToken = '';
     let tokenError = '';
     if (code && clientId && clientSecret) {

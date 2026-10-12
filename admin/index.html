@@ -138,8 +138,14 @@
       // (decap-cms 3.x uses window.postMessage with JSON objects; older docs
       // show colon-strings). Send BOTH formats so either version works.
       function deliverToken(token) {
-        var obj = { type: 'authorization:github:success', payload: JSON.stringify({ token: token }) };
-        var str = 'authorization:github:success:' + JSON.stringify({ token: token });
+        // FIX (login stuck forever): Decap 3.x's popup listener ONLY accepts a
+        // colon-delimited STRING whose payload is {"token":...,"token_type":"bearer"}.
+        // The object-format message sent here previously was silently ignored by
+        // the CMS, so even when the token arrived nothing happened. Send the
+        // exact string format first; keep the object variant as a harmless extra.
+        var successStr = 'authorization:github:success:' + JSON.stringify({ token: token, token_type: 'bearer' });
+        var obj = { type: 'authorization:github:success', payload: successStr };
+        var str = successStr;
         var tries = 0;
         var iv = setInterval(function () {
           try {
@@ -174,6 +180,35 @@
         setTimeout(function () { deliverToken(token); }, 1500);
       }
 
+      // FIX (login stuck forever — the main one): Decap's GitHub backend ONLY
+      // completes login through its popup postMessage handshake. If that never
+      // lands, it waits indefinitely ("stuck"). Since this tab shares localStorage
+      // with seedCmsAuth(), we now take over completely when no login is in
+      // flight: poll until the CMS login button exists, inject a stashed token
+      // into Decap's auth store, and RELOAD once so the CMS boots straight into
+      // the management UI. This makes login work even if every popup path fails.
+      function restoreFromStoredToken() {
+        try {
+          var tok = localStorage.getItem('iep-oauth-token') || '';
+          if (!tok || loginGuarded()) return; // a fresh login is in progress — let it run
+          var obj = JSON.stringify({ access_token: tok, token_type: 'bearer' });
+          ['github', 'GitHub'].forEach(function (k) {
+            localStorage.setItem(k + ':' + location.origin + '/admin/config.yml', obj);
+          });
+          var tries = 0;
+          var iv = setInterval(function () {
+            tries++;
+            var btns = document.querySelectorAll('button');
+            var hasLogin = false;
+            for (var i = 0; i < btns.length; i++) {
+              if (/log in/i.test(btns[i].textContent || '')) { hasLogin = true; break; }
+            }
+            if (hasLogin) { clearInterval(iv); location.reload(); }
+            else if (tries > 60) clearInterval(iv);
+          }, 250);
+        } catch (e) {}
+      }
+
       // 1a) The Worker callback redirected back here after exchanging GitHub's
       //     code for a token (?iep_token=1). Pick the token up from shared
       //     localStorage (same origin when the Worker runs under your custom
@@ -190,6 +225,7 @@
           try { localStorage.setItem('iep-oauth-token', tok); } catch (e) {}
           seedCmsAuth(tok);
           watchForAuthRequests(tok);
+          restoreFromStoredToken(); // guaranteed path: reload into the CMS once it shows "Login with GitHub"
         } else {
           // Cross-origin case (Worker only on workers.dev): localStorage is not
           // shared, but the popup postMessage path still delivers the token.
@@ -247,6 +283,7 @@
               try { localStorage.setItem('iep-oauth-token', t); } catch (e) {}
               seedCmsAuth(t);
               deliverToken(t);
+              restoreFromStoredToken(); // if the handshake above is ignored, reload into the CMS instead of hanging
             }
           }
         } catch (e) {}
