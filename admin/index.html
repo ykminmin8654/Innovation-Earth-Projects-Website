@@ -92,7 +92,16 @@
       }
 
       function authorizePopupUrl() {
-        // Fresh nonce per attempt; persisted so any return path can match it.
+        // FIX (GitHub "404 / Sorry about that" on login): the Worker used to
+        // bounce back to this page with iep_login=implicit, and the admin then
+        // built its own GitHub authorize URL — but the OAuth App's registered
+        // callback URL is the *Worker's* /callback, not /admin/. Sending a
+        // redirect_uri that isn't registered makes GitHub show its generic 404.
+        // Now the popup goes straight to github.com with the ONE combination
+        // confirmed valid: client_id Iv23liYfJrQsBnnhUgVp + redirect_uri
+        // https://innovationearthprojects.org/admin/ (registered in the OAuth
+        // App settings). The token comes back in the URL fragment (#access_token)
+        // which the handler below feeds into Decap — no Worker hop at all.
         var nonce = '';
         try {
           var buf = new Uint8Array(16);
@@ -100,7 +109,12 @@
           nonce = Array.prototype.map.call(buf, function (b) { return ('0' + b.toString(16)).slice(-2); }).join('');
         } catch (e) { nonce = String(Date.now()) + Math.random().toString(36).slice(2); }
         try { sessionStorage.setItem('iep-oauth-state', nonce); } catch (e) {}
-        return WORKER_BASE + '/oauth?state=' + encodeURIComponent(nonce);
+        var id = findAppId() || FALLBACK_APP_ID;
+        return 'https://github.com/login/oauth/authorize' +
+          '?client_id=' + encodeURIComponent(id) +
+          '&redirect_uri=' + encodeURIComponent(location.origin + location.pathname.replace(/index\.html$/, '')) +
+          '&scope=' + encodeURIComponent('repo public_repo') +
+          '&state=' + encodeURIComponent(nonce);
       }
 
       // Open the GitHub authorize flow in a popup/tab. Returns true on success.
@@ -233,16 +247,30 @@
         }
       }
 
-      // 1b) Legacy implicit-flow return: token in the URL fragment.
+      // 1b) Implicit-flow return: token in the URL fragment (#access_token).
+      //     FIX (popup stuck on "Completing sign-in…"): the popup tab has no
+      //     Decap instance to hand the token to, so it now forwards the token
+      //     to the OPENER (the admin tab) via postMessage and closes itself.
       var m = /[?&#]access_token=([^&]+)/.exec(location.href);
       if (m) {
         var token = decodeURIComponent(m[1]);
         history.replaceState(null, '', location.pathname + location.search); // clean URL
-        // Keep a copy so later visits don't need to re-login until GitHub expires it.
         try { localStorage.setItem('iep-oauth-token', token); } catch (e) {}
-        seedCmsAuth(token);
-        watchForAuthRequests(token);
-        return;
+        if (window.opener && !window.opener.closed) {
+          try {
+            window.opener.postMessage(
+              'authorization:github:success:' + JSON.stringify({ token: token, token_type: 'bearer' }),
+              location.origin
+            );
+          } catch (e) {}
+          setTimeout(function () { try { window.close(); } catch (err) {} }, 400);
+        } else {
+          // No opener (user opened /admin/ directly after login): seed store,
+          // deliver to Decap here, and reload into the CMS once it shows login.
+          seedCmsAuth(token);
+          watchForAuthRequests(token);
+          restoreFromStoredToken();
+        }
       }
 
       // 2) Intercept logins. Decap's github backend calls window.open() with
@@ -253,13 +281,11 @@
       window.open = function (url) {
         try {
           var s = String(url || '');
-          if (s.indexOf(WORKER_BASE + '/oauth') === 0) {
-            return origOpenRef(s, 'iep_oauth', 'width=600,height=720');
-          }
-          if (s.indexOf('github.com/login/oauth/authorize') !== -1) {
-            // Decap built an authorize URL itself — route it through the
-            // Worker instead so our client id / redirect_uri are used.
-            return openAuthorizeTab(), null;
+          if (s.indexOf(WORKER_BASE + '/oauth') === 0 ||
+              s.indexOf('github.com/login/oauth/authorize') !== -1) {
+            // Whether Decap opened the Worker or GitHub directly, always use
+            // OUR validated authorize URL (registered client_id + redirect_uri).
+            return origOpenRef(authorizePopupUrl(), 'iep_oauth', 'width=600,height=720');
           }
         } catch (e) {}
         return origOpenRef.apply(null, arguments);
