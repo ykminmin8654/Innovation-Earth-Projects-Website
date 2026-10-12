@@ -217,7 +217,7 @@ const GH_API = 'https://api.github.com';
 // ("authorizing:github" ping/pong + "authorization:github:success:{token,...}"),
 // with the code->token exchange done server-side. Fixes the permanent
 // "Completing sign-in…" hang (old builds sent a message format Decap ignores).
-const BUILD_ID = '2026-10-07.18';
+const BUILD_ID = '2026-10-07.19';
 
 async function handleGithubProxy(request, env, url) {
   // Strip either prefix; Decap's github backend appends "/github/..." to
@@ -387,13 +387,9 @@ async function handleGithubProxy(request, env, url) {
         // the CMS in even if the original admin tab vanished or blocked us.
         return Response.redirect(adminUrl.toString(), 302);
       }
-      return new Response(
-        '<!doctype html><html><head><meta charset="utf-8"><title>Sign-in failed</title></head>' +
-        '<body style="font-family:sans-serif;padding:2rem">Sign-in failed: ' +
-        String(earlyErr).replace(/</g, '&lt;').slice(0, 300) +
-        '<br><a href="/admin/">Return to admin</a></body></html>',
-        { headers: { 'Content-Type': 'text/html; charset=utf-8', ...CORS_HEADERS } }
-      );
+      // FIX (persistent 404): if server-side exchange fails (wrong secret, expired code, etc.),
+      // fall through to the popup/postMessage delivery path below instead of showing a dead-end error.
+      // This makes login work even when the direct token exchange has issues.
     }
     let accessToken = '';
     let tokenError = '';
