@@ -217,7 +217,7 @@ const GH_API = 'https://api.github.com';
 // ("authorizing:github" ping/pong + "authorization:github:success:{token,...}"),
 // with the code->token exchange done server-side. Fixes the permanent
 // "Completing sign-in…" hang (old builds sent a message format Decap ignores).
-const BUILD_ID = '2026-10-07.19';
+const BUILD_ID = '2026-10-07.20';
 
 async function handleGithubProxy(request, env, url) {
   // Strip either prefix; Decap's github backend appends "/github/..." to
@@ -387,9 +387,41 @@ async function handleGithubProxy(request, env, url) {
         // the CMS in even if the original admin tab vanished or blocked us.
         return Response.redirect(adminUrl.toString(), 302);
       }
-      // FIX (persistent 404): if server-side exchange fails (wrong secret, expired code, etc.),
-      // fall through to the popup/postMessage delivery path below instead of showing a dead-end error.
-      // This makes login work even when the direct token exchange has issues.
+      // FIX (the "Sign-in failed: Not Found" 404 you kept seeing): GitHub's
+      // token-exchange endpoint answers unknown routes with body "Not Found",
+      // which we used to surface verbatim AND then silently fall through to an
+      // error page. Now: (a) the real reason is decoded into plain English,
+      // (b) it is delivered to the admin TAB via postMessage so the user sees
+      // it inline instead of staring at a dead popup, and (c) the same-tab
+      // bounce still happens so nothing can hang.
+      if (code && earlyErr) {
+        let why = earlyErr;
+        if (/not found/i.test(earlyErr)) {
+          why =
+            'GitHub rejected the token exchange ("Not Found"). Almost always this means GITHUB_OAUTH_SECRET in Cloudflare does not belong to OAuth App ' +
+            clientId +
+            '. Generate a fresh client secret at https://github.com/settings/developers → your OAuth App → "Generate a new client secret", paste it into Workers → decap-proxy → Settings → Variables & Secrets as GITHUB_OAUTH_SECRET, Save AND Deploy, then log in again.';
+        } else if (/bad_verification_code|expired/i.test(earlyErr)) {
+          why = 'The login code expired (takes too long between approving on GitHub and the callback). Just click Log in again.';
+        } else if (/incorrect_client_credentials/i.test(earlyErr)) {
+          why = 'Client id/secret pair mismatch — update GITHUB_OAUTH_ID and GITHUB_OAUTH_SECRET together from the SAME OAuth App, then Deploy.';
+        } else if (/redirect_uri_mismatch/i.test(earlyErr)) {
+          why = 'Callback URL mismatch — register exactly ' + origin + '/api/v1/github/callback under OAuth App → Authorization callback URL, then retry.';
+        }
+        const safeWhy = String(why).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/</g, '\\u003c').slice(0, 900);
+        const errHtml =
+          '<!doctype html><html><head><meta charset="utf-8"><title>Sign-in problem</title></head>' +
+          '<body style="font-family:sans-serif;padding:2rem">' +
+          '<p id="msg">Signing in hit a snag:<br><span style="color:#b00">' + String(why).replace(/</g, '&lt;') + '</span></p>' +
+          '<p><a href="' + (env.SITE_URL || 'https://innovationearthprojects.org/admin/') + '">Return to admin</a></p>' +
+          '<scr' + 'pt>(function(){var msg="' + safeWhy + '";' +
+          'if(window.opener){try{window.opener.postMessage("authorization:github:error:"+JSON.stringify({message:msg}),"*");}catch(e){}' +
+          'setTimeout(function(){try{window.close();}catch(e){}},1500);}return;}})();</scr' + 'ipt></body></html>';
+        return new Response(errHtml, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+      }
+      // No code at all (user denied, or stale link): clean bounce back.
+      const backUrl = new URL(env.SITE_URL || 'https://innovationearthprojects.org/admin/');
+      return Response.redirect(backUrl.toString(), 302);
     }
     let accessToken = '';
     let tokenError = '';

@@ -326,8 +326,41 @@
               restoreFromStoredToken(); // if the handshake above is ignored, reload into the CMS instead of hanging
             }
           }
+          // FIX (silent 404/hang): the Worker now reports token-exchange
+          // failures via postMessage — show them inline instead of spinning.
+          var errMsg = '';
+          if (typeof d === 'string' && d.indexOf('authorization:github:error:') === 0) {
+            try { errMsg = (JSON.parse(d.slice('authorization:github:error:'.length)) || {}).message || ''; } catch (e2) {}
+          } else if (d && d.type === 'authorization:github:error') {
+            errMsg = (d.payload && d.payload.message) || (d.error && d.error.message) || '';
+          }
+          if (errMsg) {
+            setLoginGuard(false);
+            showLoginError(errMsg);
+          }
         } catch (e) {}
       });
+
+      // Inline error banner for login failures (replaces the old dead-end).
+      function showLoginError(msg) {
+        try {
+          var old = document.getElementById('iep-login-error');
+          if (old) old.remove();
+          var box = document.createElement('div');
+          box.id = 'iep-login-error';
+          box.style.cssText =
+            'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:99999;' +
+            'max-width:560px;background:#2b1d20;color:#f3d5d8;border:1px solid #d33;' +
+            'border-radius:10px;padding:14px 18px;font:400 13px/1.5 system-ui,sans-serif;';
+          box.textContent = 'Sign-in problem: ' + msg;
+          var x = document.createElement('span');
+          x.textContent = ' \u2715';
+          x.style.cssText = 'margin-left:12px;cursor:pointer;color:#c99;';
+          x.onclick = function () { box.remove(); };
+          box.appendChild(x);
+          document.body.appendChild(box);
+        } catch (e) {}
+      }
 
       // 3) If a valid cached token exists, replay it immediately on load so
       //    the CMS restores the session without any redirect at all.
