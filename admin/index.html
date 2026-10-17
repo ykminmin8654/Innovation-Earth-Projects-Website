@@ -219,7 +219,12 @@
       //        to the original admin tab via postMessage, stash it, then close.
       //      - The popup never opened and this is the main tab itself: seed the
       //        store and reload into the CMS directly.
-      var iepAt = /[?&]iep_at=([^&]+)/.exec(location.search);
+      // FIX (404 after GitHub approval): the Worker hand-off now navigates the
+      // popup to /admin/#iep_at=<token> instead of ?iep_at=<token>, because a
+      // query string containing dots/colons (base64 tokens) makes GitHub Pages
+      // look for "/admin/<something>" as a literal path and 404; URL fragments
+      // are never sent to the server, so they can never 404. Accept BOTH forms.
+      var iepAt = /[?&#]iep_at=([^&#]+)/.exec(location.href);
       if (iepAt) {
         setLoginGuard(false);
         var atToken = decodeURIComponent(iepAt[1]);
