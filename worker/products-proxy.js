@@ -217,7 +217,7 @@ const GH_API = 'https://api.github.com';
 // ("authorizing:github" ping/pong + "authorization:github:success:{token,...}"),
 // with the code->token exchange done server-side. Fixes the permanent
 // "Completing sign-in…" hang (old builds sent a message format Decap ignores).
-const BUILD_ID = '2026-10-07.24';
+const BUILD_ID = '2026-10-07.25';
 
 // GitHub's token-exchange endpoint ONLY accepts form-encoded bodies. A JSON
 // body makes it answer HTTP 404 with the plain-text body "Not Found" — which
@@ -295,6 +295,39 @@ async function handleGithubProxy(request, env, url) {
       );
     }
   }
+
+
+// ---------------------------------------------------------------------------
+// LOGIN HAND-OFF PAGE (v2 rewrite — full-page redirect flow, no popups).
+// After GitHub approves, the callback lands HERE (in the popup tab or a
+// top-level tab). We:
+//   a) stash the token in localStorage under EVERY key the admin shim and
+//      Decap might read, AND
+//   b) navigate this tab to <site>/admin/#iep_at=<token> using a URL
+//      FRAGMENT only — fragments are never sent to the server, so GitHub
+//      Pages can never 404 on them, and
+//   c) also postMessage the token to the opener as a bonus path.
+// The admin page's shim picks the token up from the fragment/storage and
+// boots the CMS already signed-in. No handshake wait, no ping/pong race.
+// ---------------------------------------------------------------------------
+function loginHandoffHtml(token, siteBase) {
+  const safeTok = String(token || '').replace(/[^A-Za-z0-9._\-]/g, '');
+  return '<!doctype html><html><head><meta charset="utf-8"><title>Signing in\u2026</title></head>' +
+    '<body style="font-family:sans-serif;padding:2rem">' +
+    '<p id="msg">Signing you in\u2026</p>' +
+    '<scr' + 'ipt>(function(){' +
+    'var t="' + safeTok + '";' +
+    'if(t){' +
+    'try{localStorage.setItem("iep-oauth-token",t);}catch(e){}' +
+    'var obj=JSON.stringify({access_token:t,token_type:"bearer"});' +
+    '["github","GitHub","netlify-github","decap-github"].forEach(function(k){' +
+    'try{localStorage.setItem(k+":https://innovationearthprojects.org/admin/config.yml",obj);}catch(e){}' +
+    '});' +
+    'try{window.opener&&window.opener.postMessage("authorization:github:success:"+obj,"*");}catch(e){}' +
+    "location.replace('" + siteBase + "/admin/#iep_at='+t);" +
+    '}else{document.getElementById("msg").textContent="Login failed \u2014 return to the admin page and try again.";}' +
+    '})();</scr' + 'ipt></body></html>';
+}
 
   // 1) Start login: send browser to GitHub's authorize page
   if (path === 'oauth') {
@@ -421,13 +454,12 @@ async function handleGithubProxy(request, env, url) {
         // to the server, so no 404 is possible; the admin shim reads the
         // fragment on load and seeds Decap's auth store.
         const siteBase = String(env.SITE_URL || 'https://innovationearthprojects.org').replace(/\/+$/, '');
-        const handoffHtml =
-          '<!doctype html><html><head><meta charset="utf-8"><title>Finishing sign-in…</title></head>' +
-          '<body style="font-family:sans-serif;padding:2rem;color:#555">Finishing sign-in…</body>' +
-          '<scr' + 'pt>(function(){var t="' + encodeURIComponent(earlyToken).replace(/"/g, "%22") + '";' +
-          'try{if(window.opener&&!window.opener.closed){window.opener.postMessage("authorization:github:success:"+JSON.stringify({token:t,token_type:"bearer"}),"*");}}catch(e){}' +
-          'location.replace("' + siteBase + '/admin/#iep_at="+t);</scr' + 'ipt></html>';
-        return new Response(handoffHtml, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+        // v2 rewrite: shared hand-off page stashes token in localStorage under
+        // every key the admin shim/Decap read, postMessages as backup, and
+        // navigates via URL fragment (#iep_at) — fragments can never 404.
+        return new Response(loginHandoffHtml(earlyToken, siteBase), {
+          headers: { 'Content-Type': 'text/html; charset=utf-8' },
+        });
       }
       // FIX (the "Sign-in failed: Not Found" 404 you kept seeing): GitHub's
       // token-exchange endpoint answers unknown routes with body "Not Found",

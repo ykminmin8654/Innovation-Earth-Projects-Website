@@ -12,14 +12,15 @@
       align-items: center; justify-content: center; gap: 14px;
       font: 600 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
       color: #e6e9ee; background: #171b21; text-align: center; padding: 24px;
+      z-index: 9999;
     }
     #iep-boot img { width: 72px; height: 72px; object-fit: contain; }
     #iep-boot .sub { font-weight: 400; font-size: 13px; color: #9aa4b2; max-width: 420px; }
-    #iep-boot code {
-      background: #232a33; padding: 2px 6px; border-radius: 4px;
-      font-size: 12px; color: #7dd3c0; word-break: break-all;
-    }
     #iep-boot a { color: #7dd3c0; }
+    #iep-boot button {
+      background: #35d0ba; color: #0d1117; border: 0; border-radius: 8px;
+      padding: 10px 18px; font: 600 14px system-ui, sans-serif; cursor: pointer;
+    }
     .spinner {
       width: 26px; height: 26px; border-radius: 50%;
       border: 3px solid #2c333d; border-top-color: #35d0ba;
@@ -28,515 +29,171 @@
     @keyframes iep-spin { to { transform: rotate(360deg); } }
     @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
   </style>
+
+  <!-- =====================================================================
+    LOGIN SHIM v2 — full-page redirect flow (no popups, no postMessage).
+
+    How login works now:
+      1. User clicks "Login with GitHub". Decap opens a popup that goes to
+         the Worker /oauth route -> GitHub authorize -> back to Worker
+         /callback, which exchanges the code for a token server-side and
+         then does: location.replace('/admin/#iep_at=<token>').
+      2. This shim ALSO watches for the token arriving in this tab's URL
+         fragment (#iep_at or #access_token) — the same-tab path — and
+         handles it before Decap boots.
+      3. The token is stashed in localStorage under 'iep-oauth-token' and
+         seeded into every auth-store key Decap may read, so whichever
+         storage format its installed version uses finds a valid session.
+      4. On EVERY load, if a stashed token exists, we pre-seed the store
+         BEFORE loading decap-cms.js so the app boots already logged-in.
+      5. If the popup handshake ever fails again, the user can simply
+         re-run the login link shown on the boot screen — it completes in
+         THIS tab via full-page redirects (popup blockers can't stop it).
+
+    No response_type param is ever sent (GitHub 404s on it), and state is
+    never left empty (GitHub 404s on blank state=).
+  ====================================================================== -->
   <script>
-    // ---------------------------------------------------------------------
-    // OAuth popup shim — fixes the permanent "Completing sign-in…" hang.
-    // Decap's github backend opens a popup and waits for a Netlify-style
-    // postMessage handshake ("authorizing:github" / "authorization:github:
-    // success:{token}") that our Cloudflare Worker callback page never
-    // completes reliably. This shim replaces that flow with GitHub's
-    // supported *implicit* OAuth flow, which returns the access token in
-    // the URL fragment (#access_token=...) — no proxy call needed after
-    // login, so it cannot hang. It works entirely on this page:
-    //   1. intercepts window.open() of the Worker authorize popup and
-    //      redirects the tab to github.com/login/oauth/authorize with
-    //      a GitHub-accepted authorize URL (no response_type — GitHub 404s on it);
-    //   2. on return, reads #access_token and feeds it back into the CMS
-    //      through the exact message Decap's popup listener expects.
-    // Requires app_id (your GitHub OAuth App client id) in admin/config.yml.
-    // ---------------------------------------------------------------------
     (function () {
       var WORKER_BASE = 'https://decap-proxy.ykminmin8654.workers.dev/api/v1/github';
-      // Your GitHub OAuth App Client ID (github.com/settings/developers).
-      // Hardcoded here so login works even if config.yml still has a placeholder.
-      var FALLBACK_APP_ID = 'Iv23liYfJrQsBnnhUgVp';
+      var CLIENT_ID   = 'Iv23liYfJrQsBnnhUgVp'; // fallback only; Worker has its own copy
+      var ADMIN_URL   = location.origin + '/admin/';
 
-      function normalizeAppId(id) {
-        id = String(id || '').trim().replace(/^["']+|["']+$/g, '');
-        if (!id || /REPLACE_WITH/i.test(id)) return '';
-        return id;
+      function stashToken(tok) {
+        try { localStorage.setItem('iep-oauth-token', tok); } catch (e) {}
+        seedStores(tok);
       }
 
-      function findAppId() {
-        var cfg = window.cms && window.cms.backend && window.cms.backend.config;
-        var id = normalizeAppId(cfg && cfg.app_id);
-        if (id) return id;
+      // Seed every plausible Decap/Netlify-identity auth-store key so the
+      // installed CMS version finds the session regardless of its naming.
+      function seedStores(tok) {
+        var payload = JSON.stringify({ access_token: tok, token_type: 'bearer' });
+        var keys = [
+          'netlify-github:' + ADMIN_URL + 'config.yml',
+          'github:' + ADMIN_URL + 'config.yml',
+          'localStorageKey:/config',
+          'decap-github:' + ADMIN_URL,
+          'decap-github:' + location.origin + '/admin/'
+        ];
+        for (var i = 0; i < keys.length; i++) {
+          try { localStorage.setItem(keys[i], payload); } catch (e) {}
+        }
+        // Older netlify-identity-widget format used by some decap builds:
         try {
-          var raw = localStorage.getItem('localStorageKey:/config');
-          if (raw) {
-            var j = JSON.parse(JSON.parse(raw));
-            id = normalizeAppId(j.backend && j.backend.app_id);
-            if (id) return id;
-          }
-        } catch (e) {}
-        return FALLBACK_APP_ID;
-      }
-
-      // FIX for the endless refresh loop (build .15 attempt): the shim used to
-      // immediately location.replace() to the Worker whenever Decap asked for
-      // login. Because that replacement happens *during* the login click, the
-      // browser reloads /admin/ before the redirect chain finishes — and on
-      // every reload the same interception fired again: infinite refresh.
-      // Now the login opens in a SEPARATE popup tab (like Decap intends); the
-      // Worker callback there delivers the token back via postMessage +
-      // localStorage, and THIS tab never reloads during login.
-      var GUARD_KEY = 'iep-login-inflight';
-      function loginGuarded() {
-        try { return sessionStorage.getItem(GUARD_KEY) === '1'; } catch (e) { return false; }
-      }
-      function setLoginGuard(on) {
-        try {
-          if (on) sessionStorage.setItem(GUARD_KEY, '1');
-          else sessionStorage.removeItem(GUARD_KEY);
+          localStorage.setItem('wp-github-auth', payload);
+          localStorage.setItem('gotrue.site-' + location.host, payload);
         } catch (e) {}
       }
 
-      function authorizePopupUrl() {
-        // FIX (the actual root cause of every failed attempt so far): the
-        // popup must load the WORKER's /oauth route, NOT github.com directly.
-        // Previous builds sent the popup straight to
-        // https://innovationearthprojects.org/admin/ as the redirect_uri —
-        // which is NOT the OAuth App's registered callback URL
-        // (https://decap-proxy.ykminmin8654.workers.dev/api/v1/github/callback),
-        // so GitHub answered with its "Sorry about that…" 404 page. The Worker
-        // now owns the whole flow again: it redirects to GitHub with the
-        // correctly-registered redirect_uri, exchanges the code for a token
-        // server-side, stashes it in localStorage under iep-oauth-token, and
-        // delivers it to this tab via postMessage. This tab never reloads
-        // during login (popup-only flow), so no refresh loop either.
-        return WORKER_BASE + '/oauth?flow=worker&scope=' + encodeURIComponent('repo read:user user:email');
+      function cleanUrl() {
+        // Strip token fragments/query params from the address bar without reloading.
+        try { history.replaceState(null, '', ADMIN_URL); } catch (e) {}
       }
 
-      // Open the GitHub authorize flow in a popup/tab. Returns true on success.
-      function openAuthorizeTab() {
-        var w = null;
-        try { w = origOpenRef(authorizePopupUrl(), 'iep_oauth', 'width=600,height=720'); } catch (e) {}
-        if (!w) {
-          try { w = origOpenRef(authorizePopupUrl(), '_blank'); } catch (e) {}
+      // ---- A) Token already present in THIS tab's URL? (same-tab return)
+      var mAt = /[?&#]iep_at=([^&#]+)/.exec(location.href);
+      var mAc = /[?&#]access_token=([^&#]+)/.exec(location.href);
+      var incoming = mAt ? decodeURIComponent(mAt[1]) : (mAc ? decodeURIComponent(mAc[1]) : '');
+      if (incoming) {
+        stashToken(incoming);
+        cleanUrl();
+      } else {
+        // ---- B) Stashed token from an earlier popup completion?
+        var stashed = '';
+        try { stashed = localStorage.getItem('iep-oauth-token') || ''; } catch (e) {}
+        if (stashed && !/[?&#]iep_error=/.test(location.href)) {
+          seedStores(stashed);
         }
-        if (!w) {
-          try { w = window.open(authorizePopupUrl(), '_blank'); } catch (e) {}
-        }
-        if (!w) {
-          // Last resort: same-tab, but guarded so a reload cannot re-trigger it.
-          setLoginGuard(true);
-          setTimeout(function () { setLoginGuard(false); }, 15000);
-          try { location.href = authorizePopupUrl(); } catch (e) {}
-          return false;
-        }
-        return true;
       }
 
-      // Keep a plain reference to the native window.open so our interceptor
-      // below can call it without recursion.
-      var origOpenRef = window.open.bind(window);
-
-      // Legacy entry point (?iep_login=implicit) from old cached tabs: just
-      // clean the URL; do NOT auto-redirect (that fed the loop).
-      if (/[?&]iep_login=implicit/.test(location.search)) {
-        history.replaceState(null, '', location.pathname);
-      }
-
-      // Deliver a token to Decap. The CMS listens for *object* messages of
-      // shape { type: 'authorization:github:success', payload: { token } }
-      // (decap-cms 3.x uses window.postMessage with JSON objects; older docs
-      // show colon-strings). Send BOTH formats so either version works.
-      function deliverToken(token) {
-        // FIX (login stuck forever): Decap 3.x's popup listener ONLY accepts a
-        // colon-delimited STRING whose payload is {"token":...,"token_type":"bearer"}.
-        // The object-format message sent here previously was silently ignored by
-        // the CMS, so even when the token arrived nothing happened. Send the
-        // exact string format first; keep the object variant as a harmless extra.
-        var successStr = 'authorization:github:success:' + JSON.stringify({ token: token, token_type: 'bearer' });
-        var obj = { type: 'authorization:github:success', payload: successStr };
-        var str = successStr;
-        var tries = 0;
-        var iv = setInterval(function () {
-          try {
-            window.postMessage(obj, location.origin);
-            window.postMessage(str, location.origin);
-          } catch (e) {}
-          if (++tries > 40) clearInterval(iv);
-        }, 150);
-      }
-
-      // Shared plumbing: feed a token to Decap both via postMessage (popup
-      // handshake) and by pre-seeding the CMS auth store so a full reload
-      // restores the session automatically.
-      function seedCmsAuth(token) {
+      // ---- C) Popup takeover: if Decap opens a popup toward the Worker/GitHub,
+      // let it run there untouched. But if the popup dies/blocks, offer a
+      // same-tab link. We detect blocked popups by watching for window.open
+      // returning null while attempting login.
+      var origOpen = window.open;
+      window.open = function (url, name, features) {
         try {
-          var obj = JSON.stringify({ access_token: token, token_type: 'bearer' });
-          ['github', 'GitHub'].forEach(function (k) {
-            localStorage.setItem('decap-github:' + k + ':' + location.origin + '/admin/', obj);
-            localStorage.setItem(k + ':' + location.origin + '/admin/config.yml', obj);
-          });
-        } catch (e) {}
-      }
-
-      function watchForAuthRequests(token) {
-        window.addEventListener('message', function (ev) {
-          var d = ev.data;
-          if (typeof d === 'string' ? d === 'authorizing:github' : (d && d.type === 'authorizing:github')) {
-            deliverToken(token);
-          }
-        });
-        setTimeout(function () { deliverToken(token); }, 300);
-        setTimeout(function () { deliverToken(token); }, 1500);
-      }
-
-      // FIX (login stuck forever — the main one): Decap's GitHub backend ONLY
-      // completes login through its popup postMessage handshake. If that never
-      // lands, it waits indefinitely ("stuck"). Since this tab shares localStorage
-      // with seedCmsAuth(), we now take over completely when no login is in
-      // flight: poll until the CMS login button exists, inject a stashed token
-      // into Decap's auth store, and RELOAD once so the CMS boots straight into
-      // the management UI. This makes login work even if every popup path fails.
-      function restoreFromStoredToken() {
-        try {
-          var tok = localStorage.getItem('iep-oauth-token') || '';
-          if (!tok || loginGuarded()) return; // a fresh login is in progress — let it run
-          var obj = JSON.stringify({ access_token: tok, token_type: 'bearer' });
-          ['github', 'GitHub'].forEach(function (k) {
-            localStorage.setItem(k + ':' + location.origin + '/admin/config.yml', obj);
-          });
-          var tries = 0;
-          var iv = setInterval(function () {
-            tries++;
-            var btns = document.querySelectorAll('button');
-            var hasLogin = false;
-            for (var i = 0; i < btns.length; i++) {
-              if (/log in/i.test(btns[i].textContent || '')) { hasLogin = true; break; }
+          var u = String(url || '');
+          if (/workers\.dev|github\.com\/login\/oauth/.test(u)) {
+            var w = origOpen.call(window, url, name, features);
+            if (!w) {
+              // Popup blocked -> complete login in this tab instead.
+              showBlockedNotice(u);
+              return w;
             }
-            if (hasLogin) { clearInterval(iv); location.reload(); }
-            else if (tries > 60) clearInterval(iv);
-          }, 250);
-        } catch (e) {}
-      }
-
-      // 1a2) Worker URL hand-off (the reliable path): the popup tab was
-      //      redirected to /admin/?iep_at=<token>. Two cases:
-      //      - This IS the popup tab (window.opener exists): deliver the token
-      //        to the original admin tab via postMessage, stash it, then close.
-      //      - The popup never opened and this is the main tab itself: seed the
-      //        store and reload into the CMS directly.
-      // FIX (404 after GitHub approval): the Worker hand-off now navigates the
-      // popup to /admin/#iep_at=<token> instead of ?iep_at=<token>, because a
-      // query string containing dots/colons (base64 tokens) makes GitHub Pages
-      // look for "/admin/<something>" as a literal path and 404; URL fragments
-      // are never sent to the server, so they can never 404. Accept BOTH forms.
-      var iepAt = /[?&#]iep_at=([^&#]+)/.exec(location.href);
-      if (iepAt) {
-        setLoginGuard(false);
-        var atToken = decodeURIComponent(iepAt[1]);
-        history.replaceState(null, '', location.pathname); // clean URL immediately
-        try { localStorage.setItem('iep-oauth-token', atToken); } catch (e) {}
-        seedCmsAuth(atToken);
-        if (window.opener && !window.opener.closed) {
-          try {
-            window.opener.postMessage(
-              'authorization:github:success:' + JSON.stringify({ token: atToken, token_type: 'bearer' }),
-              '*'
-            );
-          } catch (e) {}
-          setTimeout(function () { try { window.close(); } catch (err) {} }, 800);
-        } else {
-          watchForAuthRequests(atToken);
-          restoreFromStoredToken(); // guaranteed: reload into the management UI
-        }
-      }
-
-      // 1a) Legacy same-tab bounce (?iep_token=1 or #iep_token=1) from older builds.
-      if (/[?&#]iep_token=1/.test(location.href)) {
-        setLoginGuard(false); // login attempt finished
-        var payload = '';
-        try { payload = localStorage.getItem('iep-oauth-token-cache') || ''; } catch (e) {}
-        history.replaceState(null, '', location.pathname);
-        var tok = '';
-        try { tok = (JSON.parse(payload) || {}).token || ''; } catch (e) {}
-        if (tok) {
-          try { localStorage.removeItem('iep-oauth-token-cache'); } catch (e) {}
-          try { localStorage.setItem('iep-oauth-token', tok); } catch (e) {}
-          seedCmsAuth(tok);
-          watchForAuthRequests(tok);
-          restoreFromStoredToken(); // guaranteed path: reload into the CMS once it shows "Login with GitHub"
-        } else {
-          // Cross-origin case (Worker only on workers.dev): localStorage is not
-          // shared, but the popup postMessage path still delivers the token.
-          // Nothing to do here — let the CMS boot normally.
-        }
-      }
-
-      // 1b) Implicit-flow return: token in the URL fragment (#access_token).
-      //     FIX (popup stuck on "Completing sign-in…"): the popup tab has no
-      //     Decap instance to hand the token to, so it now forwards the token
-      //     to the OPENER (the admin tab) via postMessage and closes itself.
-      var m = /[?&#]access_token=([^&]+)/.exec(location.href);
-      if (m) {
-        var token = decodeURIComponent(m[1]);
-        history.replaceState(null, '', location.pathname + location.search); // clean URL
-        try { localStorage.setItem('iep-oauth-token', token); } catch (e) {}
-        if (window.opener && !window.opener.closed) {
-          try {
-            window.opener.postMessage(
-              'authorization:github:success:' + JSON.stringify({ token: token, token_type: 'bearer' }),
-              location.origin
-            );
-          } catch (e) {}
-          setTimeout(function () { try { window.close(); } catch (err) {} }, 400);
-        } else {
-          // No opener (user opened /admin/ directly after login): seed store,
-          // deliver to Decap here, and reload into the CMS once it shows login.
-          seedCmsAuth(token);
-          watchForAuthRequests(token);
-          restoreFromStoredToken();
-        }
-      }
-
-      // 2) Intercept logins. Decap's github backend calls window.open() with
-      //    the Worker authorize URL and then waits for a postMessage from that
-      //    popup. We let the popup actually open (native window.open), so this
-      //    tab NEVER reloads — breaking the refresh loop. The Worker callback
-      //    page delivers the token to us via postMessage (handled below).
-      window.open = function (url) {
-        try {
-          var s = String(url || '');
-          if (s.indexOf(WORKER_BASE + '/oauth') === 0 ||
-              s.indexOf('github.com/login/oauth/authorize') !== -1) {
-            // Whether Decap opened the Worker or GitHub directly, always use
-            // OUR validated authorize URL (registered client_id + redirect_uri).
-            return origOpenRef(authorizePopupUrl(), 'iep_oauth', 'width=600,height=720');
+            return w;
           }
         } catch (e) {}
-        return origOpenRef.apply(null, arguments);
+        return origOpen.call(window, url, name, features);
       };
 
-      // Catch tokens delivered by the Worker callback popup (postMessage) even
-      // if Decap's own listener misses them: store + feed immediately.
-      window.addEventListener('message', function (ev) {
-        try {
-          var d = ev.data;
-          var payload = '';
-          if (typeof d === 'string' && d.indexOf('authorization:github:success:') === 0) {
-            payload = d.slice('authorization:github:success:'.length);
-          } else if (d && d.type === 'authorization:github:success') {
-            payload = typeof d.payload === 'string' ? d.payload : JSON.stringify(d.payload || {});
-          }
-          if (payload) {
-            var t = (JSON.parse(payload) || {}).token || '';
-            if (t) {
-              setLoginGuard(false);
-              try { localStorage.setItem('iep-oauth-token', t); } catch (e) {}
-              seedCmsAuth(t);
-              deliverToken(t);
-              restoreFromStoredToken(); // if the handshake above is ignored, reload into the CMS instead of hanging
-            }
-          }
-          // FIX (silent 404/hang): the Worker now reports token-exchange
-          // failures via postMessage — show them inline instead of spinning.
-          var errMsg = '';
-          if (typeof d === 'string' && d.indexOf('authorization:github:error:') === 0) {
-            try { errMsg = (JSON.parse(d.slice('authorization:github:error:'.length)) || {}).message || ''; } catch (e2) {}
-          } else if (d && d.type === 'authorization:github:error') {
-            errMsg = (d.payload && d.payload.message) || (d.error && d.error.message) || '';
-          }
-          if (errMsg) {
-            setLoginGuard(false);
-            showLoginError(errMsg);
-          }
-        } catch (e) {}
-      });
-
-      // Inline error banner for login failures (replaces the old dead-end).
-      function showLoginError(msg) {
-        try {
-          var old = document.getElementById('iep-login-error');
-          if (old) old.remove();
-          var box = document.createElement('div');
-          box.id = 'iep-login-error';
-          box.style.cssText =
-            'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:99999;' +
-            'max-width:560px;background:#2b1d20;color:#f3d5d8;border:1px solid #d33;' +
-            'border-radius:10px;padding:14px 18px;font:400 13px/1.5 system-ui,sans-serif;';
-          box.textContent = 'Sign-in problem: ' + msg;
-          var x = document.createElement('span');
-          x.textContent = ' \u2715';
-          x.style.cssText = 'margin-left:12px;cursor:pointer;color:#c99;';
-          x.onclick = function () { box.remove(); };
-          box.appendChild(x);
-          document.body.appendChild(box);
-        } catch (e) {}
+      function showBlockedNotice(targetUrl) {
+        var el = document.getElementById('iep-boot');
+        if (!el) return;
+        var note = document.createElement('div');
+        note.className = 'sub';
+        note.innerHTML = 'Popup was blocked. <a id="iep-direct" href="' + targetUrl + '">Sign in here instead →</a>';
+        el.appendChild(note);
+        document.getElementById('iep-direct').addEventListener('click', function () {
+          // Full-page login in this tab; after GitHub approval the Worker
+          // lands us back on /admin/#iep_at=<token>, handled by section A.
+          location.href = targetUrl;
+        });
       }
 
-      // 3) If a valid cached token exists, replay it immediately on load so
-      //    the CMS restores the session without any redirect at all.
-      try {
-        var cached = localStorage.getItem('iep-oauth-token');
-        if (cached) {
-          seedCmsAuth(cached);
-          watchForAuthRequests(cached);
-        }
-      } catch (e) {}
-
-      // 4) Safety net: if Decap renders an <a> straight to GitHub's authorize
-      //    endpoint, route the click through our Worker popup instead (never
-      //    navigate this tab — that fed the refresh loop). Also strips any
-      //    response_type param defensively; GitHub 404s on authorize URLs that
-      //    include it.
-      document.addEventListener('click', function (e) {
-        try {
-          var a = e.target && e.target.closest ? e.target.closest('a') : null;
-          if (a && /login\/oauth\/authorize/.test(a.href || '')) {
-            e.preventDefault();
-            e.stopPropagation();
-            openAuthorizeTab();
-          }
-        } catch (err) {}
-      }, true);
-      try {
-        var origAssign = window.location.assign.bind(window.location);
-        var origReplace = window.location.replace.bind(window.location);
-        function sanitize(u) {
-          u = String(u || '');
-          if (/login\/oauth\/authorize/.test(u)) {
-            // Strip response_type (GitHub 404s on it) AND empty state= params
-            // (GitHub ALSO 404s when state is present but blank — this exact
-            // "&state=" at the end of the authorize URL was the persistent
-            // post-login 404). Fragment-safe: never touch anything after '#'.
-            var frag = '';
-            var fi = u.indexOf('#');
-            if (fi >= 0) { frag = u.slice(fi); u = u.slice(0, fi); }
-            u = u.replace(/([?&])response_type=[^&]*/g, '');
-            u = u.replace(/([?&])state=(?=&|$)/g, '$1');
-            u = u.replace(/\?&+/, '?').replace(/&&+/g, '&').replace(/[?&]$/, '');
-            u += frag;
-          }
-          return u;
-        }
-        window.location.assign = function (u) { return origAssign(sanitize(u)); };
-        window.location.replace = function (u) { return origReplace(sanitize(u)); };
-      } catch (e) {}
-
-      // -----------------------------------------------------------------
-      // FIX (the CURRENT persistent GitHub 404): the shim previously let
-      // Decap's own popup open first and only replaced its URL from inside
-      // the window.open interceptor. Decap 3.x sometimes bypasses that
-      // (it builds the authorize URL itself with a BLANK state=, which
-      // GitHub answers with its "Sorry about that…" 404 page), so the old
-      // sanitizer could never run in time. Now we take over the login
-      // button outright: as soon as the CMS renders "Login with GitHub",
-      // every click opens OUR Worker-backed authorize URL (client_id +
-      // redirect_uri + scope only — no state, no response_type), so the
-      // URL GitHub receives can never be the broken one.
-      // -----------------------------------------------------------------
-      function iepLoginClicked(ev) {
-        try {
-          var t = ev.target;
-          while (t && t !== document.body) {
-            var txt = String(t.textContent || '').toLowerCase();
-            var cls = String((t.className && t.className.toString()) || '').toLowerCase();
-            if ((/log in/.test(txt) && /github/.test(txt)) || /login-button|nc-login/.test(cls)) {
-              ev.preventDefault();
-              ev.stopPropagation();
-              openAuthorizeTab();
-              return;
-            }
-            t = t.parentNode;
-          }
-        } catch (e) {}
-      }
-      document.addEventListener('mousedown', iepLoginClicked, true);
-      document.addEventListener('click', iepLoginClicked, true);
+      // Expose tiny helper for the CMS-less fallback link below.
+      window.__iepLoginUrl = WORKER_BASE + '/oauth';
     })();
   </script>
 </head>
 <body>
-  <!-- Shown while decap-cms.js downloads; replaced by the CMS once it boots. -->
   <div id="iep-boot">
     <img src="/images/logo.png" alt="Innovation Earth Projects logo" />
-    <div class="spinner" aria-hidden="true"></div>
-    <div>Loading Admin&hellip;</div>
-    <div class="sub" id="iep-boot-sub">If this message stays for more than a few seconds, the CMS script may be blocked by an ad blocker or your network. Disable it for this page and refresh.</div>
+    <div>Loading Admin…</div>
+    <div class="sub">Content management for Innovation Earth Projects.</div>
+    <button id="iep-fallback" style="display:none">Sign in with GitHub</button>
   </div>
 
   <script>
-    // Hide the splash as soon as Decap takes over the page.
-    (function () {
-      var done = false;
-      function hide() {
-        if (done) return;
-        done = true;
-        var b = document.getElementById('iep-boot');
-        if (b) b.remove();
+    // If the CMS bundle takes too long (CDN hiccup), surface a direct
+    // same-tab sign-in button so the page is never a dead end.
+    setTimeout(function () {
+      var btn = document.getElementById('iep-fallback');
+      var boot = document.getElementById('iep-boot');
+      if (!btn || !boot) return;
+      var cmsUp = !!document.querySelector('.nc-app, .css-1u4gftf, #nc-root');
+      if (!cmsUp) {
+        btn.style.display = '';
+        btn.onclick = function () { location.href = window.__iepLoginUrl || ''; };
       }
-      var check = setInterval(function () {
-        if (document.querySelector('.nc-app-container, [id^="nc-"]')) { clearInterval(check); hide(); }
-      }, 100);
-      setTimeout(function () { clearInterval(check); }, 20000);
-      window.addEventListener('load', function () { setTimeout(hide, 3000); });
-    })();
-
-    // --- OAuth popup resilience -------------------------------------------
-    // Decap opens a popup for GitHub login and waits for a postMessage from
-    // it. Some browsers (or "block popups" settings / strict tracking
-    // protection) block the popup, which leaves the admin page spinning
-    // forever after clicking "Login with GitHub". This shim detects that and:
-    //   1) shows a clear hint telling you to allow popups for this page, and
-    //   2) offers a same-tab fallback that completes login without a popup.
-    (function () {
-      var warned = false;
-      function showHint() {
-        if (warned) return;
-        // Only relevant while the CMS is sitting on the login screen.
-        if (!document.querySelector('[class*="page-logo"], .nc-login-button-container')) return;
-        warned = true;
-        var box = document.createElement('div');
-        box.id = 'iep-oauth-hint';
-        box.style.cssText =
-          'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:99999;' +
-          'max-width:480px;background:#232a33;color:#e6e9ee;border:1px solid #35d0ba;' +
-          'border-radius:10px;padding:14px 18px;font:400 13px/1.5 system-ui,sans-serif;text-align:center;';
-        box.innerHTML =
-          'Popup blocked? Allow popups for this page and try again, or use the ' +
-          '<a href="#" id="iep-oauth-direct" style="color:#7dd3c0;font-weight:600">direct sign-in link</a>. ' +
-          '<span id="iep-oauth-close" style="margin-left:12px;cursor:pointer;color:#9aa4b2">\u2715</span>';
-        document.body.appendChild(box);
-        // Direct link: same authorize URL Decap's popup would open (redirect flow).
-        // The Worker callback page detects the missing opener and bounces back here.
-        var base = (window.DECAP_PROXY_BASE || 'https://decap-proxy.ykminmin8654.workers.dev/api/v1/github');
-        document.getElementById('iep-oauth-direct').addEventListener('click', function (e) {
-          e.preventDefault();
-          location.href = base + '/oauth?state=' + encodeURIComponent(location.origin + '/admin/');
-        });
-        document.getElementById('iep-oauth-close').addEventListener('click', function () {
-          box.remove(); warned = false;
-        });
-      }
-      // Watch for a click on the login button; if no popup materialized in 1.5s, hint.
-      document.addEventListener('click', function (e) {
-        var t = e.target;
-        while (t && t !== document.body) {
-          if (/login|github/i.test(t.className || '') || /github/i.test((t.textContent || '').toLowerCase())) {
-            var origOpen = window.open;
-            var opened = false;
-            window.open = function () { opened = true; return origOpen.apply(window, arguments); };
-            setTimeout(function () {
-              window.open = origOpen;
-              if (!opened) showHint();
-            }, 1500);
-            break;
-          }
-          t = t.parentNode;
-        }
-      }, true);
-      // Also surface the hint if the user returns to a tab still stuck at login.
-      setInterval(function () {
-        if (sessionStorage.getItem('iep-oauth-popup-blocked') === '1') showHint();
-      }, 4000);
-    })();
+    }, 6000);
   </script>
 
-  <!-- Multiple CDNs: if unpkg is blocked/slow, jsDelivr takes over. -->
-  <script src="https://unpkg.com/decap-cms@^3.3.3/dist/decap-cms.js"
-          onerror="(function(){var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/decap-cms@^3.3.3/dist/decap-cms.js';s.onerror=function(){var sub=document.getElementById('iep-boot-sub');if(sub){sub.innerHTML='Could not load the CMS from any CDN. Check your connection or ad blocker, then refresh.';}};document.body.appendChild(s);})();"></script>
+  <script src="https://unpkg.com/decap-cms@^3.8.0/dist/decap-cms.js"></script>
+  <script>
+    // After boot, hide splash when CMS renders; clear stale token on logout click.
+    (function () {
+      var tries = 0;
+      var iv = setInterval(function () {
+        tries++;
+        var root = document.querySelector('#nc-root, .nc-app');
+        if (root && root.children.length > 0) {
+          clearInterval(iv);
+          var el = document.getElementById('iep-boot');
+          if (el) el.remove();
+        } else if (tries > 120) {
+          clearInterval(iv); // 12s: leave splash + fallback button visible
+        }
+      }, 100);
+
+      // Logout hygiene: remove stashed token when user logs out.
+      document.addEventListener('click', function (ev) {
+        var t = ev.target && ev.target.textContent ? ev.target.textContent.trim().toLowerCase() : '';
+        if (t === 'log out' || t === 'logout') {
+          try { localStorage.removeItem('iep-oauth-token'); } catch (e) {}
+        }
+      }, true);
+    })();
+  </script>
 </body>
 </html>
