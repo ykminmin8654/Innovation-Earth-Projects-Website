@@ -415,6 +415,37 @@
         window.location.assign = function (u) { return origAssign(sanitize(u)); };
         window.location.replace = function (u) { return origReplace(sanitize(u)); };
       } catch (e) {}
+
+      // -----------------------------------------------------------------
+      // FIX (the CURRENT persistent GitHub 404): the shim previously let
+      // Decap's own popup open first and only replaced its URL from inside
+      // the window.open interceptor. Decap 3.x sometimes bypasses that
+      // (it builds the authorize URL itself with a BLANK state=, which
+      // GitHub answers with its "Sorry about that…" 404 page), so the old
+      // sanitizer could never run in time. Now we take over the login
+      // button outright: as soon as the CMS renders "Login with GitHub",
+      // every click opens OUR Worker-backed authorize URL (client_id +
+      // redirect_uri + scope only — no state, no response_type), so the
+      // URL GitHub receives can never be the broken one.
+      // -----------------------------------------------------------------
+      function iepLoginClicked(ev) {
+        try {
+          var t = ev.target;
+          while (t && t !== document.body) {
+            var txt = String(t.textContent || '').toLowerCase();
+            var cls = String((t.className && t.className.toString()) || '').toLowerCase();
+            if ((/log in/.test(txt) && /github/.test(txt)) || /login-button|nc-login/.test(cls)) {
+              ev.preventDefault();
+              ev.stopPropagation();
+              openAuthorizeTab();
+              return;
+            }
+            t = t.parentNode;
+          }
+        } catch (e) {}
+      }
+      document.addEventListener('mousedown', iepLoginClicked, true);
+      document.addEventListener('click', iepLoginClicked, true);
     })();
   </script>
 </head>
