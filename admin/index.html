@@ -245,8 +245,8 @@
         }
       }
 
-      // 1a) Legacy same-tab bounce (?iep_token=1) from older builds.
-      if (/[?&]iep_token=1/.test(location.search)) {
+      // 1a) Legacy same-tab bounce (?iep_token=1 or #iep_token=1) from older builds.
+      if (/[?&#]iep_token=1/.test(location.href)) {
         setLoginGuard(false); // login attempt finished
         var payload = '';
         try { payload = localStorage.getItem('iep-oauth-token-cache') || ''; } catch (e) {}

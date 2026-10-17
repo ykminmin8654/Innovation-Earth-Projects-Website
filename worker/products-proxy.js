@@ -217,7 +217,7 @@ const GH_API = 'https://api.github.com';
 // ("authorizing:github" ping/pong + "authorization:github:success:{token,...}"),
 // with the code->token exchange done server-side. Fixes the permanent
 // "Completing sign-in…" hang (old builds sent a message format Decap ignores).
-const BUILD_ID = '2026-10-07.22';
+const BUILD_ID = '2026-10-07.23';
 
 // GitHub's token-exchange endpoint ONLY accepts form-encoded bodies. A JSON
 // body makes it answer HTTP 404 with the plain-text body "Not Found" — which
@@ -494,8 +494,11 @@ async function handleGithubProxy(request, env, url) {
       'var payload="' + safePayload + '";' +
       'if(!window.opener){' +
       // Same-tab bounce path: store token for the admin page to pick up, then go back.
+      // FIX (404): navigate via URL FRAGMENT (#iep_token=1), never a query string —
+      // GitHub Pages 404s on /admin/?... paths in some edge cases; fragments are
+      // client-side only and can never hit the server as a path.
       'if(ok){try{localStorage.setItem("iep-oauth-token-cache",payload);}catch(e){}' +
-      "location.replace('/admin/?iep_token=1');return;}" +
+      "location.replace('/admin/#iep_token=1');return;}" +
       'document.getElementById("msg").textContent="Please return to the admin tab and try Log in again.";return;}' +
       'var got=false;' +
       // FIX for "popup opens, closes, admin does nothing": the popup may be
