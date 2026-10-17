@@ -217,7 +217,35 @@ const GH_API = 'https://api.github.com';
 // ("authorizing:github" ping/pong + "authorization:github:success:{token,...}"),
 // with the code->token exchange done server-side. Fixes the permanent
 // "Completing sign-in…" hang (old builds sent a message format Decap ignores).
-const BUILD_ID = '2026-10-07.20';
+const BUILD_ID = '2026-10-07.21';
+
+// GitHub's token-exchange endpoint ONLY accepts form-encoded bodies. A JSON
+// body makes it answer HTTP 404 with the plain-text body "Not Found" — which
+// is exactly the mysterious 404 that kept breaking admin login. This helper
+// posts correctly and parses either JSON or form-encoded replies.
+async function githubExchangeToken(env, code, redirectUri) {
+  const res = await fetch('https://github.com/login/oauth/access_token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Accept: 'application/json',
+    },
+    body: new URLSearchParams({
+      client_id: String(env.__cid || ''),
+      client_secret: String(env.__csec || ''),
+      code,
+      redirect_uri: redirectUri,
+    }).toString(),
+  });
+  const text = await res.text().catch(() => '');
+  let data = {};
+  try { data = JSON.parse(text); } catch (e) {
+    // form-encoded fallback: access_token=xxx&token_type=bearer
+    const p = new URLSearchParams(text);
+    if (p.get('access_token')) data = { access_token: p.get('access_token'), token_type: p.get('token_type') || 'bearer' };
+  }
+  return data;
+}
 
 async function handleGithubProxy(request, env, url) {
   // Strip either prefix; Decap's github backend appends "/github/..." to
@@ -360,17 +388,12 @@ async function handleGithubProxy(request, env, url) {
       let earlyErr = '';
       if (clientId && clientSecret) {
         try {
-          const tr = await fetch('https://github.com/login/oauth/access_token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-            body: JSON.stringify({
-              client_id: clientId,
-              client_secret: clientSecret,
-              code,
-              redirect_uri: `${origin}${basePath}/callback`,
-            }),
-          });
-          const td = await tr.json().catch(() => ({}));
+          // FIX (the real 404): was sending a JSON body — GitHub's
+          // /login/oauth/access_token only accepts form-encoded bodies and
+          // replies "Not Found" (HTTP 404) to JSON. That fake "GitHub 404"
+          // is what made every login attempt fail.
+          env.__cid = clientId; env.__csec = clientSecret;
+          const td = await githubExchangeToken(env, code, `${origin}${basePath}/callback`);
           if (td.access_token) earlyToken = td.access_token;
           else earlyErr = td.error_description || td.error || 'Token exchange failed';
         } catch (e) {
@@ -427,17 +450,9 @@ async function handleGithubProxy(request, env, url) {
     let tokenError = '';
     if (code && clientId && clientSecret) {
       try {
-        const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify({
-            client_id: clientId,
-            client_secret: clientSecret,
-            code,
-            redirect_uri: `${origin}${basePath}/callback`,
-          }),
-        });
-        const data = await tokenRes.json().catch(() => ({}));
+        // FIX (the real 404): form-encoded body required by GitHub.
+        env.__cid = clientId; env.__csec = clientSecret;
+        const data = await githubExchangeToken(env, code, `${origin}${basePath}/callback`);
         if (data.access_token) accessToken = data.access_token;
         else tokenError = data.error_description || data.error || 'Token exchange failed';
       } catch (e) {
@@ -515,17 +530,9 @@ async function handleGithubProxy(request, env, url) {
   // callback above already did the exchange and the admin never calls this).
   if (path === 'token') {
     const body = await request.json().catch(() => ({}));
-    const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: JSON.stringify({
-        client_id: clientId,
-        client_secret: clientSecret,
-        code: body.code || '',
-        redirect_uri: `${url.origin}${url.pathname.replace(/\/token$/, '')}/callback`,
-      }),
-    });
-    const data = await tokenRes.json().catch(() => ({}));
+    // FIX (the real 404): form-encoded body required by GitHub.
+    env.__cid = clientId; env.__csec = clientSecret;
+    const data = await githubExchangeToken(env, body.code || '', `${url.origin}${url.pathname.replace(/\/token$/, '')}/callback`);
     if (data.access_token) {
       return json({ access_token: data.access_token, token_type: data.token_type || 'bearer' });
     }
