@@ -217,7 +217,7 @@ const GH_API = 'https://api.github.com';
 // ("authorizing:github" ping/pong + "authorization:github:success:{token,...}"),
 // with the code->token exchange done server-side. Fixes the permanent
 // "Completing sign-in…" hang (old builds sent a message format Decap ignores).
-const BUILD_ID = '2026-10-07.23';
+const BUILD_ID = '2026-10-07.24';
 
 // GitHub's token-exchange endpoint ONLY accepts form-encoded bodies. A JSON
 // body makes it answer HTTP 404 with the plain-text body "Not Found" — which
@@ -350,7 +350,14 @@ async function handleGithubProxy(request, env, url) {
     const basePath = url.pathname.replace(/\/oauth$/, '');
     authUrl.searchParams.set('redirect_uri', `${url.origin}${basePath}/callback`);
     authUrl.searchParams.set('scope', 'repo,read:user,user:email');
-    authUrl.searchParams.set('state', url.searchParams.get('state') || '');
+    // FIX (the exact 404 you reported): GitHub returns its "Sorry about that…"
+    // 404 page for ANY authorize URL containing an EMPTY state parameter
+    // (state=). Previous builds always set state, even when the caller sent
+    // none — which is precisely how /oauth?flow=worker&scope=... ended up with
+    // "&state=" at the end of the authorize URL. Only forward state when it is
+    // actually present and non-empty.
+    const reqState = url.searchParams.get('state');
+    if (reqState) authUrl.searchParams.set('state', reqState);
     return Response.redirect(authUrl.toString(), 302);
   }
 

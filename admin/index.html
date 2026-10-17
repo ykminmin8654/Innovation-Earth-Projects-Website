@@ -397,8 +397,18 @@
         var origReplace = window.location.replace.bind(window.location);
         function sanitize(u) {
           u = String(u || '');
-          if (/login\/oauth\/authorize/.test(u) && /[?&]response_type=/.test(u)) {
-            return u.replace(/[?&]response_type=[^&#]*/g, '').replace(/\?&/, '?').replace(/\?$/, '');
+          if (/login\/oauth\/authorize/.test(u)) {
+            // Strip response_type (GitHub 404s on it) AND empty state= params
+            // (GitHub ALSO 404s when state is present but blank — this exact
+            // "&state=" at the end of the authorize URL was the persistent
+            // post-login 404). Fragment-safe: never touch anything after '#'.
+            var frag = '';
+            var fi = u.indexOf('#');
+            if (fi >= 0) { frag = u.slice(fi); u = u.slice(0, fi); }
+            u = u.replace(/([?&])response_type=[^&]*/g, '');
+            u = u.replace(/([?&])state=(?=&|$)/g, '$1');
+            u = u.replace(/\?&+/, '?').replace(/&&+/g, '&').replace(/[?&]$/, '');
+            u += frag;
           }
           return u;
         }
