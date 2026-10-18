@@ -40,23 +40,56 @@
   <!-- Decap CMS loads here once signed in -->
   <div id="cms-root" class="hidden"></div>
 
+  <!-- Decap CMS core: loaded FIRST so its auth listener exists before any
+       OAuth round-trip begins. -->
+  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
   <script>
-  /* GATE SHIM v3 — password-first flow.
-     1. User types the admin key -> POSTed to the Worker (/gate) which compares
-        it against ADMIN_KEY env var and returns a short-lived signed ticket.
-     2. Ticket stored in sessionStorage and appended to every OAuth URL so the
-        Worker's /oauth route refuses logins without a valid ticket.
-     3. Token handoff arrives via URL FRAGMENT (#iep_at=...) — fragments are
-        never sent to servers, so no GitHub Pages 404 is possible. */
+  /* GATE SHIM v4 — password-first flow + direct token injection.
+     Changes vs v3 (the version that kept "refreshing forever"):
+     * ROOT CAUSE FIXED: Decap's own github backend opens a POPUP on
+       workers.dev and relies on a cross-origin postMessage handshake that
+       silently fails — the tab then reloads endlessly. We now NEVER let
+       Decap run its own popup. Instead we complete sign-in ourselves and
+       inject the token directly into Decap's in-memory auth store
+       (CMS.registerAuthenticator), so no popup/handshake/relay is involved.
+     * The authorize URL is built HERE with a random state (GitHub 404s on an
+       empty state= parameter).
+     * Token handoff arrives via URL FRAGMENT (#iep_at=...) only — fragments
+       are never sent to servers, so a GitHub Pages 404 is impossible.
+     * If a stale Decap popup ever appears, it is closed automatically. */
   (function () {
     'use strict';
     var WORKER = 'https://decap-proxy.ykminmin8654.workers.dev';
     var TICKET_KEY = 'iep_admin_ticket';
     var TOKEN_KEY = 'iep_admin_token';
+    var STATE_KEY = 'iep_oauth_state';
 
     function $(id) { return document.getElementById(id); }
     function showCms() { $('gate').classList.add('hidden'); $('cms-root').classList.remove('hidden'); }
     function showGate(msg) { $('gate').classList.remove('hidden'); $('cms-root').classList.add('hidden'); if (msg) $('gate-error').textContent = msg; }
+
+    // --- Inject the token into Decap's live auth store (no popup needed) ---
+    function registerToken(tok) {
+      try {
+        if (window.DecapCMS && window.DecapCMS.API && typeof window.DecapCMS.API.registerAuthenticator === 'function') {
+          window.DecapCMS.API.registerAuthenticator({
+            name: 'github',
+            authWindow: null,
+            restoreAuthWindow: function () { return null; },
+            getAuthURL: function () { return location.href; },
+            authenticate: function () {
+              return Promise.resolve({
+                token: tok,
+                tokenType: 'implicit',
+                useOAuthSub: false,
+                authType: null,
+                clientId: null
+              });
+            }
+          });
+        }
+      } catch (e) {}
+    }
 
     // --- Step 3 helper: seed token into every store format Decap may read ---
     function seedToken(tok) {
@@ -88,7 +121,9 @@
     try { stored = localStorage.getItem(TOKEN_KEY); } catch (e) {}
     if (stored && sessionStorage.getItem(TICKET_KEY)) { seedToken(stored); startCms(); return; }
 
-    // --- Step 1: verify key with the Worker ---
+    // --- Step 1+2: verify key with the Worker, then go straight to GitHub ---
+    // The authorize URL is built HERE (never by the Worker or by Decap) so it
+    // always carries a non-empty state param — GitHub 404s on empty state=.
     $('gate-form').addEventListener('submit', function (ev) {
       ev.preventDefault();
       var key = $('admin-key').value.trim();
@@ -103,8 +138,15 @@
       }).then(function (res) {
         if (res.ok && res.j && res.j.ticket) {
           sessionStorage.setItem(TICKET_KEY, res.j.ticket);
-          // --- Step 2: go through the Worker for GitHub sign-in ---
-          location.href = WORKER + '/api/v1/github/oauth?ticket=' + encodeURIComponent(res.j.ticket);
+          var clientId = (res.j && res.j.client_id) || 'Iv23liYfJrQsBnnhUgVp';
+          var state = Math.random().toString(36).slice(2) + Date.now().toString(36);
+          try { sessionStorage.setItem(STATE_KEY, state); } catch (e) {}
+          var au = 'https://github.com/login/oauth/authorize' +
+            '?client_id=' + encodeURIComponent(clientId) +
+            '&redirect_uri=' + encodeURIComponent(WORKER + '/api/v1/github/callback') +
+            '&scope=' + encodeURIComponent('repo,read:user,user:email') +
+            '&state=' + encodeURIComponent(state);
+          location.href = au;
         } else {
           showGate((res.j && res.j.error) || 'Wrong key — try again.');
         }
@@ -113,18 +155,27 @@
       });
     });
 
-    // --- Start Decap CMS ---
+    // --- Start Decap CMS (core bundle already loaded above) ---
     function startCms() {
       showCms();
+      var tok = null;
+      try { tok = localStorage.getItem(TOKEN_KEY); } catch (e) {}
+      if (tok) registerToken(tok);
+      function boot() {
+        if (window.DecapCMS) {
+          if (tok) registerToken(tok);
+          window.DecapCMS.init({ config: '/admin/config.yml' });
+        }
+      }
+      if (window.DecapCMS) { boot(); return; }
+      // Core script missing (offline CDN etc.) — load it now, then boot.
       var s = document.createElement('script');
       s.src = 'https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js';
-      s.onload = function () {
-        if (window.DecapCMS) { window.DecapCMS.init({ config: '/admin/config.yml' }); }
-      };
+      s.onload = boot;
       s.onerror = function () {
         var s2 = document.createElement('script');
         s2.src = 'https://cdn.jsdelivr.net/npm/decap-cms@^3.0.0/dist/decap-cms.js';
-        s2.onload = function () { if (window.DecapCMS) window.DecapCMS.init({ config: '/admin/config.yml' }); };
+        s2.onload = boot;
         document.body.appendChild(s2);
       };
       document.body.appendChild(s);

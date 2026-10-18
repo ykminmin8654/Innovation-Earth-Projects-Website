@@ -217,7 +217,7 @@ const GH_API = 'https://api.github.com';
 // ("authorizing:github" ping/pong + "authorization:github:success:{token,...}"),
 // with the code->token exchange done server-side. Fixes the permanent
 // "Completing sign-in…" hang (old builds sent a message format Decap ignores).
-const BUILD_ID = '2026-10-07.27';
+const BUILD_ID = '2026-10-07.28';
 
 // ---------------------------------------------------------------------------
 // ADMIN GATE (v3 rewrite): a password step BEFORE GitHub OAuth.
@@ -257,6 +257,13 @@ async function checkTicket(env, ticket, cid) {
   return safeEqual(want, parts[2]);
 }
 async function handleGate(request, env) {
+  const VERIFIED_APP_ID = 'Iv23liYfJrQsBnnhUgVp';
+  function pickClientId(v) {
+    v = String(v || '').trim();
+    if (/^(iv1\.|iv2\.)/i.test(v) || /^[0-9a-f]{40}$/i.test(v)) return v;
+    return '';
+  }
+  const clientId = pickClientId(env.GITHUB_OAUTH_ID) || pickClientId(env.GITHUB_CLIENT_ID) || VERIFIED_APP_ID;
   if (request.method !== 'POST') return json({ error: 'Use POST' }, 405);
   let key = '';
   try { key = String((await request.json()).key || ''); } catch (e) { /* fallthrough */ }
@@ -269,9 +276,9 @@ async function handleGate(request, env) {
   if (!safeEqual(okA, okB)) {
     return json({ error: 'Wrong admin key.' }, 401);
   }
-  const VERIFIED_APP_ID = 'Iv23liYfJrQsBnnhUgVp';
   const ticket = await makeTicket(env, VERIFIED_APP_ID);
-  return json({ ok: true, ticket, expires_in_ms: TICKET_TTL_MS });
+  // v4: the admin page builds the authorize URL itself; it needs the client id.
+  return json({ ok: true, ticket, client_id: clientId || VERIFIED_APP_ID, expires_in_ms: TICKET_TTL_MS });
 }
 
 // GitHub's token-exchange endpoint ONLY accepts form-encoded bodies. A JSON
