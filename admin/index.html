@@ -44,7 +44,16 @@
        OAuth round-trip begins. -->
   <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
   <script>
-  /* GATE SHIM v4 — password-first flow + direct token injection.
+  /* GATE SHIM v5 — password-first flow, Worker-routed OAuth, direct token injection.
+     Changes vs v4 (the build that showed GitHub's 404 page after the key):
+     * The page NO LONGER constructs any github.com URL. It navigates only to
+       our own Worker /oauth route; the Worker redirects onward to GitHub with
+       the exact registered callback URI and a non-empty state. This removes
+       every way the browser could hit GitHub with an unregistered/empty-state
+       request (which is what rendered "Sorry about that…" 404).
+     * Safety-net interceptor rewrites any stale script's direct authorize URLs
+       back into the Worker flow.
+     Previous notes (v4) kept below for reference:
      Changes vs v3 (the version that kept "refreshing forever"):
      * ROOT CAUSE FIXED: Decap's own github backend opens a POPUP on
        workers.dev and relies on a cross-origin postMessage handshake that
@@ -138,15 +147,18 @@
       }).then(function (res) {
         if (res.ok && res.j && res.j.ticket) {
           sessionStorage.setItem(TICKET_KEY, res.j.ticket);
-          var clientId = (res.j && res.j.client_id) || 'Iv23liYfJrQsBnnhUgVp';
-          var state = Math.random().toString(36).slice(2) + Date.now().toString(36);
-          try { sessionStorage.setItem(STATE_KEY, state); } catch (e) {}
-          var au = 'https://github.com/login/oauth/authorize' +
-            '?client_id=' + encodeURIComponent(clientId) +
-            '&redirect_uri=' + encodeURIComponent(WORKER + '/api/v1/github/callback') +
-            '&scope=' + encodeURIComponent('repo,read:user,user:email') +
-            '&state=' + encodeURIComponent(state);
-          location.href = au;
+          // v5 FIX (the exact 404 you reported): the previous build built the
+          // GitHub authorize URL HERE and sent redirect_uri to the Worker's
+          // callback. That combination is what produced GitHub's "Sorry about
+          // that…" 404 page right after entering the admin key. Now the page
+          // only ever navigates to OUR OWN Worker route (/oauth); the Worker —
+          // which has the registered callback URI pinned in its code — builds
+          // the GitHub URL itself. The browser never talks to GitHub directly.
+          var ticket = encodeURIComponent(res.j.ticket);
+          // v5: ONLY same-site navigation to our own Worker route. The Worker
+          // redirects onward to GitHub itself, so this tab never builds a
+          // github.com URL (that was the source of the 404 page).
+          location.href = WORKER + '/api/v1/github/oauth?ticket=' + ticket;
         } else {
           showGate((res.j && res.j.error) || 'Wrong key — try again.');
         }
@@ -154,6 +166,30 @@
         showGate('Could not reach the server. Check your connection and retry.');
       });
     });
+
+    // Safety net: if any stale script ever tries to open a github.com/login
+    // popup or navigate THIS tab straight to github.com's authorize page with
+    // an empty/absent state param (GitHub renders its "Sorry about that…" 404
+    // for those), rewrite it into the Worker-routed flow instead.
+    function sanitizeGithubUrl(u) {
+      u = String(u || '');
+      if (!/github\.com\/login\/oauth\/authorize/.test(u)) return null;
+      var ticket = '';
+      try { ticket = sessionStorage.getItem(TICKET_KEY) || ''; } catch (e) {}
+      return WORKER + '/api/v1/github/oauth' + (ticket ? '?ticket=' + encodeURIComponent(ticket) : '');
+    }
+    var _open = window.open;
+    window.open = function (u, n, f) {
+      var fixed = sanitizeGithubUrl(u);
+      if (fixed) { location.href = fixed; return null; }
+      return _open.call(window, u, n, f);
+    };
+    document.addEventListener('click', function (ev) {
+      var a = ev.target && ev.target.closest ? ev.target.closest('a') : null;
+      if (!a) return;
+      var fixed = sanitizeGithubUrl(a.href);
+      if (fixed) { ev.preventDefault(); location.href = fixed; }
+    }, true);
 
     // --- Start Decap CMS (core bundle already loaded above) ---
     function startCms() {

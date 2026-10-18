@@ -217,7 +217,7 @@ const GH_API = 'https://api.github.com';
 // ("authorizing:github" ping/pong + "authorization:github:success:{token,...}"),
 // with the code->token exchange done server-side. Fixes the permanent
 // "Completing sign-in…" hang (old builds sent a message format Decap ignores).
-const BUILD_ID = '2026-10-07.28';
+const BUILD_ID = '2026-10-07.29';
 
 // ---------------------------------------------------------------------------
 // ADMIN GATE (v3 rewrite): a password step BEFORE GitHub OAuth.
@@ -488,6 +488,10 @@ function loginHandoffHtml(token, siteBase) {
     // actually present and non-empty.
     const reqState = url.searchParams.get('state');
     if (reqState) authUrl.searchParams.set('state', reqState);
+    else authUrl.searchParams.set('state', Math.random().toString(36).slice(2) + Date.now().toString(36));
+    // v5: GitHub renders its "Sorry about that…" 404 page for an EMPTY state
+    // parameter, so we now ALWAYS generate a non-empty one here. The callback
+    // echoes it back untouched; the admin shim never depends on its value.
     return Response.redirect(authUrl.toString(), 302);
   }
 
