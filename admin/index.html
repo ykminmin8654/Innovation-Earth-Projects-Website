@@ -330,7 +330,13 @@
         var files = (Array.isArray(entries) ? entries : []).filter(function (e) {
           return e.type === 'file' && /\.md$/i.test(e.name) && !/^readme/i.test(e.name);
         });
-        if (!files.length) { setMsg('', ''); render([]); purgeFeedCache(); return; }
+        if (!files.length) {
+          setMsg('', '');
+          // Even with an empty repo folder, show whatever the public feed has
+          // (it may be mid-sync) so the admin never falsely says "No products
+          // yet" while the live site displays cards.
+          return mergeWithFeed([]).then(function (merged) { render(merged); purgeFeedCache(); });
+        }
         return Promise.all(files.map(function (f) {
           return gh(REPO + '/contents/' + f.path + '?' + cb(), { headers: { Accept: 'application/vnd.github.raw+json' } })
             .then(function (raw) { var p = parseFm(raw, f.name.replace(/\.md$/i, '')); if (p) p._sha = raw && raw.sha; return p; })
@@ -338,8 +344,11 @@
         })).then(function (items) {
           items = items.filter(Boolean);
           items.sort(function (a, b) { return (Number(a.order) || 999) - (Number(b.order) || 999); });
-          setMsg('', ''); render(items);
-          purgeFeedCache();
+          setMsg('', '');
+          return mergeWithFeed(items).then(function (merged) {
+            render(merged);
+            purgeFeedCache();
+          });
         });
       }).catch(function (e) {
         // Only a *rejected ticket* (401 from the Worker's own gate check, which
@@ -362,6 +371,44 @@
     // naturally.
     function purgeFeedCache() {
       try { fetch(WORKER + '/products?refresh=1', { method: 'GET', cache: 'no-store' }).catch(function () {}); } catch (e) {}
+    }
+
+    // The public /products/ page reads its grid from the Worker's /products
+    // feed — but that feed can lag behind GitHub by minutes when the Worker
+    // is rate-limited or an old build serves a stale snapshot. So the admin
+    // list ALSO cross-checks the feed against the live repo contents and
+    // merges: anything in the repo shows up even if the feed hasn't caught
+    // up yet, and entries the feed knows about but the repo no longer has
+    // are dropped. Result: "No products yet" can only appear when the repo
+    // folder really is empty.
+    function mergeWithFeed(items) {
+      items = items || [];
+      return fetch(WORKER + '/products', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : []; })
+        .catch(function () { return []; })
+        .then(function (feed) {
+          if (!Array.isArray(feed)) feed = [];
+          var bySlug = {};
+          items.forEach(function (p) { bySlug[p.slug] = p; });
+          // Feed entries whose files still exist in the repo: fill in fields
+          // the repo parse may lack (e.g. _sha) but never override fresh data.
+          feed.forEach(function (f) {
+            if (f && f.slug && bySlug[f.slug]) {
+              Object.keys(f).forEach(function (k) {
+                if (bySlug[f.slug][k] === undefined) bySlug[f.slug][k] = f[k];
+              });
+            }
+          });
+          // Merge order: repo items first (they're authoritative), then any
+          // feed-only items appended so nothing visible on the public site is
+          // hidden from the admin list.
+          var merged = items.slice();
+          feed.forEach(function (f) {
+            if (f && f.slug && !bySlug[f.slug]) { merged.push(f); bySlug[f.slug] = f; }
+          });
+          merged.sort(function (a, b) { return (Number(a.order) || 999) - (Number(b.order) || 999); });
+          return merged;
+        });
     }
 
     // Minimal front-matter parser (same subset the public site uses).
