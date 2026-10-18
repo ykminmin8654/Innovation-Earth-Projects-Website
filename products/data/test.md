@@ -3,6 +3,7 @@ title: "test2"
 description: "test"
 status: "live"
 pricing: "Free"
+tags: ["test"]
 order: 999
 updatedAt: "2026-10-18"
 ---
