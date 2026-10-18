@@ -28,8 +28,26 @@ skips the gate gets a clear JSON error from `/oauth` instead of a broken login.
    `https://raw.githubusercontent.com/ykminmin8654/Innovation-Earth-Projects-Website/main/worker/products-proxy.js`
    Click **Deploy**.
 3. Verify: open `https://decap-proxy.ykminmin8654.workers.dev/` — it must show
-   `"build":"2026-10-07.26"` and `"admin_gate_configured": true`.
-   If it still shows `.25`, the deploy did not take effect.
+   `"build":"2026-10-07.27"` and `"admin_gate_configured": true`.
+   If it still shows `.26`, the deploy did not take effect.
+
+## GitHub OAuth App (one check)
+The Worker always sends GitHub this exact callback URL — it MUST be listed
+under your OAuth App → **Authorization callback URLs**
+(https://github.com/settings/developers → app `Iv23liYfJrQsBnnhUgVp`):
+
+```
+https://decap-proxy.ykminmin8654.workers.dev/api/v1/github/callback
+```
+
+Do NOT use `innovationearthprojects.org/...` as the callback — that domain is
+served by GitHub Pages, which has no `/api/v1/github/callback` route and
+answers "404 There aren't more pages here" after you approve login. That was
+the exact 404 seen in the browser address bar on github.com: the registered
+callback pointed at a page that doesn't exist on that host. Build `.27` pins
+the workers.dev callback (verified reachable, HTTP 200) for every step of the
+flow, so even if an old tab starts a login with a stale URL, the token
+exchange still succeeds.
 
 ## Using the admin
 - URL: `https://innovationearthprojects.org/admin/` (not linked anywhere on the site).

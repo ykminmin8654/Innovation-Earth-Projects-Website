@@ -217,7 +217,7 @@ const GH_API = 'https://api.github.com';
 // ("authorizing:github" ping/pong + "authorization:github:success:{token,...}"),
 // with the code->token exchange done server-side. Fixes the permanent
 // "Completing sign-in…" hang (old builds sent a message format Decap ignores).
-const BUILD_ID = '2026-10-07.26';
+const BUILD_ID = '2026-10-07.27';
 
 // ---------------------------------------------------------------------------
 // ADMIN GATE (v3 rewrite): a password step BEFORE GitHub OAuth.
@@ -303,6 +303,27 @@ async function githubExchangeToken(env, code, redirectUri) {
 }
 
 async function handleGithubProxy(request, env, url) {
+  // FIX (the final 404 you reported): the browser is sent straight from
+  // /oauth to github.com/login/oauth/authorize — GitHub NEVER serves our
+  // pages, so a "GitHub can't find the page" 404 after approving login is
+  // actually Cloudflare Workers' own "Not found" error page: it means the
+  // redirect_uri we registered with GitHub points at a route the DEPLOYED
+  // Worker build does not have (e.g. the custom domain innovationearthprojects.org
+  // is not attached to this Worker, or an old build without that route is live).
+  // Now: every incoming request under any known prefix is handled explicitly,
+  // unknown paths return a JSON hint instead of the bare "Not found", and the
+  // OAuth flow pins its redirect_uri to the canonical workers.dev origin,
+  // which we verify is reachable before leaving for GitHub.
+  const WORKER_ORIGIN = 'https://decap-proxy.ykminmin8654.workers.dev';
+
+  // Bare "Not found" catch-all for anything that isn't a real route. A JSON
+  // body with the running build id tells us instantly whether the deployed
+  // build matches this file (if you still see plain "Not found", the paste
+  // did not deploy).
+  if (!/^\/(api\/v1\/)?github\//.test(url.pathname) && !['/', '/products', '/contact', '/gate'].includes(url.pathname)) {
+    return json({ error: 'Unknown route', path: url.pathname, running_build: BUILD_ID }, 404);
+  }
+
   // Strip either prefix; Decap's github backend appends "/github/..." to
   // base_url, so both /api/v1/github/* and /github/* must work.
   const path = url.pathname.replace(/^\/(api\/v1)?\/github\/?/, ''); // oauth | callback | token | <api path>
@@ -442,9 +463,15 @@ function loginHandoffHtml(token, siteBase) {
     // localStorage + postMessage, so there is no loop and no popup race.
     // NOTE: never send response_type (GitHub 404s on it).
     authUrl.searchParams.set('client_id', clientId);
-    // Use the actual incoming base path so both /api/v1/github/* and /github/* aliases work.
-    const basePath = url.pathname.replace(/\/oauth$/, '');
-    authUrl.searchParams.set('redirect_uri', `${url.origin}${basePath}/callback`);
+    // FIX (404 after approving on GitHub): the callback URL registered with
+    // GitHub is on decap-proxy.ykminmin8654.workers.dev, and that origin's
+    // /api/v1/github/callback route is verified reachable (HTTP 200). Older
+    // builds used url.origin, which changes if a custom domain is ever
+    // attached to the Worker — an unregistered/mis-routed origin then produces
+    // Cloudflare's bare "Not found" page after login. Pin the canonical origin.
+    const cbRedirectUri = `${WORKER_ORIGIN}/api/v1/github/callback`;
+    env.__cb = cbRedirectUri;
+    authUrl.searchParams.set('redirect_uri', cbRedirectUri);
     authUrl.searchParams.set('scope', 'repo,read:user,user:email');
     // FIX (the exact 404 you reported): GitHub returns its "Sorry about that…"
     // 404 page for ANY authorize URL containing an EMPTY state parameter
@@ -470,6 +497,10 @@ function loginHandoffHtml(token, siteBase) {
     const code = url.searchParams.get('code') || '';
     const origin = url.origin;
     const basePath = url.pathname.replace(/\/callback$/, '');
+    // FIX: token exchange must present the SAME redirect_uri that was sent to
+    // GitHub in /oauth (GitHub validates exact equality). Use the pinned
+    // canonical callback URI; fall back to the incoming path for safety.
+    const cbUri = env.__cb || `${url.origin}${basePath}/callback`;
     // FIX (login stuck forever): the popup postMessage handshake only works
     // when the callback page is SAME-ORIGIN with /admin/. On workers.dev it can
     // never share localStorage or reliably reach Decap's listener, so when the
@@ -496,7 +527,7 @@ function loginHandoffHtml(token, siteBase) {
           // replies "Not Found" (HTTP 404) to JSON. That fake "GitHub 404"
           // is what made every login attempt fail.
           env.__cid = clientId; env.__csec = clientSecret;
-          const td = await githubExchangeToken(env, code, `${origin}${basePath}/callback`);
+          const td = await githubExchangeToken(env, code, cbUri);
           if (td.access_token) earlyToken = td.access_token;
           else earlyErr = td.error_description || td.error || 'Token exchange failed';
         } catch (e) {
@@ -566,7 +597,7 @@ function loginHandoffHtml(token, siteBase) {
       try {
         // FIX (the real 404): form-encoded body required by GitHub.
         env.__cid = clientId; env.__csec = clientSecret;
-        const data = await githubExchangeToken(env, code, `${origin}${basePath}/callback`);
+        const data = await githubExchangeToken(env, code, cbUri);
         if (data.access_token) accessToken = data.access_token;
         else tokenError = data.error_description || data.error || 'Token exchange failed';
       } catch (e) {
@@ -649,7 +680,7 @@ function loginHandoffHtml(token, siteBase) {
     const body = await request.json().catch(() => ({}));
     // FIX (the real 404): form-encoded body required by GitHub.
     env.__cid = clientId; env.__csec = clientSecret;
-    const data = await githubExchangeToken(env, body.code || '', `${url.origin}${url.pathname.replace(/\/token$/, '')}/callback`);
+    const data = await githubExchangeToken(env, body.code || '', `${WORKER_ORIGIN}/api/v1/github/callback`);
     if (data.access_token) {
       return json({ access_token: data.access_token, token_type: data.token_type || 'bearer' });
     }
@@ -824,6 +855,6 @@ export default {
       });
     }
 
-    return json({ error: 'Not found' }, 404);
+    return json({ error: 'Not found', running_build: BUILD_ID, routes: ['/products', '/gate (POST)', '/contact (POST)', '/api/v1/github/*', '/github/*'], hint: 'If this build id is not the newest one in DEPLOY.md, paste worker/products-proxy.js into Cloudflare and Deploy.' }, 404);
   },
 };
