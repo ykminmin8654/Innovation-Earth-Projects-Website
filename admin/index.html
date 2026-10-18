@@ -275,7 +275,9 @@
       opts = opts || {};
       opts.headers = Object.assign({
         Authorization: 'Bearer ' + (sessionStorage.getItem(TICKET_KEY) || ''),
-        'Content-Type': 'text/plain'
+        // "Accept" is the only header GitHub's raw-content endpoint respects;
+        // sending text/plain on reads made some proxies mangle the response.
+        'Content-Type': 'application/json'
       }, opts.headers || {});
       return fetch(WORKER + '/api/v1/github' + path, opts).then(function (r) {
         return r.text().then(function (body) {

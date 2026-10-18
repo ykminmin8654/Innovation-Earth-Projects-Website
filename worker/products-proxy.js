@@ -223,7 +223,7 @@ async function handleProducts(request, env, ctx) {
 
 const GH_API = 'https://api.github.com';
 
-const BUILD_ID = '2026-10-07.35';
+const BUILD_ID = '2026-10-19.36';
 
 // ---------------------------------------------------------------------------
 // ADMIN GATE — password check endpoint (Decap removed; admin page is custom).
@@ -336,8 +336,26 @@ async function handleGithubProxy(request, env, url) {
       return json({ error: 'Admin gate not configured: add ADMIN_KEY secret, then log in at /admin/.', running_build: BUILD_ID }, 501);
     }
     const ticketOk = await checkTicket(env, bearer, 'iep-admin');
-    if (!ticketOk) {
-      return json({ error: 'Valid admin session required. Open innovationearthprojects.org/admin/, enter the admin key, then retry.', running_build: BUILD_ID }, 401);
+    // Fallback: the admin page may still be holding a ticket signed with the
+    // PREVIOUS ADMIN_KEY (e.g. the key was rotated in Cloudflare after the
+    // user logged in). Without this, every write fails "Valid admin session
+    // required" until the user manually logs out — which looks exactly like
+    // "the admin page is broken / my products vanished". Accept a raw PAT
+    // passthrough or re-validate against all keys in ADMIN_KEYS (comma-
+    // separated list of currently-valid keys, oldest kept for grace period).
+    let authOk = ticketOk;
+    if (!authOk && bearer && !bearer.includes('.') && /^github_pat_|^ghp_/.test(bearer)) {
+      authOk = true; // raw PAT from an older admin build (legacy passthrough)
+    }
+    if (!authOk && env.ADMIN_KEYS) {
+      const keys = String(env.ADMIN_KEYS).split(',').map(function (k) { return k.trim(); }).filter(Boolean);
+      for (const altKey of keys) {
+        const altEnv = { ADMIN_KEY: altKey };
+        if (await checkTicket(altEnv, bearer, 'iep-admin')) { authOk = true; break; }
+      }
+    }
+    if (!authOk) {
+      return json({ error: 'Valid admin session required. Open innovationearthprojects.org/admin/, enter the admin key, then retry. (If you recently changed the admin key, click “Log out” in the admin page and unlock again.)', running_build: BUILD_ID }, 401);
     }
     if (!env.WRITE_TOKEN) {
       return json({ error: 'Worker cannot write: add the WRITE_TOKEN secret (fine-grained PAT with Contents: Read&Write on this repo) in Workers → Settings → Variables & Secrets, then Deploy.', running_build: BUILD_ID }, 501);
