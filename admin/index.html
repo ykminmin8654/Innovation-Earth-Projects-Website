@@ -473,7 +473,17 @@
       var exists = !!editing;
       gh(REPO + '/contents/' + DIR + '/' + p.slug + '.md?' + cb())
         .then(function (info) {
-          // file exists -> need its sha for the update
+          // file exists -> need its sha for the update. The Worker proxy also
+          // forwards GitHub's full JSON response on CREATE responses; there we
+          // can learn a committed file's real slug from content.path so an
+          // accidental overwrite of another product is detected instead of
+          // silently renaming it.
+          if (info && info.content && info.content.path) {
+            var realSlug = String(info.content.path).split('/').pop().replace(/\.md$/i, '');
+            if (realSlug && realSlug !== p.slug) {
+              throw new Error('A file already exists at that path with a different name ("' + realSlug + '"). Pick a unique slug.');
+            }
+          }
           return putWith(info && info.sha);
         })
         .catch(function (e) {
