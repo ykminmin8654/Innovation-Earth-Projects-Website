@@ -241,6 +241,13 @@
     var REPO = '/repos/ykminmin8654/Innovation-Earth-Projects-Website';
     var DIR = 'products/data';
     var TICKET_KEY = 'iep-admin-ticket';
+    // Cache-buster for every GitHub read this page makes. The Worker proxy and
+    // Cloudflare's edge cache can otherwise serve a directory listing from up
+    // to 60s ago — which made freshly saved products look "missing" from the
+    // list right after publishing. A unique query param per load forces a
+    // fresh answer from GitHub every time.
+    var CB = 0;
+    function cb() { return '_cb=' + Date.now() + '-' + (++CB); }
     var $ = function (id) { return document.getElementById(id); };
 
     // ---- tiny YAML serializer for the fields we support ------------------
@@ -317,13 +324,13 @@
     // ---- list -------------------------------------------------------------
     function loadList() {
       setMsg('<span class="spinner"></span>Loading products…', '');
-      gh(REPO + '/contents/' + DIR).then(function (entries) {
+      gh(REPO + '/contents/' + DIR + '?' + cb()).then(function (entries) {
         var files = (Array.isArray(entries) ? entries : []).filter(function (e) {
           return e.type === 'file' && /\.md$/i.test(e.name) && !/^readme/i.test(e.name);
         });
         if (!files.length) { setMsg('', ''); render([]); return; }
         return Promise.all(files.map(function (f) {
-          return gh(REPO + '/contents/' + f.path, { headers: { Accept: 'application/vnd.github.raw+json' } })
+          return gh(REPO + '/contents/' + f.path + '?' + cb(), { headers: { Accept: 'application/vnd.github.raw+json' } })
             .then(function (raw) { var p = parseFm(raw, f.name.replace(/\.md$/i, '')); if (p) p._sha = raw && raw.sha; return p; })
             .catch(function () { return null; });
         })).then(function (items) {
@@ -453,7 +460,7 @@
       var btn = $('saveBtn'); btn.disabled = true; btn.textContent = 'Publishing…';
       var md = buildMd(p);
       var exists = !!editing;
-      gh(REPO + '/contents/' + DIR + '/' + p.slug + '.md')
+      gh(REPO + '/contents/' + DIR + '/' + p.slug + '.md?' + cb())
         .then(function (info) {
           // file exists -> need its sha for the update
           return putWith(info && info.sha);
@@ -480,7 +487,7 @@
     $('deleteBtn').addEventListener('click', function () {
       if (!editing) return;
       if (!confirm('Delete "' + editing.title + '" from the live site?')) return;
-      gh(REPO + '/contents/' + DIR + '/' + editing.slug + '.md')
+      gh(REPO + '/contents/' + DIR + '/' + editing.slug + '.md?' + cb())
         .then(function (info) {
           return gh(REPO + '/contents/' + DIR + '/' + editing.slug + '.md', {
             method: 'DELETE',

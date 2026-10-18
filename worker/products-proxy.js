@@ -223,7 +223,7 @@ async function handleProducts(request, env, ctx) {
 
 const GH_API = 'https://api.github.com';
 
-const BUILD_ID = '2026-10-07.34';
+const BUILD_ID = '2026-10-07.35';
 
 // ---------------------------------------------------------------------------
 // ADMIN GATE — password check endpoint (Decap removed; admin page is custom).
@@ -367,10 +367,21 @@ async function handleGithubProxy(request, env, url) {
   }
 
   const target = `${GH_API}/${path}${url.search}`;
+
+  // Cloudflare's CDN sits in front of every Worker and may serve stale GETs.
+  // Without cache-control headers here, GitHub's own "max-age=60,
+  // must-revalidate" on Contents API responses gets applied at the edge —
+  // which meant: the admin saved a product successfully, then its list
+  // refresh (and the site's /products feed) kept showing the directory from
+  // up to a minute BEFORE the commit. The new product appeared "missing"
+  // right after publishing. Fix: proxy reads always revalidate at the edge.
+  const NO_STORE = { 'Cache-Control': 'no-store' };
+
   const upstream = await fetch(target, {
     method: request.method,
     headers,
     body: reqBody,
+    cache: wantsWrite ? 'no-store' : undefined,
   });
   const buf = await upstream.arrayBuffer();
   // If GitHub rate-limited an (effectively anonymous) read, retry once with
@@ -385,6 +396,7 @@ async function handleGithubProxy(request, env, url) {
         status: retry.status,
         headers: {
           'Content-Type': retry.headers.get('Content-Type') || 'application/json',
+          ...NO_STORE,
           ...CORS_HEADERS,
         },
       });
@@ -394,6 +406,7 @@ async function handleGithubProxy(request, env, url) {
     status: upstream.status,
     headers: {
       'Content-Type': upstream.headers.get('Content-Type') || 'application/json',
+      ...NO_STORE,
       ...CORS_HEADERS,
     },
   });
