@@ -217,7 +217,62 @@ const GH_API = 'https://api.github.com';
 // ("authorizing:github" ping/pong + "authorization:github:success:{token,...}"),
 // with the code->token exchange done server-side. Fixes the permanent
 // "Completing sign-in…" hang (old builds sent a message format Decap ignores).
-const BUILD_ID = '2026-10-07.25';
+const BUILD_ID = '2026-10-07.26';
+
+// ---------------------------------------------------------------------------
+// ADMIN GATE (v3 rewrite): a password step BEFORE GitHub OAuth.
+// The admin page POSTs the typed key to /gate; we compare it against the
+// ADMIN_KEY secret in Cloudflare and return a short-lived HMAC-signed ticket.
+// /oauth then refuses any login that doesn't carry a valid, unexpired ticket.
+// The key itself never appears in code, config.yml, or the browser — only its
+// HMAC signature does. Changing the password = just update ADMIN_KEY + Deploy.
+// ---------------------------------------------------------------------------
+const TICKET_TTL_MS = 30 * 60 * 1000; // 30 minutes
+async function hmacHex(secret, msg) {
+  const enc = new TextEncoder();
+  const k = await crypto.subtle.importKey('raw', enc.encode(String(secret)), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', k, enc.encode(msg));
+  return Array.from(new Uint8Array(sig)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+function safeEqual(a, b) {
+  a = String(a); b = String(b);
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+async function makeTicket(env, cid) {
+  const exp = Date.now() + TICKET_TTL_MS;
+  const sig = await hmacHex(env.ADMIN_KEY, exp + '.' + cid);
+  return exp + '.' + cid + '.' + sig;
+}
+async function checkTicket(env, ticket, cid) {
+  if (!ticket || !env.ADMIN_KEY) return false;
+  const parts = String(ticket).split('.');
+  if (parts.length !== 3) return false;
+  const exp = Number(parts[0]);
+  if (!exp || Date.now() > exp) return false;
+  if (parts[1] !== cid) return false;
+  const want = await hmacHex(env.ADMIN_KEY, parts[0] + '.' + parts[1]);
+  return safeEqual(want, parts[2]);
+}
+async function handleGate(request, env) {
+  if (request.method !== 'POST') return json({ error: 'Use POST' }, 405);
+  let key = '';
+  try { key = String((await request.json()).key || ''); } catch (e) { /* fallthrough */ }
+  if (!env.ADMIN_KEY) {
+    return json({ error: 'Admin gate not configured yet: add ADMIN_KEY in Workers → Settings → Variables & Secrets, then Deploy.' }, 501);
+  }
+  // Constant-time-ish comparison via HMAC of both values.
+  const okA = await hmacHex(env.ADMIN_KEY, 'verify:' + key);
+  const okB = await hmacHex(env.ADMIN_KEY, 'verify:' + String(env.ADMIN_KEY));
+  if (!safeEqual(okA, okB)) {
+    return json({ error: 'Wrong admin key.' }, 401);
+  }
+  const VERIFIED_APP_ID = 'Iv23liYfJrQsBnnhUgVp';
+  const ticket = await makeTicket(env, VERIFIED_APP_ID);
+  return json({ ok: true, ticket, expires_in_ms: TICKET_TTL_MS });
+}
 
 // GitHub's token-exchange endpoint ONLY accepts form-encoded bodies. A JSON
 // body makes it answer HTTP 404 with the plain-text body "Not Found" — which
@@ -346,6 +401,14 @@ function loginHandoffHtml(token, siteBase) {
         },
         501
       );
+    }
+    // ADMIN GATE v3: require a valid signed ticket (issued by POST /gate
+    // after the correct admin key was entered) before starting OAuth.
+    if (env.ADMIN_KEY) {
+      const ticketOk = await checkTicket(env, url.searchParams.get('ticket'), clientId);
+      if (!ticketOk) {
+        return json({ error: 'Admin gate: missing or expired ticket. Go to innovationearthprojects.org/admin/, enter the admin key, then sign in.', running_build: BUILD_ID }, 403);
+      }
     }
     const authUrl = new URL('https://github.com/login/oauth/authorize');
     // FIX for the persistent GitHub "404 / Completing sign-in…" loop:
@@ -735,6 +798,8 @@ export default {
     }
 
     if (url.pathname === '/products') return handleProducts(request, env, ctx);
+    // ADMIN GATE v3: password check endpoint (returns signed ticket).
+    if (url.pathname === '/gate' && request.method === 'POST') return handleGate(request, env);
     // Decap's github backend appends "/github/..." to base_url, so accept
     // both /api/v1/github/* and /github/*.
     if (url.pathname.startsWith('/api/v1/github') || url.pathname.startsWith('/github')) {
@@ -749,7 +814,8 @@ export default {
         service: 'decap-proxy',
         build: BUILD_ID,
         turnstile_configured: Boolean(env.TURNSTILE_SECRET_KEY),
-        routes: ['/products', '/contact (POST)', '/api/v1/github/*', '/github/*'],
+        routes: ['/products', '/gate (POST)', '/contact (POST)', '/api/v1/github/*', '/github/*'],
+        admin_gate_configured: Boolean(env.ADMIN_KEY),
         oauth_configured: Boolean((env.GITHUB_OAUTH_ID || env.GITHUB_CLIENT_ID) && (env.GITHUB_OAUTH_SECRET || env.GITHUB_CLIENT_SECRET)),
         client_id_present: Boolean(env.GITHUB_OAUTH_ID || env.GITHUB_CLIENT_ID),
         client_secret_present: Boolean(env.GITHUB_OAUTH_SECRET || env.GITHUB_CLIENT_SECRET),

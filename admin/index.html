@@ -1,199 +1,135 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin — Innovation Earth Projects</title>
-  <meta name="robots" content="noindex" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Admin · Innovation Earth Projects</title>
   <style>
-    body { margin: 0; background: #171b21; }
-    #iep-boot {
-      position: fixed; inset: 0; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 14px;
-      font: 600 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif;
-      color: #e6e9ee; background: #171b21; text-align: center; padding: 24px;
-      z-index: 9999;
-    }
-    #iep-boot img { width: 72px; height: 72px; object-fit: contain; }
-    #iep-boot .sub { font-weight: 400; font-size: 13px; color: #9aa4b2; max-width: 420px; }
-    #iep-boot a { color: #7dd3c0; }
-    #iep-boot button {
-      background: #35d0ba; color: #0d1117; border: 0; border-radius: 8px;
-      padding: 10px 18px; font: 600 14px system-ui, sans-serif; cursor: pointer;
-    }
-    .spinner {
-      width: 26px; height: 26px; border-radius: 50%;
-      border: 3px solid #2c333d; border-top-color: #35d0ba;
-      animation: iep-spin 0.9s linear infinite;
-    }
-    @keyframes iep-spin { to { transform: rotate(360deg); } }
-    @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+    :root { --teal: #0f766e; --ink: #0f172a; --muted: #64748b; --bg: #f8fafc; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; display: grid; place-items: center; }
+    .gate { width: min(400px, 92vw); background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 34px 30px; box-shadow: 0 12px 40px rgba(15, 23, 42, .08); text-align: center; }
+    .gate img { width: 64px; height: 64px; object-fit: contain; margin-bottom: 14px; }
+    .gate h1 { font-size: 1.3rem; margin-bottom: 6px; }
+    .gate p { color: var(--muted); font-size: .9rem; margin-bottom: 20px; line-height: 1.5; }
+    .gate input { width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 1rem; margin-bottom: 12px; }
+    .gate input:focus { outline: 2px solid var(--teal); border-color: transparent; }
+    .gate button { width: 100%; padding: 12px 14px; border: 0; border-radius: 10px; background: var(--teal); color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; }
+    .gate button:hover { filter: brightness(1.08); }
+    .err { color: #b91c1c; font-size: .85rem; margin-top: 10px; min-height: 1.2em; }
+    .hint { font-size: .75rem; color: #94a3b8; margin-top: 16px; }
+    .hidden { display: none !important; }
+    #cms-root { position: fixed; inset: 0; }
   </style>
-
-  <!-- =====================================================================
-    LOGIN SHIM v2 — full-page redirect flow (no popups, no postMessage).
-
-    How login works now:
-      1. User clicks "Login with GitHub". Decap opens a popup that goes to
-         the Worker /oauth route -> GitHub authorize -> back to Worker
-         /callback, which exchanges the code for a token server-side and
-         then does: location.replace('/admin/#iep_at=<token>').
-      2. This shim ALSO watches for the token arriving in this tab's URL
-         fragment (#iep_at or #access_token) — the same-tab path — and
-         handles it before Decap boots.
-      3. The token is stashed in localStorage under 'iep-oauth-token' and
-         seeded into every auth-store key Decap may read, so whichever
-         storage format its installed version uses finds a valid session.
-      4. On EVERY load, if a stashed token exists, we pre-seed the store
-         BEFORE loading decap-cms.js so the app boots already logged-in.
-      5. If the popup handshake ever fails again, the user can simply
-         re-run the login link shown on the boot screen — it completes in
-         THIS tab via full-page redirects (popup blockers can't stop it).
-
-    No response_type param is ever sent (GitHub 404s on it), and state is
-    never left empty (GitHub 404s on blank state=).
-  ====================================================================== -->
-  <script>
-    (function () {
-      var WORKER_BASE = 'https://decap-proxy.ykminmin8654.workers.dev/api/v1/github';
-      var CLIENT_ID   = 'Iv23liYfJrQsBnnhUgVp'; // fallback only; Worker has its own copy
-      var ADMIN_URL   = location.origin + '/admin/';
-
-      function stashToken(tok) {
-        try { localStorage.setItem('iep-oauth-token', tok); } catch (e) {}
-        seedStores(tok);
-      }
-
-      // Seed every plausible Decap/Netlify-identity auth-store key so the
-      // installed CMS version finds the session regardless of its naming.
-      function seedStores(tok) {
-        var payload = JSON.stringify({ access_token: tok, token_type: 'bearer' });
-        var keys = [
-          'netlify-github:' + ADMIN_URL + 'config.yml',
-          'github:' + ADMIN_URL + 'config.yml',
-          'localStorageKey:/config',
-          'decap-github:' + ADMIN_URL,
-          'decap-github:' + location.origin + '/admin/'
-        ];
-        for (var i = 0; i < keys.length; i++) {
-          try { localStorage.setItem(keys[i], payload); } catch (e) {}
-        }
-        // Older netlify-identity-widget format used by some decap builds:
-        try {
-          localStorage.setItem('wp-github-auth', payload);
-          localStorage.setItem('gotrue.site-' + location.host, payload);
-        } catch (e) {}
-      }
-
-      function cleanUrl() {
-        // Strip token fragments/query params from the address bar without reloading.
-        try { history.replaceState(null, '', ADMIN_URL); } catch (e) {}
-      }
-
-      // ---- A) Token already present in THIS tab's URL? (same-tab return)
-      var mAt = /[?&#]iep_at=([^&#]+)/.exec(location.href);
-      var mAc = /[?&#]access_token=([^&#]+)/.exec(location.href);
-      var incoming = mAt ? decodeURIComponent(mAt[1]) : (mAc ? decodeURIComponent(mAc[1]) : '');
-      if (incoming) {
-        stashToken(incoming);
-        cleanUrl();
-      } else {
-        // ---- B) Stashed token from an earlier popup completion?
-        var stashed = '';
-        try { stashed = localStorage.getItem('iep-oauth-token') || ''; } catch (e) {}
-        if (stashed && !/[?&#]iep_error=/.test(location.href)) {
-          seedStores(stashed);
-        }
-      }
-
-      // ---- C) Popup takeover: if Decap opens a popup toward the Worker/GitHub,
-      // let it run there untouched. But if the popup dies/blocks, offer a
-      // same-tab link. We detect blocked popups by watching for window.open
-      // returning null while attempting login.
-      var origOpen = window.open;
-      window.open = function (url, name, features) {
-        try {
-          var u = String(url || '');
-          if (/workers\.dev|github\.com\/login\/oauth/.test(u)) {
-            var w = origOpen.call(window, url, name, features);
-            if (!w) {
-              // Popup blocked -> complete login in this tab instead.
-              showBlockedNotice(u);
-              return w;
-            }
-            return w;
-          }
-        } catch (e) {}
-        return origOpen.call(window, url, name, features);
-      };
-
-      function showBlockedNotice(targetUrl) {
-        var el = document.getElementById('iep-boot');
-        if (!el) return;
-        var note = document.createElement('div');
-        note.className = 'sub';
-        note.innerHTML = 'Popup was blocked. <a id="iep-direct" href="' + targetUrl + '">Sign in here instead →</a>';
-        el.appendChild(note);
-        document.getElementById('iep-direct').addEventListener('click', function () {
-          // Full-page login in this tab; after GitHub approval the Worker
-          // lands us back on /admin/#iep_at=<token>, handled by section A.
-          location.href = targetUrl;
-        });
-      }
-
-      // Expose tiny helper for the CMS-less fallback link below.
-      window.__iepLoginUrl = WORKER_BASE + '/oauth';
-    })();
-  </script>
 </head>
 <body>
-  <div id="iep-boot">
+  <!-- Password gate: verified server-side by the Worker (key never exposed). -->
+  <div class="gate" id="gate">
     <img src="/images/logo.png" alt="Innovation Earth Projects logo" />
-    <div>Loading Admin…</div>
-    <div class="sub">Content management for Innovation Earth Projects.</div>
-    <button id="iep-fallback" style="display:none">Sign in with GitHub</button>
+    <h1>Content Admin</h1>
+    <p>Private area. Enter the admin key to unlock GitHub sign-in.</p>
+    <form id="gate-form" autocomplete="off">
+      <input type="password" id="admin-key" placeholder="Admin key" aria-label="Admin key" required />
+      <button type="submit">Unlock &amp; continue</button>
+    </form>
+    <div class="err" id="gate-error"></div>
+    <div class="hint">All verification happens on our server — this page never checks the key itself.</div>
   </div>
 
-  <script>
-    // If the CMS bundle takes too long (CDN hiccup), surface a direct
-    // same-tab sign-in button so the page is never a dead end.
-    setTimeout(function () {
-      var btn = document.getElementById('iep-fallback');
-      var boot = document.getElementById('iep-boot');
-      if (!btn || !boot) return;
-      var cmsUp = !!document.querySelector('.nc-app, .css-1u4gftf, #nc-root');
-      if (!cmsUp) {
-        btn.style.display = '';
-        btn.onclick = function () { location.href = window.__iepLoginUrl || ''; };
-      }
-    }, 6000);
-  </script>
+  <!-- Decap CMS loads here once signed in -->
+  <div id="cms-root" class="hidden"></div>
 
-  <script src="https://unpkg.com/decap-cms@^3.8.0/dist/decap-cms.js"></script>
   <script>
-    // After boot, hide splash when CMS renders; clear stale token on logout click.
-    (function () {
-      var tries = 0;
-      var iv = setInterval(function () {
-        tries++;
-        var root = document.querySelector('#nc-root, .nc-app');
-        if (root && root.children.length > 0) {
-          clearInterval(iv);
-          var el = document.getElementById('iep-boot');
-          if (el) el.remove();
-        } else if (tries > 120) {
-          clearInterval(iv); // 12s: leave splash + fallback button visible
-        }
-      }, 100);
+  /* GATE SHIM v3 — password-first flow.
+     1. User types the admin key -> POSTed to the Worker (/gate) which compares
+        it against ADMIN_KEY env var and returns a short-lived signed ticket.
+     2. Ticket stored in sessionStorage and appended to every OAuth URL so the
+        Worker's /oauth route refuses logins without a valid ticket.
+     3. Token handoff arrives via URL FRAGMENT (#iep_at=...) — fragments are
+        never sent to servers, so no GitHub Pages 404 is possible. */
+  (function () {
+    'use strict';
+    var WORKER = 'https://decap-proxy.ykminmin8654.workers.dev';
+    var TICKET_KEY = 'iep_admin_ticket';
+    var TOKEN_KEY = 'iep_admin_token';
 
-      // Logout hygiene: remove stashed token when user logs out.
-      document.addEventListener('click', function (ev) {
-        var t = ev.target && ev.target.textContent ? ev.target.textContent.trim().toLowerCase() : '';
-        if (t === 'log out' || t === 'logout') {
-          try { localStorage.removeItem('iep-oauth-token'); } catch (e) {}
+    function $(id) { return document.getElementById(id); }
+    function showCms() { $('gate').classList.add('hidden'); $('cms-root').classList.remove('hidden'); }
+    function showGate(msg) { $('gate').classList.remove('hidden'); $('cms-root').classList.add('hidden'); if (msg) $('gate-error').textContent = msg; }
+
+    // --- Step 3 helper: seed token into every store format Decap may read ---
+    function seedToken(tok) {
+      try {
+        var iso = new Date().toISOString();
+        var auth = JSON.stringify({ token: tok });
+        localStorage.setItem(TOKEN_KEY, tok);
+        ['netlify-github-auth', 'netlify-cms-user', 'github-auth'].forEach(function (k) {
+          try { localStorage.setItem(k, auth); } catch (e) {}
+        });
+        try {
+          localStorage.setItem('netlify-cms-oauth', JSON.stringify({
+            token: { accessToken: tok, expiresAt: iso },
+            provider: 'github'
+          }));
+        } catch (e) {}
+        sessionStorage.setItem('netlify-cms-access-token', JSON.stringify({ token: tok }));
+      } catch (e) {}
+    }
+
+    function cleanUrl() {
+      try { history.replaceState({}, '', location.pathname); } catch (e) {}
+    }
+
+    // --- On load: fragment token? stored token + ticket? ---
+    var m = /[?&#]iep_at=([^&]+)/.exec(location.hash + location.search);
+    if (m) { seedToken(decodeURIComponent(m[1])); cleanUrl(); startCms(); return; }
+    var stored = null;
+    try { stored = localStorage.getItem(TOKEN_KEY); } catch (e) {}
+    if (stored && sessionStorage.getItem(TICKET_KEY)) { seedToken(stored); startCms(); return; }
+
+    // --- Step 1: verify key with the Worker ---
+    $('gate-form').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var key = $('admin-key').value.trim();
+      if (!key) return;
+      showGate('');
+      fetch(WORKER + '/gate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: key })
+      }).then(function (r) {
+        return r.json().then(function (j) { return { ok: r.ok, j: j }; });
+      }).then(function (res) {
+        if (res.ok && res.j && res.j.ticket) {
+          sessionStorage.setItem(TICKET_KEY, res.j.ticket);
+          // --- Step 2: go through the Worker for GitHub sign-in ---
+          location.href = WORKER + '/api/v1/github/oauth?ticket=' + encodeURIComponent(res.j.ticket);
+        } else {
+          showGate((res.j && res.j.error) || 'Wrong key — try again.');
         }
-      }, true);
-    })();
+      }).catch(function () {
+        showGate('Could not reach the server. Check your connection and retry.');
+      });
+    });
+
+    // --- Start Decap CMS ---
+    function startCms() {
+      showCms();
+      var s = document.createElement('script');
+      s.src = 'https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js';
+      s.onload = function () {
+        if (window.DecapCMS) { window.DecapCMS.init({ config: '/admin/config.yml' }); }
+      };
+      s.onerror = function () {
+        var s2 = document.createElement('script');
+        s2.src = 'https://cdn.jsdelivr.net/npm/decap-cms@^3.0.0/dist/decap-cms.js';
+        s2.onload = function () { if (window.DecapCMS) window.DecapCMS.init({ config: '/admin/config.yml' }); };
+        document.body.appendChild(s2);
+      };
+      document.body.appendChild(s);
+    }
+  })();
   </script>
 </body>
 </html>
