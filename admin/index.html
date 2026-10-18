@@ -330,7 +330,7 @@
         var files = (Array.isArray(entries) ? entries : []).filter(function (e) {
           return e.type === 'file' && /\.md$/i.test(e.name) && !/^readme/i.test(e.name);
         });
-        if (!files.length) { setMsg('', ''); render([]); return; }
+        if (!files.length) { setMsg('', ''); render([]); purgeFeedCache(); return; }
         return Promise.all(files.map(function (f) {
           return gh(REPO + '/contents/' + f.path + '?' + cb(), { headers: { Accept: 'application/vnd.github.raw+json' } })
             .then(function (raw) { var p = parseFm(raw, f.name.replace(/\.md$/i, '')); if (p) p._sha = raw && raw.sha; return p; })
@@ -339,6 +339,7 @@
           items = items.filter(Boolean);
           items.sort(function (a, b) { return (Number(a.order) || 999) - (Number(b.order) || 999); });
           setMsg('', ''); render(items);
+          purgeFeedCache();
         });
       }).catch(function (e) {
         // Only a *rejected ticket* (401 from the Worker's own gate check, which
@@ -353,6 +354,14 @@
         }
         setMsg('Could not load products: ' + e.message, 'err');
       });
+    }
+
+    // Purge the public site's cached product feed on the Worker so the grid
+    // updates immediately after a save/delete instead of up to 60s later.
+    // Fire-and-forget; any failure just means the short cache TTL expires
+    // naturally.
+    function purgeFeedCache() {
+      try { fetch(WORKER + '/products?refresh=1', { method: 'GET', cache: 'no-store' }).catch(function () {}); } catch (e) {}
     }
 
     // Minimal front-matter parser (same subset the public site uses).

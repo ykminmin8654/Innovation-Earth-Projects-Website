@@ -165,9 +165,12 @@ async function buildProductList(env) {
 
 async function handleProducts(request, env, ctx) {
   const url = new URL(request.url);
-  const cacheKey = new Request(url.toString(), { method: 'GET' });
+  // Cache key must be EXACTLY /products — a ?_cb=<timestamp> query param from
+  // the admin page would otherwise create a brand-new cache entry per request.
+  const cacheKey = new Request(`${url.origin}/products`, { method: 'GET' });
   const cache = caches.default;
-  const force = url.searchParams.get('refresh') === '1';
+  // Any query string (?refresh=1 or ?_cb=...) means "give me fresh data".
+  const force = url.search !== '' || request.headers.get('Cache-Control') === 'no-cache';
 
   if (!force) {
     const cached = await cache.match(cacheKey);
@@ -223,7 +226,7 @@ async function handleProducts(request, env, ctx) {
 
 const GH_API = 'https://api.github.com';
 
-const BUILD_ID = '2026-10-19.36';
+const BUILD_ID = '2026-10-19.37';
 
 // ---------------------------------------------------------------------------
 // ADMIN GATE — password check endpoint (Decap removed; admin page is custom).

@@ -249,8 +249,11 @@
     // 0) Preferred: the Cloudflare Worker feed (GET /products). It reads
     //    the repo server-side, parses front matter and caches the result,
     //    so one request renders the whole grid without GitHub rate limits.
+    //    ?_cb=<ts> makes Cloudflare's edge cache bypass its copy of the
+    //    response; the Worker then rebuilds the feed from GitHub fresh and
+    //    re-caches it under the plain /products key (see products-proxy.js).
     try {
-      const res = await fetch(WORKER_PRODUCTS_URL, { cache: 'no-cache' });
+      const res = await fetch(WORKER_PRODUCTS_URL + '?_cb=' + Date.now(), { cache: 'no-cache' });
       if (res.ok) {
         const json = await res.json();
         if (Array.isArray(json)) {
@@ -343,6 +346,13 @@
       return;
     }
 
+    // Cards are injected dynamically AFTER motion.js has already observed the
+    // page's static markup. Re-adding .reveal to them would hide them (opacity:0)
+    // until a fresh observer marks them visible — and any race between the
+    // observer, the stagger animation layer and browser back/forward cache
+    // restores could leave every card invisible ("all tabs disappear" when a
+    // filter tab is clicked). Rendered product cards therefore skip the reveal
+    // class entirely and are always shown.
     grid.innerHTML = items.map((p, i) => {
       const meta = statusMeta(p.status);
       const url = normalizeUrl(p.url);
@@ -371,7 +381,7 @@
         : `<span class="product-card__meta">${escapeHtml(pricingLabel(p))}</span>`;
 
       return `
-        <article class="product-card grad-border reveal" data-delay="${(i % 6) * 100}" style="--reveal-delay:${(i % 6) * 100}ms">
+        <article class="product-card grad-border" style="animation:rise-in .5s cubic-bezier(.2,.7,.2,1) both;animation-delay:${(i % 6) * 80}ms">
           <div class="product-card__top">
             <span class="product-card__status product-card__status--${meta.cls}">
               ${meta.label}
@@ -473,22 +483,15 @@
     updateCounts();
     applyFilter(activeFilter);
 
-    // Re-run shared scroll-reveals for the dynamically injected cards.
-    // Safety net: if the reveal observer hasn't marked a card visible
-    // within a few seconds (e.g. stale cached JS, missing motion.js),
-    // force-show it so products are NEVER hidden by the animation layer.
-    try {
-      if (window.IEPmotion && typeof window.IEPmotion.reveals === 'function') {
-        window.IEPmotion.reveals(grid);
-      } else {
-        grid.querySelectorAll('.reveal').forEach(el => el.classList.add('is-visible'));
-      }
-    } catch { /* motion layer optional */ }
+    // Safety net: product cards no longer use the .reveal animation class
+    // (see renderGrid), but if a stale cached copy of this script or an old
+    // markup pattern ever leaves a card hidden by the motion layer, force it
+    // visible after a moment — products must NEVER be invisible.
     setTimeout(() => {
       const g = document.getElementById('products-grid');
       if (!g) return;
       g.querySelectorAll('.reveal:not(.is-visible)').forEach(el => el.classList.add('is-visible'));
-    }, 2500);
+    }, 1200);
   }
 
   // ------------------------------------------------------------
