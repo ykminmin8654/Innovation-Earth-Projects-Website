@@ -223,7 +223,7 @@ async function handleProducts(request, env, ctx) {
 
 const GH_API = 'https://api.github.com';
 
-const BUILD_ID = '2026-10-07.33';
+const BUILD_ID = '2026-10-07.34';
 
 // ---------------------------------------------------------------------------
 // ADMIN GATE — password check endpoint (Decap removed; admin page is custom).
@@ -287,19 +287,35 @@ async function handleGate(request, env) {
 // proxy usable for any future read-only features.
 // ---------------------------------------------------------------------------
 // The admin page only writes product files, so writes are restricted to
-// products/data/*.md — nothing else (no images/, no other paths). GitHub's
-// contents API percent-encodes some characters in the URL path, so we decode
-// before matching. Slugs themselves are validated client-side ([a-z0-9-]).
-const WRITE_ALLOWED_PATHS = /^\/repos\/ykminmin8654\/Innovation-Earth-Projects-Website\/contents\/products\/data\/[A-Za-z0-9._\-]+\.md$/;
+// products/data/*.md — nothing else (no images/, no other paths). The old
+// implementation compared a single rigid, case-sensitive regex against
+// url.pathname, which broke whenever the browser sent a differently-cased
+// owner ("YkMinMin8654"), an encoded space, or a trailing slash — GitHub's
+// API itself is case-insensitive for owners/repos, so those saves were valid
+// but got blocked. Now we parse the path segment-by-segment: normalize each
+// decoded segment, compare owner/repo case-insensitively, and require the
+// file to be a plain "<slug>.md" directly inside products/data/.
 function writePathAllowed(rawPath) {
-  let p = rawPath;
-  try { p = decodeURIComponent(rawPath); } catch (e) {}
-  return WRITE_ALLOWED_PATHS.test(p) || WRITE_ALLOWED_PATHS.test(rawPath);
+  const segs = String(rawPath || '').split('/').map(function (s) {
+    try { return decodeURIComponent(s).trim(); } catch (e) { return s.trim(); }
+  }).filter(Boolean);
+  // Expected: repos / <owner> / <repo> / contents / products / data / <name>.md
+  if (segs.length !== 7) return false;
+  if (segs[0].toLowerCase() !== 'repos') return false;
+  if (segs[1].toLowerCase() !== 'ykminmin8654') return false;
+  if (segs[2].toLowerCase() !== 'innovation-earth-projects-website') return false;
+  if (segs[3].toLowerCase() !== 'contents') return false;
+  if (segs[4].toLowerCase() !== 'products') return false;
+  if (segs[5].toLowerCase() !== 'data') return false;
+  return /^[a-z0-9][a-z0-9._-]*\.md$/i.test(segs[6]);
 }
 
 async function handleGithubProxy(request, env, url) {
   // Strip either prefix; accept /api/v1/github/* and /github/*.
-  const path = url.pathname.replace(/^\/(api\/v1)?\/github\/?/, ''); // e.g. repos/.../contents/...
+  let path = url.pathname.replace(/^\/(api\/v1)?\/github\/?/, ''); // e.g. repos/.../contents/...
+  // Normalize away trailing slashes so the write-path matcher never sees an
+  // extra empty segment (e.g. ".../data/test.md/" from older admin pages).
+  path = path.replace(/\/+$/, '');
   if (!path) {
     return json({ error: 'Missing GitHub API path after /github/. Example: /api/v1/github/repos/ykminmin8654/Innovation-Earth-Projects-Website/contents/products/data', running_build: BUILD_ID }, 404);
   }
@@ -327,7 +343,9 @@ async function handleGithubProxy(request, env, url) {
       return json({ error: 'Worker cannot write: add the WRITE_TOKEN secret (fine-grained PAT with Contents: Read&Write on this repo) in Workers → Settings → Variables & Secrets, then Deploy.', running_build: BUILD_ID }, 501);
     }
     if (!writePathAllowed(path)) {
-      return json({ error: 'Write blocked: the admin may only modify product files (products/data/<name>.md) in your repo.', running_build: BUILD_ID }, 403);
+      // Include the exact path we received so a mismatch is immediately
+      // obvious instead of a mystery "blocked" message.
+      return json({ error: 'Write blocked: the admin may only modify product files (products/data/<name>.md) in your repo.', blocked_path: '/' + path, running_build: BUILD_ID }, 403);
     }
     headers.Authorization = `Bearer ${env.WRITE_TOKEN}`;
   } else {
