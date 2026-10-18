@@ -223,7 +223,7 @@ async function handleProducts(request, env, ctx) {
 
 const GH_API = 'https://api.github.com';
 
-const BUILD_ID = '2026-10-07.31';
+const BUILD_ID = '2026-10-07.32';
 
 // ---------------------------------------------------------------------------
 // ADMIN GATE — password check endpoint (Decap removed; admin page is custom).
@@ -323,7 +323,12 @@ async function handleGithubProxy(request, env, url) {
     headers.Authorization = `Bearer ${env.WRITE_TOKEN}`;
   } else {
     // Reads: prefer GITHUB_TOKEN (higher rate limit); allow caller's Bearer too.
+    // Fallback chain: GITHUB_TOKEN -> WRITE_TOKEN -> caller PAT -> anonymous.
+    // Anonymous reads share one Cloudflare egress IP and hit GitHub's 60/hr
+    // limit fast; that used to surface as 403s, which the admin page wrongly
+    // read as "session expired". Using WRITE_TOKEN for reads prevents that.
     if (env.GITHUB_TOKEN) headers.Authorization = `Bearer ${env.GITHUB_TOKEN}`;
+    else if (env.WRITE_TOKEN) headers.Authorization = `Bearer ${env.WRITE_TOKEN}`;
     else if (bearer && !bearer.includes('.')) headers.Authorization = `Bearer ${bearer}`; // raw PAT passthrough (legacy)
   }
 
@@ -341,6 +346,23 @@ async function handleGithubProxy(request, env, url) {
     body: reqBody,
   });
   const buf = await upstream.arrayBuffer();
+  // If GitHub rate-limited an (effectively anonymous) read, retry once with
+  // any available token so the admin page never sees a raw 403 that it would
+  // misread as "session expired".
+  if (upstream.status === 403 && !headers.Authorization) {
+    const tok = env.GITHUB_TOKEN || env.WRITE_TOKEN;
+    if (tok) {
+      headers.Authorization = `Bearer ${tok}`;
+      const retry = await fetch(target, { method: request.method, headers, body: reqBody });
+      return new Response(await retry.arrayBuffer(), {
+        status: retry.status,
+        headers: {
+          'Content-Type': retry.headers.get('Content-Type') || 'application/json',
+          ...CORS_HEADERS,
+        },
+      });
+    }
+  }
   return new Response(buf, {
     status: upstream.status,
     headers: {

@@ -332,7 +332,16 @@
           setMsg('', ''); render(items);
         });
       }).catch(function (e) {
-        if (e.status === 401 || e.status === 403) { alert('Session expired — please unlock again.'); sessionStorage.removeItem(TICKET_KEY); location.reload(); return; }
+        // Only a *rejected ticket* (401 from the Worker's own gate check, which
+        // always carries running_build) means the session is gone. A 403 is
+        // GitHub itself (rate limit / token scope) — show it instead of
+        // falsely logging the user out right after unlocking.
+        if (e.status === 401 && /session required/i.test(e.message)) {
+          setMsg('Session expired — please unlock again.', 'err');
+          sessionStorage.removeItem(TICKET_KEY);
+          setTimeout(function () { location.reload(); }, 1200);
+          return;
+        }
         setMsg('Could not load products: ' + e.message, 'err');
       });
     }
@@ -488,7 +497,16 @@
 
     // ---- auto-resume session (ticket valid ~30 min) ----------------------
     if (sessionStorage.getItem(TICKET_KEY)) {
-      gh(REPO + '/contents/' + DIR).then(function () { enterApp(); }).catch(function () { sessionStorage.removeItem(TICKET_KEY); });
+      gh(REPO + '/contents/' + DIR).then(function () { enterApp(); })
+        .catch(function (e) {
+          // Only drop the stored ticket when the Worker itself rejects it.
+          // GitHub-side errors (rate limit, scope) must not force a re-login.
+          if (e && e.status === 401 && /session required/i.test(e.message)) {
+            sessionStorage.removeItem(TICKET_KEY);
+          } else {
+            enterApp(); // show the app; loadList() will surface the real error
+          }
+        });
     }
   })();
   </script>
