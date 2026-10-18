@@ -1,223 +1,363 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
-  <!-- v5: never serve a stale shim from GitHub Pages' 10-min cache; the login
-       flow changes often during development and old pages caused ghost bugs. -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <title>Admin · Innovation Earth Projects</title>
+  <link rel="icon" href="/images/logo.png" />
   <style>
-    :root { --teal: #0f766e; --ink: #0f172a; --muted: #64748b; --bg: #f8fafc; }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--ink); min-height: 100vh; display: grid; place-items: center; }
-    .gate { width: min(400px, 92vw); background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 34px 30px; box-shadow: 0 12px 40px rgba(15, 23, 42, .08); text-align: center; }
-    .gate img { width: 64px; height: 64px; object-fit: contain; margin-bottom: 14px; }
-    .gate h1 { font-size: 1.3rem; margin-bottom: 6px; }
-    .gate p { color: var(--muted); font-size: .9rem; margin-bottom: 20px; line-height: 1.5; }
-    .gate input { width: 100%; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 1rem; margin-bottom: 12px; }
-    .gate input:focus { outline: 2px solid var(--teal); border-color: transparent; }
-    .gate button { width: 100%; padding: 12px 14px; border: 0; border-radius: 10px; background: var(--teal); color: #fff; font-size: 1rem; font-weight: 600; cursor: pointer; }
-    .gate button:hover { filter: brightness(1.08); }
-    .err { color: #b91c1c; font-size: .85rem; margin-top: 10px; min-height: 1.2em; }
-    .hint { font-size: .75rem; color: #94a3b8; margin-top: 16px; }
+    :root { --teal: #0f766e; --ink: #0f172a; --muted: #64748b; --line: #e2e8f0; --bg: #f8fafc; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink); background: var(--bg); }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 3rem 1.25rem; }
+    .card { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
+    h1 { font-size: 1.4rem; margin: 0 0 .25rem; display: flex; align-items: center; gap: .6rem; }
+    h1 img { width: 34px; height: 34px; }
+    p.sub { margin: 0 0 1.5rem; color: var(--muted); font-size: .95rem; }
+    label { display: block; font-size: .85rem; font-weight: 600; margin-bottom: .35rem; }
+    input[type="password"], input[type="text"], input[type="number"], textarea, select {
+      width: 100%; padding: .65rem .85rem; font-size: .95rem; border: 1px solid var(--line); border-radius: 10px; font-family: inherit; background:#fff; color: var(--ink);
+    }
+    button { margin-top: 1rem; background: var(--teal); color: #fff; border: 0; border-radius: 10px; padding: .7rem 1.3rem; font-size: .95rem; font-weight: 600; cursor: pointer; }
+    button:hover { filter: brightness(1.1); }
+    button[disabled] { opacity: .6; cursor: default; }
+    .msg { margin-top: 1rem; font-size: .9rem; min-height: 1.2em; }
+    .msg.err { color: #b91c1c; }
+    .msg.ok { color: var(--teal); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .prod { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; gap: .5rem; }
+    .prod h3 { margin: 0; font-size: 1.05rem; }
+    .badges { display: flex; gap: .4rem; flex-wrap: wrap; }
+    .badge { font-size: .72rem; font-weight: 700; letter-spacing: .02em; padding: .18rem .55rem; border-radius: 999px; background: #ccfbf1; color: var(--teal); }
+    .badge.beta { background: #fef3c7; color: #92400e; }
+    .badge.soon { background: #e0e7ff; color: #3730a3; }
+    .badge.paid { background: #fde68a; color: #78350f; }
+    .prod .desc { color: var(--muted); font-size: .85rem; margin: 0; flex: 1; word-break: break-all; }
+    .row { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+    .row button { margin: 0; padding: .45rem .8rem; font-size: .85rem; }
+    .row a.btn { display: inline-block; text-decoration: none; background: var(--teal); color: #fff; border-radius: 10px; padding: .45rem .8rem; font-size: .85rem; font-weight: 600; }
+    .ghost { background: #fff !important; color: var(--ink) !important; border: 1px solid var(--line) !important; }
+    .danger { background: #dc2626 !important; }
+    .field { margin-bottom: 1rem; }
+    .field small { display: block; color: var(--muted); font-weight: 400; margin-top: .25rem; font-size: .78rem; }
     .hidden { display: none !important; }
-    #cms-root { position: fixed; inset: 0; }
+    header.bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: .5rem; }
+    .note { font-size: .82rem; color: var(--muted); margin-top: 1.5rem; line-height: 1.5; }
+    dialog { border: 0; border-radius: 16px; padding: 0; max-width: 640px; width: calc(100% - 2rem); box-shadow: 0 20px 60px rgba(15,23,42,.25); }
+    dialog::backdrop { background: rgba(15, 23, 42, .45); }
+    dialog .inner { padding: 1.75rem; max-height: 80vh; overflow: auto; }
   </style>
 </head>
 <body>
-  <!-- Password gate: verified server-side by the Worker (key never exposed). -->
-  <div class="gate" id="gate">
-    <img src="/images/logo.png" alt="Innovation Earth Projects logo" />
-    <h1>Content Admin</h1>
-    <p>Private area. Enter the admin key to unlock GitHub sign-in.</p>
-    <form id="gate-form" autocomplete="off">
-      <input type="password" id="admin-key" placeholder="Admin key" aria-label="Admin key" required />
-      <button type="submit">Unlock &amp; continue</button>
-    </form>
-    <div class="err" id="gate-error"></div>
-    <div class="hint">All verification happens on our server — this page never checks the key itself.</div>
+  <div class="wrap">
+
+    <!-- ===================== LOGIN GATE ===================== -->
+    <section id="gate" class="card">
+      <h1><img src="/images/logo.png" alt="" /> Content Admin</h1>
+      <p class="sub">Private page — manage the tools shown on the Products page.</p>
+      <form id="keyForm" autocomplete="off">
+        <label for="adminKey">Admin key</label>
+        <input type="password" id="adminKey" placeholder="Enter the admin key" required />
+        <button type="submit" id="keyBtn">Unlock</button>
+      </form>
+      <div class="msg err" id="gateMsg"></div>
+      <p class="note">The key is checked by our server (Cloudflare Worker) — it is never stored in this page or your browser beyond one short-lived session ticket. No GitHub login is involved.</p>
+    </section>
+
+    <!-- ===================== ADMIN APP ===================== -->
+    <main id="app" class="hidden">
+      <header class="bar">
+        <h1 style="margin:0"><img src="/images/logo.png" alt="" /> Products Manager</h1>
+        <div class="row">
+          <button class="ghost" id="refreshBtn" type="button">Refresh list</button>
+          <button id="newBtn" type="button">+ New product</button>
+          <button class="ghost" id="logoutBtn" type="button">Lock</button>
+        </div>
+      </header>
+      <div class="msg" id="appMsg"></div>
+      <div class="grid" id="list"></div>
+      <p class="note">Changes are committed straight to the website repository and appear on innovationearthprojects.org after GitHub Pages rebuilds (usually under a minute). The public site reads products through the same server feed you see here.</p>
+    </main>
   </div>
 
-  <!-- Decap CMS loads here once signed in -->
-  <div id="cms-root" class="hidden"></div>
+  <!-- ===================== EDITOR DIALOG ===================== -->
+  <dialog id="editor">
+    <div class="inner">
+      <h2 id="edTitle" style="margin-top:0">New product</h2>
+      <form id="edForm">
+        <div class="field"><label for="f_slug">File name (slug)</label><input id="f_slug" required pattern="[a-z0-9][a-z0-9\-]*" /><small>Lowercase letters, numbers and dashes only. Used as the URL-friendly id.</small></div>
+        <div class="field"><label for="f_title">Title *</label><input id="f_title" required /></div>
+        <div class="field"><label for="f_description">Description</label><textarea id="f_description" rows="4"></textarea></div>
+        <div class="field"><label for="f_status">Status</label>
+          <select id="f_status">
+            <option value="live">Live</option>
+            <option value="beta">Beta</option>
+            <option value="soon">Coming Soon</option>
+          </select>
+        </div>
+        <div class="field"><label for="f_url">URL</label><input id="f_url" placeholder="https://toolname.innovationearthprojects.org" /><small>Where the product lives. Subdomains must have their CNAME record created first.</small></div>
+        <div class="field"><label for="f_pricing">Pricing</label><input id="f_pricing" value="Free" /><small>"Free" shows the standard badge. Anything else ("$5/mo", "Freemium") shows an amber price badge.</small></div>
+        <div class="field"><label for="f_tags">Tags</label><input id="f_tags" placeholder="study, writing" /><small>Comma separated.</small></div>
+        <div class="field"><label for="f_order">Order</label><input id="f_order" type="number" min="0" max="999" value="999" /><small>Lower numbers appear first on the site.</small></div>
+        <div class="field"><label for="f_icon">Icon</label><input id="f_icon" placeholder="fa-rocket" /><small>Font Awesome class name, optional.</small></div>
+        <div class="row">
+          <button type="submit" id="saveBtn">Save &amp; publish</button>
+          <button type="button" class="ghost" id="cancelBtn">Cancel</button>
+          <button type="button" class="danger hidden" id="deleteBtn">Delete</button>
+        </div>
+        <div class="msg err" id="edMsg"></div>
+      </form>
+    </div>
+  </dialog>
 
-  <!-- Decap CMS core: loaded FIRST so its auth listener exists before any
-       OAuth round-trip begins. -->
-  <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
   <script>
-  /* GATE SHIM v5 — password-first flow, Worker-routed OAuth, direct token injection.
-     Changes vs v4 (the build that showed GitHub's 404 page after the key):
-     * The page NO LONGER constructs any github.com URL. It navigates only to
-       our own Worker /oauth route; the Worker redirects onward to GitHub with
-       the exact registered callback URI and a non-empty state. This removes
-       every way the browser could hit GitHub with an unregistered/empty-state
-       request (which is what rendered "Sorry about that…" 404).
-     * Safety-net interceptor rewrites any stale script's direct authorize URLs
-       back into the Worker flow.
-     Previous notes (v4) kept below for reference:
-     Changes vs v3 (the version that kept "refreshing forever"):
-     * ROOT CAUSE FIXED: Decap's own github backend opens a POPUP on
-       workers.dev and relies on a cross-origin postMessage handshake that
-       silently fails — the tab then reloads endlessly. We now NEVER let
-       Decap run its own popup. Instead we complete sign-in ourselves and
-       inject the token directly into Decap's in-memory auth store
-       (CMS.registerAuthenticator), so no popup/handshake/relay is involved.
-     * The authorize URL is built HERE with a random state (GitHub 404s on an
-       empty state= parameter).
-     * Token handoff arrives via URL FRAGMENT (#iep_at=...) only — fragments
-       are never sent to servers, so a GitHub Pages 404 is impossible.
-     * If a stale Decap popup ever appears, it is closed automatically. */
+  /* ============================================================================
+   * ADMIN v1 — standalone, Decap-free.
+   * No decap-cms bundle, no OAuth popup handshake, no config.yml backend.
+   * Auth: type the admin key -> POST /gate on the Cloudflare Worker returns a
+   * signed 30-min ticket. All GitHub calls go THROUGH the Worker proxy
+   * (/api/v1/github/*) with that ticket as Bearer auth, so the browser never
+   * touches github.com directly and there is no login redirect at all.
+   * Data: products/data/*.md front matter, same format the site already reads.
+   * ==========================================================================*/
   (function () {
     'use strict';
     var WORKER = 'https://decap-proxy.ykminmin8654.workers.dev';
-    var TICKET_KEY = 'iep_admin_ticket';
-    var TOKEN_KEY = 'iep_admin_token';
-    var STATE_KEY = 'iep_oauth_state';
+    var REPO = '/repos/ykminmin8654/Innovation-Earth-Projects-Website';
+    var DIR = 'products/data';
+    var TICKET_KEY = 'iep-admin-ticket';
+    var $ = function (id) { return document.getElementById(id); };
 
-    function $(id) { return document.getElementById(id); }
-    function showCms() { $('gate').classList.add('hidden'); $('cms-root').classList.remove('hidden'); }
-    function showGate(msg) { $('gate').classList.remove('hidden'); $('cms-root').classList.add('hidden'); if (msg) $('gate-error').textContent = msg; }
-
-    // --- Inject the token into Decap's live auth store (no popup needed) ---
-    function registerToken(tok) {
-      try {
-        if (window.DecapCMS && window.DecapCMS.API && typeof window.DecapCMS.API.registerAuthenticator === 'function') {
-          window.DecapCMS.API.registerAuthenticator({
-            name: 'github',
-            authWindow: null,
-            restoreAuthWindow: function () { return null; },
-            getAuthURL: function () { return location.href; },
-            authenticate: function () {
-              return Promise.resolve({
-                token: tok,
-                tokenType: 'implicit',
-                useOAuthSub: false,
-                authType: null,
-                clientId: null
-              });
-            }
-          });
-        }
-      } catch (e) {}
+    // ---- tiny YAML serializer for the fields we support ------------------
+    function yamlStr(s) {
+      s = String(s == null ? '' : s);
+      return JSON.stringify(s); // double-quoted scalars are valid YAML
+    }
+    function buildMd(p) {
+      var lines = ['---'];
+      lines.push('title: ' + yamlStr(p.title));
+      if (p.description) lines.push('description: ' + yamlStr(p.description));
+      lines.push('status: ' + yamlStr(p.status || 'live'));
+      if (p.url) lines.push('url: ' + yamlStr(p.url));
+      lines.push('pricing: ' + yamlStr(p.pricing || 'Free'));
+      if (p.tags) lines.push('tags: [' + String(p.tags).split(',').map(function (t) { return t.trim(); }).filter(Boolean).map(function (t) { return JSON.stringify(t); }).join(', ') + ']');
+      lines.push('order: ' + (Number(p.order) || 999));
+      if (p.icon) lines.push('icon: ' + yamlStr(p.icon));
+      lines.push('updatedAt: ' + yamlStr(new Date().toISOString().slice(0, 10)));
+      lines.push('---', '', '');
+      return lines.join('\n');
     }
 
-    // --- Step 3 helper: seed token into every store format Decap may read ---
-    function seedToken(tok) {
-      try {
-        var iso = new Date().toISOString();
-        var auth = JSON.stringify({ token: tok });
-        localStorage.setItem(TOKEN_KEY, tok);
-        ['netlify-github-auth', 'netlify-cms-user', 'github-auth'].forEach(function (k) {
-          try { localStorage.setItem(k, auth); } catch (e) {}
+    // ---- Worker API helpers ----------------------------------------------
+    function gh(path, opts) {
+      opts = opts || {};
+      opts.headers = Object.assign({
+        Authorization: 'Bearer ' + (sessionStorage.getItem(TICKET_KEY) || ''),
+        'Content-Type': 'text/plain'
+      }, opts.headers || {});
+      return fetch(WORKER + '/api/v1/github' + path, opts).then(function (r) {
+        return r.text().then(function (body) {
+          if (!r.ok) {
+            var msg = body; try { msg = (JSON.parse(body).error || JSON.parse(body).message) || body; } catch (e) {}
+            var err = new Error(String(msg || ('HTTP ' + r.status))); err.status = r.status; throw err;
+          }
+          try { return JSON.parse(body); } catch (e) { return body; }
         });
-        try {
-          localStorage.setItem('netlify-cms-oauth', JSON.stringify({
-            token: { accessToken: tok, expiresAt: iso },
-            provider: 'github'
-          }));
-        } catch (e) {}
-        sessionStorage.setItem('netlify-cms-access-token', JSON.stringify({ token: tok }));
-      } catch (e) {}
-    }
-
-    function cleanUrl() {
-      try { history.replaceState({}, '', location.pathname); } catch (e) {}
-    }
-
-    // --- On load: fragment token? stored token + ticket? ---
-    var m = /[?&#]iep_at=([^&]+)/.exec(location.hash + location.search);
-    if (m) { seedToken(decodeURIComponent(m[1])); cleanUrl(); startCms(); return; }
-    var stored = null;
-    try { stored = localStorage.getItem(TOKEN_KEY); } catch (e) {}
-    if (stored && sessionStorage.getItem(TICKET_KEY)) { seedToken(stored); startCms(); return; }
-
-    // --- Step 1+2: verify key with the Worker, then go straight to GitHub ---
-    // The authorize URL is built HERE (never by the Worker or by Decap) so it
-    // always carries a non-empty state param — GitHub 404s on empty state=.
-    $('gate-form').addEventListener('submit', function (ev) {
-      ev.preventDefault();
-      var key = $('admin-key').value.trim();
-      if (!key) return;
-      showGate('');
-      fetch(WORKER + '/gate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: key })
-      }).then(function (r) {
-        return r.json().then(function (j) { return { ok: r.ok, j: j }; });
-      }).then(function (res) {
-        if (res.ok && res.j && res.j.ticket) {
-          sessionStorage.setItem(TICKET_KEY, res.j.ticket);
-          // v5 FIX (the exact 404 you reported): the previous build built the
-          // GitHub authorize URL HERE and sent redirect_uri to the Worker's
-          // callback. That combination is what produced GitHub's "Sorry about
-          // that…" 404 page right after entering the admin key. Now the page
-          // only ever navigates to OUR OWN Worker route (/oauth); the Worker —
-          // which has the registered callback URI pinned in its code — builds
-          // the GitHub URL itself. The browser never talks to GitHub directly.
-          var ticket = encodeURIComponent(res.j.ticket);
-          // v5: ONLY same-site navigation to our own Worker route. The Worker
-          // redirects onward to GitHub itself, so this tab never builds a
-          // github.com URL (that was the source of the 404 page).
-          location.href = WORKER + '/api/v1/github/oauth?ticket=' + ticket;
-        } else {
-          showGate((res.j && res.j.error) || 'Wrong key — try again.');
-        }
-      }).catch(function () {
-        showGate('Could not reach the server. Check your connection and retry.');
       });
+    }
+    function b64encode(str) {
+      var bytes = new TextEncoder().encode(str), bin = '';
+      for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      return btoa(bin);
+    }
+
+    // ---- gate -------------------------------------------------------------
+    $('keyForm').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var btn = $('keyBtn'), msg = $('gateMsg');
+      msg.textContent = ''; btn.disabled = true; btn.textContent = 'Checking…';
+      fetch(WORKER + '/gate', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: $('adminKey').value })
+      }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok || !res.d.ok) throw new Error(res.d.error || 'Server refused the key.');
+          sessionStorage.setItem(TICKET_KEY, res.d.ticket);
+          enterApp();
+        })
+        .catch(function (e) { msg.textContent = e.message; })
+        .finally(function () { btn.disabled = false; btn.textContent = 'Unlock'; });
     });
 
-    // Safety net: if any stale script ever tries to open a github.com/login
-    // popup or navigate THIS tab straight to github.com's authorize page with
-    // an empty/absent state param (GitHub renders its "Sorry about that…" 404
-    // for those), rewrite it into the Worker-routed flow instead.
-    function sanitizeGithubUrl(u) {
-      u = String(u || '');
-      if (!/github\.com\/login\/oauth\/authorize/.test(u)) return null;
-      var ticket = '';
-      try { ticket = sessionStorage.getItem(TICKET_KEY) || ''; } catch (e) {}
-      return WORKER + '/api/v1/github/oauth' + (ticket ? '?ticket=' + encodeURIComponent(ticket) : '');
+    function enterApp() {
+      $('gate').classList.add('hidden');
+      $('app').classList.remove('hidden');
+      loadList();
     }
-    var _open = window.open;
-    window.open = function (u, n, f) {
-      var fixed = sanitizeGithubUrl(u);
-      if (fixed) { location.href = fixed; return null; }
-      return _open.call(window, u, n, f);
-    };
-    document.addEventListener('click', function (ev) {
-      var a = ev.target && ev.target.closest ? ev.target.closest('a') : null;
-      if (!a) return;
-      var fixed = sanitizeGithubUrl(a.href);
-      if (fixed) { ev.preventDefault(); location.href = fixed; }
-    }, true);
+    $('logoutBtn').addEventListener('click', function () {
+      sessionStorage.removeItem(TICKET_KEY);
+      location.reload();
+    });
 
-    // --- Start Decap CMS (core bundle already loaded above) ---
-    function startCms() {
-      showCms();
-      var tok = null;
-      try { tok = localStorage.getItem(TOKEN_KEY); } catch (e) {}
-      if (tok) registerToken(tok);
-      function boot() {
-        if (window.DecapCMS) {
-          if (tok) registerToken(tok);
-          window.DecapCMS.init({ config: '/admin/config.yml' });
-        }
-      }
-      if (window.DecapCMS) { boot(); return; }
-      // Core script missing (offline CDN etc.) — load it now, then boot.
-      var s = document.createElement('script');
-      s.src = 'https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js';
-      s.onload = boot;
-      s.onerror = function () {
-        var s2 = document.createElement('script');
-        s2.src = 'https://cdn.jsdelivr.net/npm/decap-cms@^3.0.0/dist/decap-cms.js';
-        s2.onload = boot;
-        document.body.appendChild(s2);
+    // ---- list -------------------------------------------------------------
+    function loadList() {
+      setMsg('Loading products…', '');
+      gh(REPO + '/contents/' + DIR).then(function (entries) {
+        var files = (Array.isArray(entries) ? entries : []).filter(function (e) {
+          return e.type === 'file' && /\.md$/i.test(e.name) && !/^readme/i.test(e.name);
+        });
+        if (!files.length) { setMsg('No products yet — click "+ New product".', 'ok'); render([]); return; }
+        return Promise.all(files.map(function (f) {
+          return gh(REPO + '/contents/' + f.path, { headers: { Accept: 'application/vnd.github.raw+json' } })
+            .then(function (raw) { var p = parseFm(raw, f.name.replace(/\.md$/i, '')); if (p) p._sha = raw && raw.sha; return p; })
+            .catch(function () { return null; });
+        })).then(function (items) {
+          items = items.filter(Boolean);
+          items.sort(function (a, b) { return (Number(a.order) || 999) - (Number(b.order) || 999); });
+          setMsg('', ''); render(items);
+        });
+      }).catch(function (e) {
+        if (e.status === 401 || e.status === 403) { alert('Session expired — please unlock again.'); sessionStorage.removeItem(TICKET_KEY); location.reload(); return; }
+        setMsg('Could not load products: ' + e.message, 'err');
+      });
+    }
+
+    // Minimal front-matter parser (same subset the public site uses).
+    function parseFm(md, slug) {
+      var m = String(md).match(/^---\s*\r?\n([\s\S]*?)\r?\n---/);
+      if (!m) return null;
+      var data = { slug: slug }, cur = null;
+      m[1].split(/\r?\n/).forEach(function (line) {
+        var li = line.match(/^\s+-\s+(.*)$/);
+        if (li && cur) { if (!Array.isArray(data[cur])) data[cur] = []; data[cur].push(strip(li[1])); return; }
+        var kv = line.match(/^([A-Za-z0-9_\-]+):\s*(.*)$/);
+        if (kv) { cur = kv[1]; var v = kv[2].trim(); data[cur] = v === '' ? [] : strip(v); }
+        else if (cur && /^\s+\S/.test(line) && typeof data[cur] === 'string') { data[cur] += ' ' + line.trim(); }
+      });
+      if (!data.title) return null;
+      if (Array.isArray(data.tags)) data.tags = data.tags.join(', ');
+      return data;
+      function strip(s) { s = String(s).trim(); if ((s[0] === '"' && s.slice(-1) === '"') || (s[0] === "'" && s.slice(-1) === "'")) return s.slice(1, -1); return s; }
+    }
+
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+    function render(items) {
+      var el = $('list');
+      el.innerHTML = items.map(function (p) {
+        var st = p.status || 'live';
+        var pr = p.pricing && !/^free$/i.test(p.pricing);
+        return '<div class="prod">' +
+          '<h3>' + esc(p.title) + '</h3>' +
+          '<div class="badges">' +
+          '<span class="badge' + (st === 'beta' ? ' beta' : st === 'soon' ? ' soon' : '') + '">' + esc(st) + '</span>' +
+          '<span class="badge' + (pr ? ' paid' : '') + '">' + esc(pr ? p.pricing : 'Free') + '</span>' +
+          '</div>' +
+          '<p class="desc">' + esc((p.description || '').slice(0, 160)) + '</p>' +
+          (p.url ? '<p class="desc"><a href="' + esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.url) + '</a></p>' : '') +
+          '<div class="row">' +
+          '<button type="button" data-edit="' + esc(p.slug) + '">Edit</button>' +
+          '<a class="btn" href="/products/" target="_blank" rel="noopener">View on site</a>' +
+          '</div></div>';
+      }).join('');
+      window.__items = items;
+      Array.prototype.forEach.call(el.querySelectorAll('[data-edit]'), function (b) {
+        b.addEventListener('click', function () { openEditor(findSlug(b.getAttribute('data-edit'))); });
+      });
+    }
+    function findSlug(slug) { return (window.__items || []).filter(function (p) { return p.slug === slug; })[0]; }
+
+    // ---- editor -----------------------------------------------------------
+    var editing = null;
+    $('newBtn').addEventListener('click', function () { openEditor(null); });
+    $('cancelBtn').addEventListener('click', function () { $('editor').close(); });
+
+    function openEditor(p) {
+      editing = p;
+      $('edTitle').textContent = p ? 'Edit: ' + p.title : 'New product';
+      $('f_slug').value = p ? p.slug : '';
+      $('f_slug').disabled = !!p;
+      $('f_title').value = p ? (p.title || '') : '';
+      $('f_description').value = p ? (p.description || '') : '';
+      $('f_status').value = p ? (p.status || 'live') : 'live';
+      $('f_url').value = p ? (p.url || '') : '';
+      $('f_pricing').value = p ? (p.pricing || 'Free') : 'Free';
+      $('f_tags').value = p ? (p.tags || '') : '';
+      $('f_order').value = p ? (p.order || 999) : 999;
+      $('f_icon').value = p ? (p.icon || '') : '';
+      $('edMsg').textContent = '';
+      $('deleteBtn').classList.toggle('hidden', !p);
+      $('editor').showModal();
+    }
+
+    function collect() {
+      return {
+        slug: $('f_slug').value.trim().toLowerCase(),
+        title: $('f_title').value.trim(),
+        description: $('f_description').value.trim(),
+        status: $('f_status').value,
+        url: $('f_url').value.trim(),
+        pricing: $('f_pricing').value.trim() || 'Free',
+        tags: $('f_tags').value.trim(),
+        order: Number($('f_order').value) || 999,
+        icon: $('f_icon').value.trim()
       };
-      document.body.appendChild(s);
+    }
+
+    $('edForm').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var p = collect();
+      if (!/^[a-z0-9][a-z0-9\-]*$/.test(p.slug)) { $('edMsg').textContent = 'Slug must be lowercase letters/numbers/dashes.'; return; }
+      if (!p.title) { $('edMsg').textContent = 'Title is required.'; return; }
+      var btn = $('saveBtn'); btn.disabled = true; btn.textContent = 'Publishing…';
+      var md = buildMd(p);
+      var exists = !!editing;
+      gh(REPO + '/contents/' + DIR + '/' + p.slug + '.md')
+        .then(function (info) {
+          // file exists -> need its sha for the update
+          return putWith(info && info.sha);
+        })
+        .catch(function (e) {
+          if (e.status === 404) return putWith(undefined); // new file
+          throw e;
+        })
+        .then(function () {
+          $('editor').close();
+          setMsg('Saved "' + p.title + '". Live on the site within about a minute.', 'ok');
+          loadList();
+        })
+        .catch(function (e) { $('edMsg').textContent = 'Save failed: ' + e.message; })
+        .finally(function () { btn.disabled = false; btn.textContent = 'Save & publish'; });
+
+      function putWith(sha) {
+        var body = { message: (exists ? 'Update' : 'Create') + ' product "' + p.title + '" via admin', content: b64encode(md) };
+        if (sha) body.sha = sha;
+        return gh(REPO + '/contents/' + DIR + '/' + p.slug + '.md', { method: 'PUT', body: JSON.stringify(body) });
+      }
+    });
+
+    $('deleteBtn').addEventListener('click', function () {
+      if (!editing) return;
+      if (!confirm('Delete "' + editing.title + '" from the live site?')) return;
+      gh(REPO + '/contents/' + DIR + '/' + editing.slug + '.md')
+        .then(function (info) {
+          return gh(REPO + '/contents/' + DIR + '/' + editing.slug + '.md', {
+            method: 'DELETE',
+            body: JSON.stringify({ message: 'Delete product "' + editing.title + '" via admin', sha: info.sha })
+          });
+        })
+        .then(function () { $('editor').close(); setMsg('Deleted.', 'ok'); loadList(); })
+        .catch(function (e) { $('edMsg').textContent = 'Delete failed: ' + e.message; });
+    });
+
+    $('refreshBtn').addEventListener('click', loadList);
+
+    function setMsg(text, cls) { var el = $('appMsg'); el.textContent = text; el.className = 'msg ' + (cls || ''); }
+
+    // ---- auto-resume session (ticket valid ~30 min) ----------------------
+    if (sessionStorage.getItem(TICKET_KEY)) {
+      gh(REPO + '/contents/' + DIR).then(function () { enterApp(); }).catch(function () { sessionStorage.removeItem(TICKET_KEY); });
     }
   })();
   </script>
