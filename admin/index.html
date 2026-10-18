@@ -154,6 +154,8 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation: none !important; transition: none !important; }
     }
+    .cf-turnstile-wrap { margin: 1rem 0 .25rem; min-height: 65px; display: flex; justify-content: center; }
+    .cf-turnstile-wrap:empty { min-height: 0; margin: 0; } /* widget script blocked/offline -> no layout gap */
   </style>
 </head>
 <body>
@@ -166,6 +168,13 @@
       <form id="keyForm" autocomplete="off">
         <label for="adminKey">Admin key</label>
         <input type="password" id="adminKey" placeholder="Enter the admin key" required autofocus />
+        <!-- Cloudflare Turnstile human check (same widget as the contact form) -->
+        <div class="cf-turnstile-wrap" id="cf-turnstile-wrap">
+          <div class="cf-turnstile" id="cf-turnstile"
+               data-sitekey="0x4AAAAAABgPLACEHOLDER000000"
+               data-theme="light"
+               data-size="flex"></div>
+        </div>
         <button type="submit" id="keyBtn" style="width:100%">Unlock</button>
       </form>
       <div class="msg err" id="gateMsg"></div>
@@ -241,6 +250,34 @@
     var REPO = '/repos/ykminmin8654/Innovation-Earth-Projects-Website';
     var DIR = 'products/data';
     var TICKET_KEY = 'iep-admin-ticket';
+    // Cloudflare Turnstile — same widget/site key as the contact form.
+    // Replace the placeholder with your real site key (dash.cloudflare.com →
+    // Turnstile). Also update data-sitekey on #cf-turnstile above. The Worker
+    // verifies tokens with TURNSTILE_SECRET_KEY; until that secret is set,
+    // unlocking works without the check.
+    var TURNSTILE_SITE_KEY = '0x4AAAAAABgPLACEHOLDER000000';
+    var turnstileWidgetId = null;
+    var turnstileToken = '';
+    function initTurnstile() {
+      var mount = document.getElementById('cf-turnstile');
+      if (!mount || !window.turnstile) return;
+      try {
+        turnstileWidgetId = window.turnstile.render(mount, {
+          sitekey: TURNSTILE_SITE_KEY,
+          theme: 'light',
+          size: 'flex',
+          callback: function (token) { turnstileToken = token; },
+          'error-callback': function () { turnstileToken = ''; },
+          'expired-callback': function () { turnstileToken = ''; }
+        });
+      } catch (e) { /* widget failed to render; server-side gate still applies */ }
+    }
+    function resetTurnstile() {
+      turnstileToken = '';
+      if (window.turnstile && turnstileWidgetId != null) {
+        try { window.turnstile.reset(turnstileWidgetId); } catch (e) {}
+      }
+    }
     // Cache-buster for every GitHub read this page makes. The Worker proxy and
     // Cloudflare's edge cache can otherwise serve a directory listing from up
     // to 60s ago — which made freshly saved products look "missing" from the
@@ -296,20 +333,31 @@
     }
 
     // ---- gate -------------------------------------------------------------
+    // Render the Turnstile widget as soon as its script is available (it's
+    // loaded async, so also hook the window load event as a fallback).
+    if (document.readyState === 'complete') initTurnstile();
+    else window.addEventListener('load', initTurnstile);
+
     $('keyForm').addEventListener('submit', function (ev) {
       ev.preventDefault();
       var btn = $('keyBtn'), msg = $('gateMsg');
       msg.textContent = ''; btn.disabled = true; btn.textContent = 'Checking…';
       fetch(WORKER + '/gate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: $('adminKey').value })
+        body: JSON.stringify({
+          key: $('adminKey').value,
+          turnstile: turnstileToken || (document.querySelector('#cf-turnstile-response') || {}).value || ''
+        })
       }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
         .then(function (res) {
           if (!res.ok || !res.d.ok) throw new Error(res.d.error || 'Server refused the key.');
           sessionStorage.setItem(TICKET_KEY, res.d.ticket);
           enterApp();
         })
-        .catch(function (e) { msg.textContent = e.message; })
+        .catch(function (e) {
+          msg.textContent = e.message;
+          resetTurnstile(); // tokens are single-use — get a fresh one for the retry
+        })
         .finally(function () { btn.disabled = false; btn.textContent = 'Unlock'; });
     });
 
@@ -585,5 +633,6 @@
     }
   })();
   </script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 </body>
 </html>

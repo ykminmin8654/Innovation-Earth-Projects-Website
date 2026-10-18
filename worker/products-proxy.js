@@ -226,7 +226,7 @@ async function handleProducts(request, env, ctx) {
 
 const GH_API = 'https://api.github.com';
 
-const BUILD_ID = '2026-10-19.37';
+const BUILD_ID = '2026-10-19.38';
 
 // ---------------------------------------------------------------------------
 // ADMIN GATE — password check endpoint (Decap removed; admin page is custom).
@@ -269,8 +269,41 @@ async function handleGate(request, env) {
   if (!env.ADMIN_KEY) {
     return json({ error: 'Admin gate not configured yet: add ADMIN_KEY in Workers → Settings → Variables & Secrets, then Deploy.' }, 501);
   }
-  let key = '';
-  try { key = String((await request.json()).key || ''); } catch (e) { /* fallthrough */ }
+  let key = '', turnstileToken = '';
+  try {
+    const body = await request.json();
+    key = String(body.key || '');
+    turnstileToken = String(body.turnstile || '');
+  } catch (e) { /* fallthrough */ }
+
+  // Cloudflare Turnstile: the same human check the contact form uses. When
+  // TURNSTILE_SECRET_KEY is set, unlocking the admin page requires a valid
+  // token from the widget embedded in the login form. While unset, unlocks
+  // pass through (so the admin keeps working before the widget is created).
+  if (env.TURNSTILE_SECRET_KEY) {
+    if (!turnstileToken) {
+      return json({ ok: false, turnstile_required: true, error: 'Please complete the human check, then unlock again.' }, 400);
+    }
+    let tsRes;
+    try {
+      tsRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          secret: env.TURNSTILE_SECRET_KEY,
+          response: turnstileToken,
+          remoteip: request.headers.get('CF-Connecting-IP') || undefined,
+        }),
+      });
+    } catch {
+      return json({ ok: false, error: 'The human check timed out. Please try again.' }, 502);
+    }
+    const tsData = await tsRes.json().catch(() => ({}));
+    if (!tsData.success) {
+      return json({ ok: false, turnstile_failed: true, error: 'The human check failed. Please try again.', codes: tsData['error-codes'] || [] }, 403);
+    }
+  }
+
   // Constant-time-ish comparison via HMAC of both values.
   const okA = await hmacHex(env.ADMIN_KEY, 'verify:' + key);
   const okB = await hmacHex(env.ADMIN_KEY, 'verify:' + String(env.ADMIN_KEY));
