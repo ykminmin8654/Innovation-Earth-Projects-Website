@@ -223,7 +223,7 @@ async function handleProducts(request, env, ctx) {
 
 const GH_API = 'https://api.github.com';
 
-const BUILD_ID = '2026-10-07.32';
+const BUILD_ID = '2026-10-07.33';
 
 // ---------------------------------------------------------------------------
 // ADMIN GATE — password check endpoint (Decap removed; admin page is custom).
@@ -286,7 +286,16 @@ async function handleGate(request, env) {
 // fall back to GITHUB_TOKEN / unauthenticated), which keeps the transparent
 // proxy usable for any future read-only features.
 // ---------------------------------------------------------------------------
-const WRITE_ALLOWED_PATHS = /^\/repos\/ykminmin8654\/Innovation-Earth-Projects-Website\/contents\/(products\/data|images)\/[A-Za-z0-9._\-\/ ]+$/;
+// The admin page only writes product files, so writes are restricted to
+// products/data/*.md — nothing else (no images/, no other paths). GitHub's
+// contents API percent-encodes some characters in the URL path, so we decode
+// before matching. Slugs themselves are validated client-side ([a-z0-9-]).
+const WRITE_ALLOWED_PATHS = /^\/repos\/ykminmin8654\/Innovation-Earth-Projects-Website\/contents\/products\/data\/[A-Za-z0-9._\-]+\.md$/;
+function writePathAllowed(rawPath) {
+  let p = rawPath;
+  try { p = decodeURIComponent(rawPath); } catch (e) {}
+  return WRITE_ALLOWED_PATHS.test(p) || WRITE_ALLOWED_PATHS.test(rawPath);
+}
 
 async function handleGithubProxy(request, env, url) {
   // Strip either prefix; accept /api/v1/github/* and /github/*.
@@ -317,8 +326,8 @@ async function handleGithubProxy(request, env, url) {
     if (!env.WRITE_TOKEN) {
       return json({ error: 'Worker cannot write: add the WRITE_TOKEN secret (fine-grained PAT with Contents: Read&Write on this repo) in Workers → Settings → Variables & Secrets, then Deploy.', running_build: BUILD_ID }, 501);
     }
-    if (!WRITE_ALLOWED_PATHS.test(path)) {
-      return json({ error: 'Write blocked: only products/data/*.md and images/* paths in your own repo may be modified.', running_build: BUILD_ID }, 403);
+    if (!writePathAllowed(path)) {
+      return json({ error: 'Write blocked: the admin may only modify product files (products/data/<name>.md) in your repo.', running_build: BUILD_ID }, 403);
     }
     headers.Authorization = `Bearer ${env.WRITE_TOKEN}`;
   } else {
