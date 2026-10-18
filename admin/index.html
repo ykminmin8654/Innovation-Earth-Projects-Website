@@ -4,49 +4,151 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex, nofollow" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <title>Admin · Innovation Earth Projects</title>
   <link rel="icon" href="/images/logo.png" />
   <style>
-    :root { --teal: #0f766e; --ink: #0f172a; --muted: #64748b; --line: #e2e8f0; --bg: #f8fafc; }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: var(--ink); background: var(--bg); }
-    .wrap { max-width: 980px; margin: 0 auto; padding: 3rem 1.25rem; }
-    .card { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(15, 23, 42, .06); }
-    h1 { font-size: 1.4rem; margin: 0 0 .25rem; display: flex; align-items: center; gap: .6rem; }
-    h1 img { width: 34px; height: 34px; }
-    p.sub { margin: 0 0 1.5rem; color: var(--muted); font-size: .95rem; }
-    label { display: block; font-size: .85rem; font-weight: 600; margin-bottom: .35rem; }
-    input[type="password"], input[type="text"], input[type="number"], textarea, select {
-      width: 100%; padding: .65rem .85rem; font-size: .95rem; border: 1px solid var(--line); border-radius: 10px; font-family: inherit; background:#fff; color: var(--ink);
+    /* ==========================================================
+       ADMIN v2 — dark studio theme. Self-contained (no CDN).
+       ========================================================== */
+    :root {
+      --bg: #0b1120;
+      --panel: #131c2e;
+      --panel-2: #1a2540;
+      --line: #24324f;
+      --ink: #e6edf7;
+      --muted: #8fa3bf;
+      --teal: #2dd4bf;
+      --teal-deep: #0d9488;
+      --amber: #fbbf24;
+      --violet: #a5b4fc;
+      --rose: #fb7185;
+      --ok: #34d399;
+      --radius: 14px;
+      --shadow: 0 18px 50px rgba(2, 6, 23, .55);
     }
-    button { margin-top: 1rem; background: var(--teal); color: #fff; border: 0; border-radius: 10px; padding: .7rem 1.3rem; font-size: .95rem; font-weight: 600; cursor: pointer; }
-    button:hover { filter: brightness(1.1); }
-    button[disabled] { opacity: .6; cursor: default; }
+    * { box-sizing: border-box; }
+    html { color-scheme: dark; }
+    body {
+      margin: 0; background: var(--bg); color: var(--ink);
+      font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      min-height: 100vh;
+    }
+    /* ambient background glows */
+    body::before {
+      content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background:
+        radial-gradient(600px 400px at 85% -10%, rgba(45, 212, 191, .10), transparent 70%),
+        radial-gradient(700px 500px at -10% 110%, rgba(165, 180, 252, .08), transparent 70%);
+    }
+    .wrap { position: relative; z-index: 1; max-width: 1060px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+
+    /* ---------- shared bits ---------- */
+    .card {
+      background: linear-gradient(180deg, var(--panel) 0%, #101827 100%);
+      border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 1.75rem; box-shadow: var(--shadow);
+    }
+    h1 { font-size: 1.3rem; margin: 0 0 .3rem; display: flex; align-items: center; gap: .65rem; letter-spacing: .01em; }
+    h1 img { width: 36px; height: 36px; border-radius: 9px; background: #fff; padding: 2px; }
+    p.sub { margin: 0 0 1.5rem; color: var(--muted); font-size: .92rem; line-height: 1.55; }
+    label { display: block; font-size: .8rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin-bottom: .4rem; }
+    input[type="password"], input[type="text"], input[type="number"], textarea, select {
+      width: 100%; padding: .7rem .9rem; font-size: .95rem; color: var(--ink);
+      background: #0e1626; border: 1px solid var(--line); border-radius: 10px;
+      font-family: inherit; outline: none; transition: border-color .18s, box-shadow .18s;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--teal-deep);
+      box-shadow: 0 0 0 3px rgba(45, 212, 191, .15);
+    }
+    ::placeholder { color: #55688a; }
+    button {
+      margin-top: 1rem; background: linear-gradient(135deg, var(--teal) 0%, var(--teal-deep) 100%);
+      color: #042f2e; border: 0; border-radius: 10px; padding: .72rem 1.35rem;
+      font-size: .92rem; font-weight: 800; cursor: pointer; letter-spacing: .01em;
+      transition: transform .15s, filter .15s, box-shadow .15s;
+      box-shadow: 0 8px 22px rgba(13, 148, 136, .28);
+    }
+    button:hover:not([disabled]) { transform: translateY(-1px); filter: brightness(1.08); }
+    button:active:not([disabled]) { transform: translateY(0); }
+    button[disabled] { opacity: .55; cursor: default; }
+    .ghost { background: var(--panel-2) !important; color: var(--ink) !important; border: 1px solid var(--line) !important; box-shadow: none !important; }
+    .danger { background: linear-gradient(135deg, #f43f5e, #be123c) !important; color: #fff !important; box-shadow: 0 8px 22px rgba(190,18,60,.3) !important; }
     .msg { margin-top: 1rem; font-size: .9rem; min-height: 1.2em; }
-    .msg.err { color: #b91c1c; }
-    .msg.ok { color: var(--teal); }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-top: 1rem; }
-    .prod { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; gap: .5rem; }
-    .prod h3 { margin: 0; font-size: 1.05rem; }
-    .badges { display: flex; gap: .4rem; flex-wrap: wrap; }
-    .badge { font-size: .72rem; font-weight: 700; letter-spacing: .02em; padding: .18rem .55rem; border-radius: 999px; background: #ccfbf1; color: var(--teal); }
-    .badge.beta { background: #fef3c7; color: #92400e; }
-    .badge.soon { background: #e0e7ff; color: #3730a3; }
-    .badge.paid { background: #fde68a; color: #78350f; }
-    .prod .desc { color: var(--muted); font-size: .85rem; margin: 0; flex: 1; word-break: break-all; }
-    .row { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
-    .row button { margin: 0; padding: .45rem .8rem; font-size: .85rem; }
-    .row a.btn { display: inline-block; text-decoration: none; background: var(--teal); color: #fff; border-radius: 10px; padding: .45rem .8rem; font-size: .85rem; font-weight: 600; }
-    .ghost { background: #fff !important; color: var(--ink) !important; border: 1px solid var(--line) !important; }
-    .danger { background: #dc2626 !important; }
-    .field { margin-bottom: 1rem; }
-    .field small { display: block; color: var(--muted); font-weight: 400; margin-top: .25rem; font-size: .78rem; }
+    .msg.err { color: var(--rose); }
+    .msg.ok { color: var(--ok); }
+    .note { font-size: .8rem; color: var(--muted); margin-top: 1.5rem; line-height: 1.6; }
     .hidden { display: none !important; }
-    header.bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: .5rem; }
-    .note { font-size: .82rem; color: var(--muted); margin-top: 1.5rem; line-height: 1.5; }
-    dialog { border: 0; border-radius: 16px; padding: 0; max-width: 640px; width: calc(100% - 2rem); box-shadow: 0 20px 60px rgba(15,23,42,.25); }
-    dialog::backdrop { background: rgba(15, 23, 42, .45); }
-    dialog .inner { padding: 1.75rem; max-height: 80vh; overflow: auto; }
+
+    /* ---------- login gate ---------- */
+    #gate { max-width: 420px; margin: 12vh auto 0; animation: rise .5s ease both; }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    .keyhint { display:flex; align-items:center; gap:.5rem; margin-top:1.1rem; font-size:.78rem; color:var(--muted); }
+    .keyhint svg { flex:none; }
+
+    /* ---------- app header ---------- */
+    header.bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.4rem; flex-wrap: wrap; gap: .75rem; }
+    header.bar .row { margin: 0; }
+    .stat-strip { display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: 1.2rem; }
+    .stat {
+      background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+      padding: .65rem 1rem; font-size: .82rem; color: var(--muted);
+      display: flex; align-items: baseline; gap: .45rem; animation: rise .45s ease both;
+    }
+    .stat b { color: var(--ink); font-size: 1.05rem; }
+
+    /* ---------- product grid ---------- */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1rem; }
+    .prod {
+      background: linear-gradient(180deg, var(--panel) 0%, #101827 100%);
+      border: 1px solid var(--line); border-radius: var(--radius); padding: 1.15rem;
+      display: flex; flex-direction: column; gap: .55rem;
+      transition: transform .18s, border-color .18s, box-shadow .18s;
+      animation: rise .45s ease both;
+    }
+    .prod:hover { transform: translateY(-3px); border-color: #35507c; box-shadow: 0 14px 34px rgba(2,6,23,.5); }
+    .prod h3 { margin: 0; font-size: 1.02rem; }
+    .badges { display: flex; gap: .4rem; flex-wrap: wrap; }
+    .badge { font-size: .7rem; font-weight: 800; letter-spacing: .03em; padding: .2rem .6rem; border-radius: 999px; }
+    .badge.live  { background: rgba(52,211,153,.14); color: var(--ok); border: 1px solid rgba(52,211,153,.3); }
+    .badge.beta  { background: rgba(251,191,36,.12); color: var(--amber); border: 1px solid rgba(251,191,36,.3); }
+    .badge.soon  { background: rgba(165,180,252,.12); color: var(--violet); border: 1px solid rgba(165,180,252,.3); }
+    .badge.free  { background: rgba(45,212,191,.12); color: var(--teal); border: 1px solid rgba(45,212,191,.3); }
+    .badge.paid  { background: rgba(251,191,36,.14); color: var(--amber); border: 1px solid rgba(251,191,36,.35); }
+    .prod .desc { color: var(--muted); font-size: .84rem; margin: 0; flex: 1; line-height: 1.5; word-break: break-word; }
+    .prod .link { font-size: .78rem; }
+    .prod .link a { color: var(--teal); text-decoration: none; word-break: break-all; }
+    .prod .link a:hover { text-decoration: underline; }
+    .row { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .5rem; }
+    .row button { margin: 0; padding: .5rem .9rem; font-size: .84rem; }
+
+    .empty {
+      text-align: center; padding: 3rem 1rem; border: 1px dashed var(--line);
+      border-radius: var(--radius); color: var(--muted); background: rgba(19,28,46,.5);
+    }
+    .empty strong { display: block; color: var(--ink); font-size: 1.05rem; margin-bottom: .35rem; }
+
+    .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.25); border-top-color: currentColor; border-radius: 50%; animation: spin .7s linear infinite; vertical-align: -2px; margin-right: .4rem; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ---------- editor dialog ---------- */
+    dialog {
+      border: 1px solid var(--line); border-radius: 18px; padding: 0;
+      max-width: 660px; width: calc(100% - 2rem);
+      background: var(--panel); color: var(--ink); box-shadow: var(--shadow);
+    }
+    dialog::backdrop { background: rgba(2, 6, 23, .7); backdrop-filter: blur(3px); }
+    dialog .inner { padding: 1.75rem; max-height: 82vh; overflow: auto; }
+    dialog h2 { margin-top: 0; font-size: 1.15rem; }
+    .field { margin-bottom: 1.05rem; }
+    .field small { display: block; color: var(--muted); font-weight: 400; margin-top: .3rem; font-size: .76rem; line-height: 1.45; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+    @media (max-width: 560px) { .two-col { grid-template-columns: 1fr; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
   </style>
 </head>
 <body>
@@ -58,11 +160,14 @@
       <p class="sub">Private page — manage the tools shown on the Products page.</p>
       <form id="keyForm" autocomplete="off">
         <label for="adminKey">Admin key</label>
-        <input type="password" id="adminKey" placeholder="Enter the admin key" required />
-        <button type="submit" id="keyBtn">Unlock</button>
+        <input type="password" id="adminKey" placeholder="Enter the admin key" required autofocus />
+        <button type="submit" id="keyBtn" style="width:100%">Unlock</button>
       </form>
       <div class="msg err" id="gateMsg"></div>
-      <p class="note">The key is checked by our server (Cloudflare Worker) — it is never stored in this page or your browser beyond one short-lived session ticket. No GitHub login is involved.</p>
+      <div class="keyhint">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        The key is verified by our server — it never touches this browser beyond one short-lived session ticket.
+      </div>
     </section>
 
     <!-- ===================== ADMIN APP ===================== -->
@@ -71,35 +176,40 @@
         <h1 style="margin:0"><img src="/images/logo.png" alt="" /> Products Manager</h1>
         <div class="row">
           <button class="ghost" id="refreshBtn" type="button">Refresh list</button>
-          <button id="newBtn" type="button">+ New product</button>
+          <button id="newBtn" type="button">＋ New product</button>
           <button class="ghost" id="logoutBtn" type="button">Lock</button>
         </div>
       </header>
+      <div class="stat-strip" id="stats"></div>
       <div class="msg" id="appMsg"></div>
       <div class="grid" id="list"></div>
-      <p class="note">Changes are committed straight to the website repository and appear on innovationearthprojects.org after GitHub Pages rebuilds (usually under a minute). The public site reads products through the same server feed you see here.</p>
+      <p class="note">Changes are committed straight to the website repository and appear on innovationearthprojects.org after GitHub Pages rebuilds (usually under a minute). Sessions last 30 minutes, then you can unlock again with the same key.</p>
     </main>
   </div>
 
   <!-- ===================== EDITOR DIALOG ===================== -->
   <dialog id="editor">
     <div class="inner">
-      <h2 id="edTitle" style="margin-top:0">New product</h2>
+      <h2 id="edTitle">New product</h2>
       <form id="edForm">
         <div class="field"><label for="f_slug">File name (slug)</label><input id="f_slug" required pattern="[a-z0-9][a-z0-9\-]*" /><small>Lowercase letters, numbers and dashes only. Used as the URL-friendly id.</small></div>
         <div class="field"><label for="f_title">Title *</label><input id="f_title" required /></div>
         <div class="field"><label for="f_description">Description</label><textarea id="f_description" rows="4"></textarea></div>
-        <div class="field"><label for="f_status">Status</label>
-          <select id="f_status">
-            <option value="live">Live</option>
-            <option value="beta">Beta</option>
-            <option value="soon">Coming Soon</option>
-          </select>
+        <div class="two-col">
+          <div class="field"><label for="f_status">Status</label>
+            <select id="f_status">
+              <option value="live">Live</option>
+              <option value="beta">Beta</option>
+              <option value="soon">Coming Soon</option>
+            </select>
+          </div>
+          <div class="field"><label for="f_pricing">Pricing</label><input id="f_pricing" value="Free" /><small>"Free" shows the standard badge. Anything else ("$5/mo", "Freemium") shows an amber price badge.</small></div>
         </div>
         <div class="field"><label for="f_url">URL</label><input id="f_url" placeholder="https://toolname.innovationearthprojects.org" /><small>Where the product lives. Subdomains must have their CNAME record created first.</small></div>
-        <div class="field"><label for="f_pricing">Pricing</label><input id="f_pricing" value="Free" /><small>"Free" shows the standard badge. Anything else ("$5/mo", "Freemium") shows an amber price badge.</small></div>
-        <div class="field"><label for="f_tags">Tags</label><input id="f_tags" placeholder="study, writing" /><small>Comma separated.</small></div>
-        <div class="field"><label for="f_order">Order</label><input id="f_order" type="number" min="0" max="999" value="999" /><small>Lower numbers appear first on the site.</small></div>
+        <div class="two-col">
+          <div class="field"><label for="f_tags">Tags</label><input id="f_tags" placeholder="study, writing" /><small>Comma separated.</small></div>
+          <div class="field"><label for="f_order">Order</label><input id="f_order" type="number" min="0" max="999" value="999" /><small>Lower numbers appear first on the site.</small></div>
+        </div>
         <div class="field"><label for="f_icon">Icon</label><input id="f_icon" placeholder="fa-rocket" /><small>Font Awesome class name, optional.</small></div>
         <div class="row">
           <button type="submit" id="saveBtn">Save &amp; publish</button>
@@ -113,8 +223,7 @@
 
   <script>
   /* ============================================================================
-   * ADMIN v1 — standalone, Decap-free.
-   * No decap-cms bundle, no OAuth popup handshake, no config.yml backend.
+   * ADMIN v2 — standalone, Decap-free. Same logic as v1, restyled.
    * Auth: type the admin key -> POST /gate on the Cloudflare Worker returns a
    * signed 30-min ticket. All GitHub calls go THROUGH the Worker proxy
    * (/api/v1/github/*) with that ticket as Bearer auth, so the browser never
@@ -202,12 +311,12 @@
 
     // ---- list -------------------------------------------------------------
     function loadList() {
-      setMsg('Loading products…', '');
+      setMsg('<span class="spinner"></span>Loading products…', '');
       gh(REPO + '/contents/' + DIR).then(function (entries) {
         var files = (Array.isArray(entries) ? entries : []).filter(function (e) {
           return e.type === 'file' && /\.md$/i.test(e.name) && !/^readme/i.test(e.name);
         });
-        if (!files.length) { setMsg('No products yet — click "+ New product".', 'ok'); render([]); return; }
+        if (!files.length) { setMsg('', ''); render([]); return; }
         return Promise.all(files.map(function (f) {
           return gh(REPO + '/contents/' + f.path, { headers: { Accept: 'application/vnd.github.raw+json' } })
             .then(function (raw) { var p = parseFm(raw, f.name.replace(/\.md$/i, '')); if (p) p._sha = raw && raw.sha; return p; })
@@ -243,22 +352,39 @@
 
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
+    function statusBadge(st) {
+      if (st === 'beta') return '<span class="badge beta">BETA</span>';
+      if (st === 'soon') return '<span class="badge soon">SOON</span>';
+      return '<span class="badge live">LIVE</span>';
+    }
+
     function render(items) {
       var el = $('list');
-      el.innerHTML = items.map(function (p) {
+      // stats strip
+      var freeCount = items.filter(function (p) { return !p.pricing || /^free$/i.test(p.pricing); }).length;
+      $('stats').innerHTML =
+        '<div class="stat"><b>' + items.length + '</b> product' + (items.length === 1 ? '' : 's') + '</div>' +
+        '<div class="stat"><b>' + freeCount + '</b> free</div>' +
+        '<div class="stat"><b>' + (items.length - freeCount) + '</b> priced</div>';
+
+      if (!items.length) {
+        el.innerHTML = '<div class="empty" style="grid-column:1/-1"><strong>No products yet</strong>Click “＋ New product” to publish your first tool to the site.</div>';
+        window.__items = items;
+        return;
+      }
+      el.innerHTML = items.map(function (p, idx) {
         var st = p.status || 'live';
         var pr = p.pricing && !/^free$/i.test(p.pricing);
-        return '<div class="prod">' +
+        return '<div class="prod" style="animation-delay:' + Math.min(idx * 60, 400) + 'ms">' +
           '<h3>' + esc(p.title) + '</h3>' +
-          '<div class="badges">' +
-          '<span class="badge' + (st === 'beta' ? ' beta' : st === 'soon' ? ' soon' : '') + '">' + esc(st) + '</span>' +
-          '<span class="badge' + (pr ? ' paid' : '') + '">' + esc(pr ? p.pricing : 'Free') + '</span>' +
+          '<div class="badges">' + statusBadge(st) +
+          '<span class="badge ' + (pr ? 'paid' : 'free') + '">' + esc(pr ? p.pricing : 'Free') + '</span>' +
           '</div>' +
           '<p class="desc">' + esc((p.description || '').slice(0, 160)) + '</p>' +
-          (p.url ? '<p class="desc"><a href="' + esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.url) + '</a></p>' : '') +
+          (p.url ? '<p class="link"><a href="' + esc(p.url) + '" target="_blank" rel="noopener">' + esc(p.url) + '</a></p>' : '') +
           '<div class="row">' +
           '<button type="button" data-edit="' + esc(p.slug) + '">Edit</button>' +
-          '<a class="btn" href="/products/" target="_blank" rel="noopener">View on site</a>' +
+          '<a style="display:inline-flex;align-items:center;padding:.5rem .9rem;font-size:.84rem;border-radius:10px;text-decoration:none;background:var(--panel-2);color:var(--ink);border:1px solid var(--line);font-weight:700" href="/products/" target="_blank" rel="noopener">View on site</a>' +
           '</div></div>';
       }).join('');
       window.__items = items;
@@ -353,7 +479,7 @@
 
     $('refreshBtn').addEventListener('click', loadList);
 
-    function setMsg(text, cls) { var el = $('appMsg'); el.textContent = text; el.className = 'msg ' + (cls || ''); }
+    function setMsg(html, cls) { var el = $('appMsg'); el.innerHTML = html; el.className = 'msg ' + (cls || ''); }
 
     // ---- auto-resume session (ticket valid ~30 min) ----------------------
     if (sessionStorage.getItem(TICKET_KEY)) {

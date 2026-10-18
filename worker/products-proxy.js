@@ -42,8 +42,12 @@ const SNAPSHOT_TTL = 3600; // seconds — last-good fallback if GitHub fails
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+  // PUT + DELETE are required: the admin page saves (PUT) and removes
+  // products (DELETE) through this Worker. Without them listed here, the
+  // browser blocks those requests at the CORS preflight stage with a
+  // network-level "Failed to fetch" before they ever reach the server.
+  'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With, Accept',
   'Access-Control-Max-Age': '86400',
 };
 
@@ -219,7 +223,7 @@ async function handleProducts(request, env, ctx) {
 
 const GH_API = 'https://api.github.com';
 
-const BUILD_ID = '2026-10-07.30';
+const BUILD_ID = '2026-10-07.31';
 
 // ---------------------------------------------------------------------------
 // ADMIN GATE — password check endpoint (Decap removed; admin page is custom).
@@ -323,13 +327,21 @@ async function handleGithubProxy(request, env, url) {
     else if (bearer && !bearer.includes('.')) headers.Authorization = `Bearer ${bearer}`; // raw PAT passthrough (legacy)
   }
 
+  // Buffer the body so a failed upstream read can never surface as an opaque
+  // network "Failed to fetch" in the browser, and so we can re-send it safely.
+  let reqBody;
+  if (!['GET', 'HEAD'].includes(request.method)) {
+    reqBody = await request.arrayBuffer();
+  }
+
   const target = `${GH_API}/${path}${url.search}`;
   const upstream = await fetch(target, {
     method: request.method,
     headers,
-    body: ['GET', 'HEAD'].includes(request.method) ? undefined : request.body,
+    body: reqBody,
   });
-  return new Response(upstream.body, {
+  const buf = await upstream.arrayBuffer();
+  return new Response(buf, {
     status: upstream.status,
     headers: {
       'Content-Type': upstream.headers.get('Content-Type') || 'application/json',
