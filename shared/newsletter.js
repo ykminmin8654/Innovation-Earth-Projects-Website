@@ -31,6 +31,7 @@
   var ENDPOINT = 'https://decap-proxy.ykminmin8654.workers.dev/newsletter';
   var SITE_KEY = '0x4AAAAAAFMinCrsCsyi7S6X';
   var DONE_KEY = 'iep_newsletter_done'; // remember success across pages
+  var MAX_WAIT_MS = 12000;              // hard cap on a submit fetch
 
   function getStored(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function setStored(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -175,7 +176,12 @@
       fetch(ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify(body)
+        body: JSON.stringify(body),
+        // Hard cap: if the Worker/CDN hangs, abort after MAX_WAIT_MS so the
+        // button can never stay stuck in the loading state forever.
+        signal: (typeof AbortSignal !== 'undefined' && AbortSignal.timeout)
+          ? AbortSignal.timeout(MAX_WAIT_MS)
+          : undefined
       })
         .then(function (r) { return r.json().catch(function () { return {}; }); })
         .then(function (data) {

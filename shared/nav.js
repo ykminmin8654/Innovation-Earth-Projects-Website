@@ -149,17 +149,24 @@
   function loadNewsletterScript() {
     // Wire up the sign-up form + Turnstile widget. Skipped inside /admin/.
     // The footer no longer contains any newsletter markup — shared/newsletter.js
-    // is loaded ONLY on the /newsletter/ page itself, and only once per
-    // document. (Re-firing init events on every boot used to stack up during
-    // SPA navigation; the script self-wires via shim:content-loaded instead.)
+    // is loaded ONLY on the /newsletter/ page itself, and EXACTLY ONCE per
+    // document lifetime. IMPORTANT: this must never run again after the SPA
+    // router has replaced the body (the router wipes all injected <script>
+    // nodes when it swaps pages; re-appending a fresh tag would re-download
+    // AND re-execute the file on every navigation, which is what previously
+    // stacked Turnstile widgets and froze the tab). The one-time flag lives
+    // on `window` (which survives body replacement), and shared/newsletter.js
+    // self-wires to future shim:content-loaded events by itself.
     if (/^\/admin/i.test(window.location.pathname)) return;
     var onNlPage = /^\/newsletter(\/|$)/i.test(window.location.pathname) ||
                    document.body.getAttribute('data-page') === 'newsletter';
     if (!onNlPage) return;
+    if (window.__iepNlScriptDone) return;   // already loaded once this session
     if (document.getElementById('iep-newsletter-script')) return;
+    window.__iepNlScriptDone = true;        // set BEFORE append: never re-load
     var s = document.createElement('script');
     s.id = 'iep-newsletter-script';
-    s.src = '/shared/newsletter.js?v=20261019s';
+    s.src = '/shared/newsletter.js?v=20261020a';
     document.body.appendChild(s);
   }
 
