@@ -39,7 +39,6 @@ const REPO_OWNER = 'ykminmin8654';
 // GET /products return 502 and the grid fail to load.
 const REPO_NAME = 'Innovation-Earth-Projects-Website';
 const PRODUCTS_DIR = 'products/data';
-const PRODUCTS_CACHE_TTL = 60; // seconds — fresh feed
 const SNAPSHOT_TTL = 3600; // seconds — last-good fallback if GitHub fails
 
 const CORS_HEADERS = {
@@ -125,15 +124,46 @@ function stripQuotes(s) {
   return s;
 }
 
+// Normalize the "tags" field into a plain comma-separated string. Decap's
+// editor saves inline lists like tags: ["Android", "App"] — after the naive
+// front-matter pass that arrives as the literal string '["Android", "App"]',
+// and JSON.stringify then double-escapes it ('\"Android\"'), which the site
+// used to render as one ugly tag chip containing quotes and brackets. Here we
+// unwrap inline lists, drop quotes/brackets, and join cleanly. Also tolerates
+// real arrays ("- item" style lists) from the parser above.
+function normalizeTags(v) {
+  let arr = [];
+  if (Array.isArray(v)) {
+    arr = v;
+  } else if (typeof v === 'string' && v.trim()) {
+    arr = v
+      .replace(/^\[\s*|\s*\]$/g, '') // strip surrounding [ ]
+      .split(',')
+      .map((s) => s.trim().replace(/^["']|["']$/g, '').trim())
+      .filter(Boolean);
+  }
+  return arr.join(', ');
+}
+
 // ---------------------------------------------------------------------------
-// GET /products — public product feed (Cache API, 60s TTL, ?refresh=1 purges)
+// GET /products — public product feed.
+// Freshness model: NO edge cache on the response itself (Cache-Control:
+// no-store) so every page load/poll from the site gets current GitHub data —
+// this is what makes the products grid "constantly checking" instead of
+// showing whatever was cached when someone else first visited. To stay under
+// GitHub's rate limit while polling that hard, a short 15-second in-memory
+// revalidation window per Worker isolate absorbs bursts (a visitor polling
+// every 20s hits GitHub once; rapid refreshes hit memory). A last-good
+// snapshot (Cache API, 1h) is served if GitHub errors or rate-limits us.
 // ---------------------------------------------------------------------------
 
-// Fetch + parse every product .md file from the repo contents API.
+let plCache = { at: 0, items: null }; // in-memory revalidation window
+const PL_STALE_MS = 15 * 1000;        // 15s — near-real-time, burst-safe
+
 async function buildProductList(env) {
   const listUrl =
     `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${PRODUCTS_DIR}`;
-  const listRes = await fetch(listUrl, { headers: ghHeaders(env) });
+  const listRes = await fetch(listUrl, { headers: ghHeaders(env), cache: 'no-store' });
   if (!listRes.ok) throw new Error(`GitHub listing failed: ${listRes.status}`);
   const entries = await listRes.json();
 
@@ -146,13 +176,14 @@ async function buildProductList(env) {
       try {
         const res = await fetch(f.url, {
           headers: { ...ghHeaders(env), Accept: 'application/vnd.github.raw+json' },
+          cache: 'no-store',
         });
         if (!res.ok) return null;
         const fm = parseFrontMatter(await res.text());
         if (!fm || !fm.title) return null; // README.md etc. -> skip
-        // Normalize list fields (tags) to a comma string so both the
+        // Normalize list fields (tags) to a clean comma string so both the
         // Worker feed and the site's fallback parser handle them the same.
-        if (Array.isArray(fm.tags)) fm.tags = fm.tags.join(', ');
+        if (fm.tags !== undefined) fm.tags = normalizeTags(fm.tags);
         return { slug: f.name.replace(/\.md$/, ''), ...fm };
       } catch {
         return null;
@@ -165,31 +196,28 @@ async function buildProductList(env) {
   return items;
 }
 
+async function getProductsFresh(env) {
+  const now = Date.now();
+  if (plCache.items && now - plCache.at < PL_STALE_MS) return plCache.items;
+  const items = await buildProductList(env);
+  plCache = { at: now, items };
+  return items;
+}
+
 async function handleProducts(request, env, ctx) {
   const url = new URL(request.url);
-  // Cache key must be EXACTLY /products — a ?_cb=<timestamp> query param from
-  // the admin page would otherwise create a brand-new cache entry per request.
-  const cacheKey = new Request(`${url.origin}/products`, { method: 'GET' });
-  const cache = caches.default;
-  // Any query string (?refresh=1 or ?_cb=...) means "give me fresh data".
-  const force = url.search !== '' || request.headers.get('Cache-Control') === 'no-cache';
-
-  if (!force) {
-    const cached = await cache.match(cacheKey);
-    if (cached) return cached;
-  }
 
   let items;
   try {
-    items = await buildProductList(env);
+    items = await getProductsFresh(env);
   } catch (err) {
     // GitHub is rate-limiting us or momentarily unavailable. Instead of
     // killing the site with a 502, serve the last good snapshot we have
-    // (stored in the cache under /products-snapshot). If that exists, the
-    // browser sees valid JSON and stale data beats an empty grid.
+    // (stored in the Cache API under /products-snapshot). If that exists,
+    // the browser sees valid JSON and stale data beats an empty grid.
     console.error('products error:', err);
     try {
-      const snap = await cache.match(new Request(`${url.origin}/products-snapshot`));
+      const snap = await caches.default.match(new Request(`${url.origin}/products-snapshot`));
       if (snap) {
         return new Response(snap.body, {
           status: 200,
@@ -209,17 +237,18 @@ async function handleProducts(request, env, ctx) {
 
   // Keep a longer-lived copy for the failure path above.
   ctx.waitUntil(
-    cache.put(
+    caches.default.put(
       new Request(`${url.origin}/products-snapshot`),
       json(items, 200, { 'Cache-Control': `public, max-age=${SNAPSHOT_TTL}` })
     )
   );
 
-  const resp = json(items, 200, {
-    'Cache-Control': `public, max-age=${PRODUCTS_CACHE_TTL}`,
+  // no-store: the site polls this endpoint continuously; any CDN/edge caching
+  // here would defeat that and show outdated products for up to a minute.
+  return json(items, 200, {
+    'Cache-Control': 'no-store',
+    'X-Products-Count': String(items.length),
   });
-  ctx.waitUntil(cache.put(cacheKey, resp.clone()));
-  return resp;
 }
 
 // ---------------------------------------------------------------------------
@@ -228,7 +257,7 @@ async function handleProducts(request, env, ctx) {
 
 const GH_API = 'https://api.github.com';
 
-const BUILD_ID = '2026-10-20.42';
+const BUILD_ID = '2026-10-20.43';
 
 // ---------------------------------------------------------------------------
 // ADMIN GATE — password check endpoint (Decap removed; admin page is custom).

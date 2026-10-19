@@ -19,6 +19,12 @@
   // ------------------------------------------------------------
   let allProducts = [];
   let activeFilter = 'all';
+  let isFetching = false;          // never overlap poll requests
+  let pollTimer = null;            // single interval, survives SPA re-boots
+  let lastSignature = '';          // skip re-renders when nothing changed
+  let firstLoadDone = false;       // only background polls after the first paint
+
+  const POLL_INTERVAL_MS = 20 * 1000; // constantly checking: every 20 seconds
 
   // ------------------------------------------------------------
   // Utilities
@@ -331,6 +337,13 @@
     const grid = document.getElementById('products-grid');
     if (!grid) return;
 
+    // Background polling re-calls this every ~20s. If the visible set is
+    // unchanged, skip the DOM write entirely — no flicker, no animation
+    // replay, no wasted work.
+    const sig = items.map((p) => (p.slug || p.title || '') + ':' + (p.updatedAt || p.order || '')).join('|') + '#' + activeFilter;
+    if (sig === lastSignature && grid.children.length) return;
+    lastSignature = sig;
+
     if (!items.length) {
       const emptyMsg = allProducts.length
         ? 'No products match this filter.'
@@ -360,7 +373,17 @@
       const icon = pickIcon(p);
       const dateStr = formatDate(p.updatedAt || p.createdAt);
 
-      const tags = Array.isArray(p.tags) ? p.tags.slice(0, 4) : [];
+      // Tags arrive either as a real array (GitHub-API fallback path) or as
+      // the normalized comma string from the Worker feed ("Android, App").
+      // Accept both so chips never render as one blob with quotes/brackets.
+      const tags = Array.isArray(p.tags)
+        ? p.tags.slice(0, 4)
+        : String(p.tags || '')
+            .replace(/^\[\s*|\s*\]$/g, '')
+            .split(',')
+            .map((t) => t.trim().replace(/^["']|["']$/g, '').trim())
+            .filter(Boolean)
+            .slice(0, 4);
       const tagsHtml = tags.length
         ? `<div class="product-card__tags">
              ${tags.map(t => `<span class="product-card__tag">${escapeHtml(t)}</span>`).join('')}
@@ -466,32 +489,61 @@
   // Load
   // ------------------------------------------------------------
   async function load() {
-    const grid = document.getElementById('products-grid');
-    const { items, source } = await fetchProducts();
+    if (isFetching) return; // a poll is already in flight — don't stack
+    isFetching = true;
+    try {
+      const { items, source } = await fetchProducts();
 
-    allProducts = items;
+      allProducts = items;
 
-    if (!items.length && source === 'empty') {
-      // Either genuinely nothing published yet, or the network failed.
-      // Show the "no products" state (handled in renderGrid) plus retry
-      // in case it was a transient fetch error.
-      showRetry(true);
-    } else {
-      showRetry(false);
+      if (!items.length && source === 'empty') {
+        // Either genuinely nothing published yet, or the network failed.
+        // Show the "no products" state (handled in renderGrid) plus retry
+        // in case it was a transient fetch error. Background polling keeps
+        // trying regardless, so a blip self-heals within ~20s.
+        showRetry(true);
+      } else {
+        showRetry(false);
+      }
+
+      updateCounts();
+      applyFilter(activeFilter);
+
+      // Safety net: product cards no longer use the .reveal animation class
+      // (see renderGrid), but if a stale cached copy of this script or an old
+      // markup pattern ever leaves a card hidden by the motion layer, force it
+      // visible after a moment — products must NEVER be invisible.
+      setTimeout(() => {
+        const g = document.getElementById('products-grid');
+        if (!g) return;
+        g.querySelectorAll('.reveal:not(.is-visible)').forEach(el => el.classList.add('is-visible'));
+      }, 1200);
+    } finally {
+      isFetching = false;
+      firstLoadDone = true;
     }
+  }
 
-    updateCounts();
-    applyFilter(activeFilter);
+  // ------------------------------------------------------------
+  // Continuous checking
+  // The grid re-fetches the Worker feed every POLL_INTERVAL_MS while the
+  // products tab is visible, refreshes immediately when you switch back to
+  // the tab, and pauses entirely when the page is hidden (battery-friendly).
+  // renderGrid's signature check means unchanged data causes zero DOM churn.
+  // Exactly one timer exists even across SPA navigations (script re-executes
+  // on each visit — without this guard, timers would stack per visit).
+  // ------------------------------------------------------------
+  function startPolling() {
+    if (pollTimer != null) return;
+    pollTimer = setInterval(() => {
+      if (document.hidden) return;              // skip while tab is in background
+      if (!document.getElementById('products-grid')) return; // left the page
+      load();                                  // guarded against overlap
+    }, POLL_INTERVAL_MS);
+  }
 
-    // Safety net: product cards no longer use the .reveal animation class
-    // (see renderGrid), but if a stale cached copy of this script or an old
-    // markup pattern ever leaves a card hidden by the motion layer, force it
-    // visible after a moment — products must NEVER be invisible.
-    setTimeout(() => {
-      const g = document.getElementById('products-grid');
-      if (!g) return;
-      g.querySelectorAll('.reveal:not(.is-visible)').forEach(el => el.classList.add('is-visible'));
-    }, 1200);
+  function onVisibilityChange() {
+    if (!document.hidden && firstLoadDone) load(); // instant catch-up on return
   }
 
   // ------------------------------------------------------------
@@ -501,7 +553,11 @@
     wireTabs();
     wireRetry();
     load();
+    startPolling();
   }
+
+  // Instant refresh when the visitor comes back to the tab (see above).
+  document.addEventListener('visibilitychange', onVisibilityChange);
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
