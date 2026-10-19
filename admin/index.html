@@ -170,8 +170,11 @@
         <input type="password" id="adminKey" placeholder="Enter the admin key" required autofocus />
         <!-- Cloudflare Turnstile human check (same widget as the contact form) -->
         <div class="cf-turnstile-wrap" id="cf-turnstile-wrap">
+          <!-- Paste your real widget Site Key in data-sitekey below (dash.cloudflare.com → Turnstile →
+               your widget). Leave as-is until then: the script falls back to Cloudflare's visible
+               "always passes" test key so the checkbox actually renders. -->
           <div class="cf-turnstile" id="cf-turnstile"
-               data-sitekey="1x00000000000000000000AA"
+               data-sitekey="3x00000000000000000000FF"
                data-theme="light"
                data-size="flex"></div>
         </div>
@@ -255,15 +258,25 @@
     // Turnstile). Also update data-sitekey on #cf-turnstile above. The Worker
     // verifies tokens with TURNSTILE_SECRET_KEY; until that secret is set,
     // unlocking works without the check.
-    var TURNSTILE_SITE_KEY = '1x00000000000000000000AA';
+    // Site key is read from the widget div's data-sitekey attribute so there
+    // is a single source of truth — change it in ONE place (the div above).
+    var TURNSTILE_PLACEHOLDER_KEYS = ['1x00000000000000000000AA']; // Cloudflare docs test key
     var turnstileWidgetId = null;
     var turnstileToken = '';
+    function getTurnstileSiteKey() {
+      var mount = document.getElementById('cf-turnstile');
+      var k = (mount && mount.getAttribute('data-sitekey')) || TURNSTILE_PLACEHOLDER_KEYS[0];
+      // If nobody pasted the real widget key yet, fall back to Cloudflare's
+      // documented "always passes" test key so the box visibly renders.
+      return TURNSTILE_PLACEHOLDER_KEYS.indexOf(k) !== -1 ? '3x00000000000000000000FF' : k;
+    }
     function initTurnstile() {
       var mount = document.getElementById('cf-turnstile');
-      if (!mount || !window.turnstile) return;
+      if (!mount) return;
+      if (!window.turnstile) return; // script not loaded (blocked/offline) — gate still works server-side
       try {
         turnstileWidgetId = window.turnstile.render(mount, {
-          sitekey: TURNSTILE_SITE_KEY,
+          sitekey: getTurnstileSiteKey(),
           theme: 'light',
           size: 'flex',
           callback: function (token) { turnstileToken = token; },
@@ -633,6 +646,26 @@
     }
   })();
   </script>
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+  <!-- Cloudflare Turnstile: load with render=auto so the widget renders from its
+       data-sitekey attribute even if the explicit-render call above never fires.
+       The div is emptied first to avoid a duplicate render. -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=iepTurnstileAuto" async defer></script>
+  <script>
+    window.iepTurnstileAuto = function () {
+      try {
+        var mount = document.getElementById('cf-turnstile');
+        if (mount && mount.childElementCount === 0) window.turnstile.render(mount);
+      } catch (e) {}
+    };
+    // Safety net: if the API script loads but onload already missed, poll once on load.
+    window.addEventListener('load', function () {
+      setTimeout(function () {
+        var mount = document.getElementById('cf-turnstile');
+        if (window.turnstile && mount && mount.childElementCount === 0) {
+          try { window.turnstile.render(mount); } catch (e) {}
+        }
+      }, 300);
+    });
+  </script>
 </body>
 </html>
