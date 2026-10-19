@@ -93,12 +93,11 @@
          Config — sections that support clean URLs
          ------------------------------------------------------------ */
       var SECTIONS = {
-        'home':       '/home/index.html',
-        'products':   '/products/index.html'
-        // Add more as you build them:
-        // 'studio':  '/studio/index.html',
-        // 'aboutus': '/aboutus/index.html',
-        // 'contact': '/contact/index.html'
+        'home':     '/home/index.html',
+        'about':    '/about/index.html',
+        'products': '/products/index.html',
+        'contact':  '/contact/index.html',
+        'legal':    '/legal/index.html'
       };
 
       var pathname = window.location.pathname;
@@ -107,6 +106,16 @@
 
       var cleaned  = pathname.replace(/^\/+|\/+$/g, '');
       var segments = cleaned.split('/').filter(Boolean);
+
+      // If the shim itself was served at a real section URL (e.g. /legal or
+      // /contact, whose index.html exists but GitHub Pages' edge cache may
+      // still 404 for a few minutes after a push), redirect straight to the
+      // actual page instead of injecting it — this preserves #hash deep
+      // links (#privacy / #tos) and avoids running page scripts twice.
+      if (segments.length === 1 && SECTIONS[segments[0].toLowerCase()]) {
+        window.location.replace(SECTIONS[segments[0].toLowerCase()] + search + hash);
+        return;
+      }
 
       var subEl = document.getElementById('loader-sub');
       var manualLink = document.getElementById('manual-link');
