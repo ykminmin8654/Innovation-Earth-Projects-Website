@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!-- ============================================================================
+       legal/doc.html — GitHub Pages "directory URL" shim.
+
+       A request for /legal/privacy hits this file (GitHub Pages serves the
+       nearest index-ish HTML inside a directory when the exact path doesn't
+       exist). We forward the visitor to the real document at /legal/ and let
+       legal.js open the matching tab from the ?doc= parameter, so clean URLs
+       like innovationearthprojects.org/legal/privacy and .../legal/tos work
+       with NO hash in the address bar.
+
+       Deep links from the cookie banner / footer that still use #privacy or
+       #tos are also honored here.
+       ==========================================================================*/ -->
+  <title>Innovation Earth Projects — Legal</title>
+  <script>
+    (function () {
+      var seg = window.location.pathname.split('/').filter(Boolean).pop() || '';
+      var doc = null;
+      if (/^privacy/i.test(seg)) doc = 'privacy';
+      else if (/^(tos|terms)/i.test(seg)) doc = 'tos';
+      if (!doc) {
+        var q = new URLSearchParams(window.location.search);
+        var d = (q.get('doc') || '').toLowerCase();
+        if (d === 'privacy' || d === 'tos') doc = d;
+      }
+      if (!doc) {
+        var h = (window.location.hash || '').replace('#', '').toLowerCase();
+        if (h === 'privacy' || h === 'tos') doc = h;
+      }
+      var target = '/legal/' + (doc ? ('?doc=' + doc) : '');
+      // location.replace keeps Back-button sane (skips this shim hop).
+      window.location.replace(target);
+    })();
+  </script>
+</head>
+<body>
+  <p>Redirecting… If nothing happens, <a href="/legal/">open the Legal page</a>.</p>
+</body>
+</html>
