@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Newsletter — Innovation Earth Projects</title>
+  <meta name="description" content="One email a month from Innovation Earth Projects — new tools, changelogs, and student-build tips. No spam, unsubscribe anytime." />
+  <meta name="theme-color" content="#008080" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Icons -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+  />
+
+  <!-- Shared styles -->
+  <link rel="stylesheet" href="../shared/tokens.css" />
+  <link rel="stylesheet" href="../shared/base.css" />
+  <link rel="stylesheet" href="../shared/nav.css?v=20261019r" />
+  <link rel="stylesheet" href="../shared/motion.css" />
+
+  <!-- Local styles -->
+  <link rel="stylesheet" href="./newsletter.css?v=20261019r" />
+  <link rel="icon" type="image/png" href="/images/logo.png" />
+</head>
+
+<body data-page="newsletter">
+
+  <div class="bg-orbs" aria-hidden="true">
+    <span class="orb orb--teal par" data-par-depth="80"></span>
+    <span class="orb orb--cyan par" data-par-depth="50"></span>
+    <span class="orb orb--lime par" data-par-depth="35"></span>
+  </div>
+
+  <div id="nav-mount"></div>
+
+  <main>
+
+    <!-- ============================================================
+         1. HERO + SIGN-UP FORM
+         ============================================================ -->
+    <section class="nl-hero">
+      <div class="container nl-hero__grid">
+
+        <div class="nl-hero__copy">
+          <p class="eyebrow"><i class="fas fa-envelope-open-text"></i> Newsletter</p>
+          <h1>One email a month.<br /><span class="accent-shimmer">Zero noise.</span></h1>
+          <p class="lede">
+            New tools, changelogs, and behind-the-scenes tips from a studio of
+            students who ship software for free. We write it ourselves, send it
+            once a month, and never sell or share your address.
+          </p>
+
+          <form class="nl-form nl-form--page" id="iep-newsletter" data-nl-form autocomplete="on" novalidate>
+            <!-- Honeypot: hidden from humans, bots fill it in and get dropped -->
+            <input type="text" name="company" tabindex="-1" aria-hidden="true" class="nl-hp" autocomplete="off" />
+            <label class="sr-only" for="iep-nl-email">Email address</label>
+            <div class="nl-row">
+              <input class="nl-input" id="iep-nl-email" type="email" name="email" inputmode="email"
+                     required placeholder="you@example.com" autocomplete="email" />
+              <button class="btn btn--primary btn--lg nl-submit pulse-ring shine" type="submit">
+                <span class="nl-submit__label">Subscribe</span>
+              </button>
+            </div>
+            <div class="cf-turnstile nl-turnstile"
+                 data-sitekey="0x4AAAAAAFMinCrsCsyi7S6X"
+                 data-theme="light"
+                 data-size="flexible"
+                 data-action="newsletter"
+                 data-callback="iepNlTurnstileCb"
+                 data-expired-callback="iepNlTurnstileExpired"></div>
+            <input type="hidden" id="iep-nl-token" name="turnstile" value="" />
+            <p class="nl-msg" role="status" aria-live="polite"></p>
+          </form>
+
+          <p class="nl-hero__note">
+            <i class="fas fa-shield-halved"></i>
+            Protected by Cloudflare Turnstile · Unsubscribe in one click, anytime
+          </p>
+        </div>
+
+        <aside class="nl-hero__visual" aria-hidden="true">
+          <div class="nl-envelope float-slow grad-border">
+            <span class="nl-envelope__flap"></span>
+            <span class="nl-envelope__body">
+              <span class="nl-envelope__lines">
+                <span class="nl-line"></span>
+                <span class="nl-line"></span>
+                <span class="nl-line"></span>
+              </span>
+            </span>
+            <span class="nl-envelope__stamp"><img src="/images/logo.png" alt="" width="34" height="34" /></span>
+          </div>
+          <span class="nl-plane nl-plane--a float-mid"><i class="fas fa-paper-plane"></i></span>
+          <span class="nl-plane nl-plane--b float-fast"><i class="fas fa-envelope-circle-check"></i></span>
+          <span class="nl-spark nl-spark--1"><i class="fas fa-star"></i></span>
+          <span class="nl-spark nl-spark--2"><i class="fas fa-star"></i></span>
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- ============================================================
+         2. WHAT YOU'LL GET
+         ============================================================ -->
+    <section class="section nl-perks">
+      <div class="container">
+        <header class="section__head reveal">
+          <h2 class="section__title">What lands in your inbox</h2>
+          <p class="section__lede">Every issue is short enough to read with your morning coffee.</p>
+        </header>
+
+        <div class="nl-perks__grid">
+          <article class="value-card nl-perk reveal icon-pop">
+            <span class="nl-perk__icon nl-perk__icon--teal"><i class="fas fa-rocket"></i></span>
+            <h3>New tool drops</h3>
+            <p>Be first to try every app we ship — free tools for competitors, learners, and makers.</p>
+          </article>
+          <article class="value-card nl-perk reveal icon-pop" data-delay="100">
+            <span class="nl-perk__icon nl-perk__icon--cyan"><i class="fas fa-code-commit"></i></span>
+            <h3>Honest changelogs</h3>
+            <p>What changed, what broke, and what we fixed next — written by the students who built it.</p>
+          </article>
+          <article class="value-card nl-perk reveal icon-pop" data-delay="200">
+            <span class="nl-perk__icon nl-perk__icon--lime"><i class="fas fa-lightbulb"></i></span>
+            <h3>Student-build tips</h3>
+            <p>Short, practical lessons on shipping real software while juggling homework and deadlines.</p>
+          </article>
+          <article class="value-card nl-perk reveal icon-pop" data-delay="300">
+            <span class="nl-perk__icon nl-perk__icon--blue"><i class="fas fa-lock"></i></span>
+            <h3>Privacy, always</h3>
+            <p>No ads, no trackers, no selling your data. One email a month — that's the whole deal.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         3. HOW IT WORKS
+         ============================================================ -->
+    <section class="section section--tint nl-steps-section">
+      <div class="container">
+        <header class="section__head reveal">
+          <h2 class="section__title">How it works</h2>
+          <p class="section__lede">Three steps. Roughly ten seconds. That's it.</p>
+        </header>
+
+        <ol class="steps nl-steps">
+          <li class="step reveal">
+            <span class="step__num">1</span>
+            <h3>Drop your email</h3>
+            <p>Type your address into the box above and hit Subscribe.</p>
+          </li>
+          <li class="step reveal" data-delay="150">
+            <span class="step__num">2</span>
+            <h3>Tick the human check</h3>
+            <p>A quick Cloudflare Turnstile tap keeps bots off the list.</p>
+          </li>
+          <li class="step reveal" data-delay="300">
+            <span class="step__num">3</span>
+            <h3>Read once a month</h3>
+            <p>Issue #1 arrives with the latest news. Unsubscribe any time.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         4. FAQ
+         ============================================================ -->
+    <section class="section nl-faq-section">
+      <div class="container">
+        <header class="section__head reveal">
+          <h2 class="section__title">Questions, answered</h2>
+        </header>
+
+        <div class="faq nl-faq">
+          <details class="reveal">
+            <summary><i class="fas fa-envelope"></i> How often will you actually email me?</summary>
+            <p>Once a month, plus an occasional one-off when something big ships. If we can't say anything
+               worth reading, we don't send anything.</p>
+          </details>
+          <details class="reveal" data-delay="100">
+            <summary><i class="fas fa-user-shield"></i> What happens to my email address?</summary>
+            <p>It goes straight to our newsletter provider (and our privacy policy covers the details).
+               We never sell it, rent it, or hand it to advertisers.</p>
+          </details>
+          <details class="reveal" data-delay="200">
+            <summary><i class="fas fa-arrow-right-rotate"></i> Can I unsubscribe easily?</summary>
+            <p>Yes — every issue has a one-click unsubscribe link in the footer. No "are you sure?" mazes.</p>
+          </details>
+          <details class="reveal" data-delay="300">
+            <summary><i class="fas fa-gift"></i> Does it cost anything?</summary>
+            <p>Nope. The newsletter is free, just like everything else we build.</p>
+          </details>
+        </div>
+
+        <div class="nl-final text-center reveal">
+          <h2>Ready? <span class="accent">Join the list.</span></h2>
+          <a href="#iep-newsletter" class="btn btn--primary btn--glow nl-top-link">
+            Subscribe now <i class="fas fa-arrow-up"></i>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="footer-mount"></div>
+
+  <script src="../shared/nav.js?v=20261019r"></script>
+  <script src="../shared/motion.js"></script>
+  <script src="./newsletter.js?v=20261019r"></script>
+</body>
+</html>

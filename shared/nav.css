@@ -123,6 +123,9 @@
   .footer__inner { grid-template-columns: repeat(3, 1fr); }
   .footer__nl { grid-column: 1 / -1; max-width: 420px; }
 }
+@media (min-width: 1081px) {
+  .footer__inner { grid-template-columns: 1.8fr 0.9fr 0.9fr 0.9fr 1.3fr; }
+}
 
 .footer__brand {
   display: inline-flex;
@@ -299,8 +302,10 @@
 .footer__legal a:hover { color: var(--teal); }
 
 /* ============================================================
-   NEWSLETTER — footer sign-up column (markup injected by nav.js,
-   wired by shared/newsletter.js). Dark footer theme.
+   NEWSLETTER — footer CTA column (markup injected by nav.js).
+   The sign-up form itself lives on the /newsletter/ page and is
+   styled there (newsletter/newsletter.css) + wired by
+   shared/newsletter.js.
    ============================================================ */
 .footer__nl .footer__nl-blurb {
   color: var(--muted);
@@ -308,62 +313,11 @@
   line-height: 1.55;
   margin: 0 0 var(--s-3);
 }
-.nl-form { position: relative; }
-.nl-hp {
-  position: absolute !important;
-  left: -9999px; top: -9999px;
-  width: 1px; height: 1px;
-  opacity: 0;
-  pointer-events: none;
-}
-.nl-row { display: flex; gap: var(--s-2); flex-wrap: wrap; }
-.nl-input {
-  flex: 1 1 160px;
-  min-width: 0;
-  padding: 0.6rem 0.8rem;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  background: var(--surface-alt);
-  color: var(--ink);
-  font: inherit;
-  font-size: 0.9rem;
-  transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
-}
-.nl-input::placeholder { color: var(--muted); }
-.nl-input:focus {
-  outline: none;
-  border-color: var(--teal);
-  background: var(--surface);
-  box-shadow: 0 0 0 3px rgba(0, 128, 128, 0.15);
-}
-.nl-submit {
-  flex: 0 0 auto;
-  font-size: 0.9rem;
-  padding: 0.6rem 1.05rem;
-}
-.nl-submit.is-loading { opacity: 0.75; cursor: progress; }
-.nl-turnstile { margin-top: var(--s-3); min-height: 44px; }
-.nl-msg { margin: var(--s-2) 0 0; font-size: 0.82rem; min-height: 1em; color: var(--muted); }
-.nl-msg.is-error { color: #c0392b; }
-.nl-success {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  padding: 0.9rem 1rem;
-  border-radius: 12px;
-  border: 1px solid rgba(0, 128, 128, 0.35);
-  background: rgba(0, 128, 128, 0.07);
-  animation: nlPop 0.5s cubic-bezier(.2, .7, .2, 1) both;
-}
-.nl-success strong { color: var(--teal-deep); font-size: 0.95rem; }
-.nl-success span:last-child { color: var(--muted); font-size: 0.82rem; }
-.nl-success__icon { color: var(--teal); font-size: 1.3rem; }
-@keyframes nlPop {
-  from { opacity: 0; transform: translateY(10px) scale(0.97); }
-  to   { opacity: 1; transform: none; }
-}
+.footer__nl-cta i { transition: transform 0.35s cubic-bezier(.2,.7,.2,1); }
+.footer__nl-cta:hover i { transform: translateX(3px); }
 @media (prefers-reduced-motion: reduce) {
-  .nl-success { animation: none; }
+  .footer__nl-cta i { transition: none !important; }
+  .footer__nl-cta:hover i { transform: none; }
 }
 
 /* Screen-reader-only utility */

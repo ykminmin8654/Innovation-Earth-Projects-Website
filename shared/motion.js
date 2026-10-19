@@ -51,7 +51,8 @@
   var STAGGER_SELECTORS = [
     '.grid-products', '.values-grid', '.work-grid', '.resource-preview',
     '.reasons', '.steps', '.changelog', '.faq', '.chips', '.social-list',
-    '.contact-side', '.story-grid', '.timeline', '.about-facts'
+    '.contact-side', '.story-grid', '.timeline', '.about-facts',
+    '.nl-perks__grid'
   ].join(', ');
 
   function initStagger(root) {

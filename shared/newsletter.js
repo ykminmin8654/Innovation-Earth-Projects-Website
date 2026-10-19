@@ -1,9 +1,9 @@
 /* ============================================================
-   NEWSLETTER — footer sign-up form (injected by shared/nav.js)
+   NEWSLETTER — sign-up form on the /newsletter/ page.
    Plain ES5, no dependencies. Posts to the Worker's POST
    /newsletter endpoint as JSON:
      { email, name, company (honeypot), turnstile }
-   Turnstile widget markup lives inside the footer form; this
+   Turnstile widget markup lives inside the page form; this
    script loads challenges.cloudflare.com/turnstile/v0/api.js
    in "explicit" mode and renders it into .nl-turnstile so it
    never collides with the contact page's auto-render widget.

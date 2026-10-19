@@ -1,0 +1,479 @@
+/* ============================================================
+   NEWSLETTER PAGE — /newsletter/
+   Owns the look of the standalone sign-up page. The shared form
+   logic (shared/newsletter.js) and shared animation primitives
+   (shared/motion.css + motion.js) do the heavy lifting; this
+   file styles the hero, the animated envelope, perks, steps,
+   and FAQ so the page matches the rest of the site.
+   Depends on: tokens.css, base.css, nav.css, motion.css
+   ============================================================ */
+
+/* ---------- Hero ---------- */
+.nl-hero {
+  padding: var(--s-9) 0 var(--s-8);
+}
+
+.nl-hero__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: var(--s-7);
+  align-items: center;
+}
+
+.nl-hero h1 {
+  font-size: var(--fs-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: var(--s-3) 0 var(--s-4);
+  line-height: 1.08;
+}
+
+.nl-hero .accent-shimmer { font-weight: 800; }
+
+.nl-hero .lede {
+  max-width: 56ch;
+  color: var(--ink-soft);
+  font-size: 1.1rem;
+  line-height: 1.65;
+  margin-bottom: var(--s-6);
+}
+
+/* Eyebrow pill — same treatment as the contact/about pages */
+.nl-hero .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-family: var(--mono);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--teal-deep);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 14px;
+  margin-bottom: var(--s-4);
+}
+
+/* ---------- Sign-up card (the footer form, promoted to a page) ---------- */
+.nl-form { position: relative; }
+.nl-hp {
+  position: absolute !important;
+  left: -9999px; top: -9999px;
+  width: 1px; height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.nl-row { display: flex; gap: var(--s-2); flex-wrap: wrap; }
+.nl-input {
+  flex: 1 1 160px;
+  min-width: 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-alt);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+}
+.nl-input::placeholder { color: var(--muted); }
+.nl-input:focus {
+  outline: none;
+  border-color: var(--teal);
+  background: var(--surface);
+  box-shadow: 0 0 0 3px rgba(0, 128, 128, 0.15);
+}
+.nl-submit {
+  flex: 0 0 auto;
+  font-size: 0.9rem;
+  padding: 0.6rem 1.05rem;
+}
+.nl-submit.is-loading { opacity: 0.75; cursor: progress; }
+.nl-turnstile { margin-top: var(--s-3); min-height: 44px; }
+.nl-msg { margin: var(--s-2) 0 0; font-size: 0.82rem; min-height: 1em; color: var(--muted); }
+.nl-msg.is-error { color: #c0392b; }
+.nl-success {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 128, 128, 0.35);
+  background: rgba(0, 128, 128, 0.07);
+  animation: nlPop 0.5s cubic-bezier(.2, .7, .2, 1) both;
+}
+.nl-success strong { color: var(--teal-deep); font-size: 0.95rem; }
+.nl-success span:last-child { color: var(--muted); font-size: 0.82rem; }
+.nl-success__icon { color: var(--teal); font-size: 1.3rem; }
+@keyframes nlPop {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nl-success { animation: none; }
+}
+
+.nl-form--page {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--s-5);
+  max-width: 560px;
+  transition: box-shadow 0.35s var(--ease), transform 0.35s var(--ease),
+              border-color 0.35s ease;
+}
+.nl-form--page:focus-within {
+  border-color: rgba(0, 128, 128, 0.45);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.nl-form--page .nl-row { gap: var(--s-3); }
+
+.nl-form--page .nl-input {
+  flex: 1 1 220px;
+  padding: 0.85rem 1rem;
+  font-size: 1rem;
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.nl-form--page .nl-submit {
+  padding: 0.85rem 1.4rem;
+  font-size: 1rem;
+}
+
+.nl-form--page .nl-turnstile {
+  margin-top: var(--s-4);
+  min-height: 65px;
+  display: flex;
+  justify-content: center;
+}
+
+.nl-form--page .nl-msg { font-size: 0.9rem; }
+
+.nl-form--page .nl-success {
+  padding: var(--s-5);
+  gap: var(--s-2);
+}
+.nl-form--page .nl-success strong { font-size: 1.1rem; }
+.nl-form--page .nl-success span:last-child { font-size: 0.9rem; }
+.nl-form--page .nl-success__icon { font-size: 1.8rem; }
+
+/* Gentle "attention" nudge on the input while it's empty and untouched */
+@keyframes nlGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 128, 128, 0); }
+  50%      { box-shadow: 0 0 0 4px rgba(0, 206, 209, 0.18); }
+}
+.nl-form--page:not(:focus-within):not(.is-done) .nl-input:placeholder-shown {
+  animation: nlGlow 2.8s ease-in-out infinite;
+}
+
+.nl-hero__note {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin: var(--s-4) 0 0;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+}
+.nl-hero__note i { color: var(--teal); }
+
+/* ---------- Animated envelope illustration ---------- */
+.nl-hero__visual {
+  position: relative;
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nl-envelope {
+  position: relative;
+  width: min(320px, 80vw);
+  aspect-ratio: 3 / 2;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+/* Envelope flap — draws open/closed with a slow breathing tilt */
+.nl-envelope__flap {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 52%;
+  background: linear-gradient(180deg, rgba(0, 128, 128, 0.10), rgba(0, 128, 128, 0.02));
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: top center;
+  animation: nlFlap 6s cubic-bezier(.2, .7, .2, 1) infinite;
+}
+@keyframes nlFlap {
+  0%, 55%, 100% { transform: scaleY(1); }
+  70%, 85%      { transform: scaleY(-0.85); }
+}
+
+.nl-envelope__body {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 12% 14%;
+}
+
+/* Letter lines slide up into view when the flap opens */
+.nl-envelope__lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  animation: nlLetter 6s cubic-bezier(.2, .7, .2, 1) infinite;
+}
+.nl-line {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--teal), var(--cyan));
+  opacity: 0.55;
+}
+.nl-line:nth-child(1) { width: 88%; }
+.nl-line:nth-child(2) { width: 70%; }
+.nl-line:nth-child(3) { width: 52%; }
+@keyframes nlLetter {
+  0%, 55%, 100% { transform: translateY(10px); opacity: 0.35; }
+  70%, 85%      { transform: translateY(-6px); opacity: 1; }
+}
+
+.nl-envelope__stamp {
+  position: absolute;
+  top: 10px; right: 12px;
+  width: 46px; height: 46px;
+  display: grid;
+  place-items: center;
+  background: var(--surface-alt);
+  border: 1px dashed rgba(0, 128, 128, 0.5);
+  border-radius: var(--r-sm);
+  transform: rotate(6deg);
+}
+
+/* Floating paper-plane badges orbiting the envelope */
+.nl-plane {
+  position: absolute;
+  width: 52px; height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  color: var(--teal);
+  font-size: 1.15rem;
+}
+.nl-plane--a { top: 6%; left: 2%; }
+.nl-plane--b { bottom: 8%; right: 0%; color: var(--lime); }
+
+.nl-spark {
+  position: absolute;
+  color: var(--cyan);
+  font-size: 0.85rem;
+  animation: nlTwinkle 2.6s ease-in-out infinite;
+}
+.nl-spark--1 { top: 18%; right: 12%; }
+.nl-spark--2 { bottom: 22%; left: 10%; animation-delay: 1.2s; font-size: 0.7rem; }
+@keyframes nlTwinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.8) rotate(0deg); }
+  50%      { opacity: 1;    transform: scale(1.15) rotate(20deg); }
+}
+
+/* ---------- Perks grid ---------- */
+.nl-perks__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: var(--s-5);
+}
+
+.nl-perk {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--s-6) var(--s-5);
+  box-shadow: var(--shadow-sm);
+}
+.nl-perk h3 { margin-bottom: var(--s-2); }
+.nl-perk p {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  margin: 0;
+  line-height: 1.6;
+}
+
+.nl-perk__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 48px; height: 48px;
+  border-radius: var(--r-md);
+  margin-bottom: var(--s-4);
+  font-size: 1.25rem;
+  color: #fff;
+}
+.nl-perk__icon--teal { background: linear-gradient(135deg, var(--teal), var(--teal-deep)); }
+.nl-perk__icon--cyan { background: linear-gradient(135deg, var(--cyan), var(--teal)); }
+.nl-perk__icon--lime { background: linear-gradient(135deg, var(--lime), var(--green-dark)); }
+.nl-perk__icon--blue { background: linear-gradient(135deg, var(--blue), var(--teal)); }
+
+/* ---------- Steps ---------- */
+.nl-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto;
+  max-width: 900px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--s-5);
+}
+
+.nl-steps .step {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--s-6) var(--s-5) var(--s-5);
+  box-shadow: var(--shadow-sm);
+}
+
+.step__num {
+  display: inline-grid;
+  place-items: center;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--teal);
+  color: #fff;
+  font-family: var(--mono);
+  font-weight: 700;
+  margin-bottom: var(--s-4);
+  box-shadow: 0 6px 16px -6px rgba(0, 128, 128, 0.55);
+}
+
+.nl-steps .step h3 { font-size: 1.05rem; }
+.nl-steps .step p {
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  margin: 0;
+}
+
+/* Connector arrow between steps (desktop only) */
+@media (min-width: 761px) {
+  .nl-steps .step:not(:last-child)::after {
+    content: "\f061";            /* fa-arrow-right, via Font Awesome ligature */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    position: absolute;
+    top: 50%; right: -22px;
+    transform: translateY(-50%);
+    color: var(--cyan);
+    font-size: 1rem;
+    animation: nlNudge 1.8s ease-in-out infinite;
+  }
+}
+@keyframes nlNudge {
+  0%, 100% { transform: translateY(-50%) translateX(0); opacity: 0.6; }
+  50%      { transform: translateY(-50%) translateX(5px); opacity: 1; }
+}
+
+/* ---------- FAQ ---------- */
+.nl-faq {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.nl-faq details {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: var(--s-4) var(--s-5);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+.nl-faq details:hover { border-color: var(--cyan); }
+.nl-faq details[open] {
+  border-color: rgba(0, 128, 128, 0.45);
+  box-shadow: var(--shadow-md);
+}
+
+.nl-faq summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--ink);
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+.nl-faq summary::-webkit-details-marker { display: none; }
+.nl-faq summary i { color: var(--teal); width: 18px; text-align: center; }
+.nl-faq summary::after {
+  content: "+";
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 1.2rem;
+  color: var(--teal);
+  transition: transform 0.3s var(--ease);
+}
+.nl-faq details[open] summary::after { transform: rotate(45deg); }
+
+.nl-faq details p {
+  margin: var(--s-3) 0 0;
+  color: var(--muted);
+  font-size: var(--fs-sm);
+  line-height: 1.65;
+  animation: nlFadeDown 0.35s var(--ease) both;
+}
+@keyframes nlFadeDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ---------- Final CTA ---------- */
+.nl-final { margin-top: var(--s-8); }
+.nl-final h2 {
+  font-size: var(--fs-h2);
+  margin-bottom: var(--s-4);
+}
+.nl-final .accent { color: var(--teal); }
+
+.nl-top-link {
+  scroll-margin-top: calc(var(--nav-h) + var(--s-4));
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .nl-hero__grid { grid-template-columns: 1fr; }
+  .nl-hero__visual { order: -1; min-height: 260px; }
+  .nl-envelope { width: min(280px, 70vw); }
+}
+
+@media (max-width: 640px) {
+  .nl-hero { padding: var(--s-7) 0 var(--s-6); }
+  .nl-form--page { padding: var(--s-4); }
+  .nl-form--page .nl-row { flex-direction: column; }
+  .nl-form--page .nl-submit { width: 100%; }
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .nl-envelope__flap,
+  .nl-envelope__lines,
+  .nl-spark,
+  .nl-plane,
+  .nl-steps .step::after,
+  .nl-form--page:not(:focus-within) .nl-input:placeholder-shown {
+    animation: none !important;
+  }
+  .nl-form--page:focus-within { transform: none; }
+  .nl-faq details p { animation: none !important; }
+}
