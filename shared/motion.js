@@ -269,6 +269,51 @@
     }
   }
 
+  /* ---------------- Scroll-linked engine (premium) ----------------
+     One rAF-throttled scroll loop drives:
+       - html { --sp }  : whole-page progress 0..1 (hero zoom, etc.)
+       - .par elements  : per-element progress written to --sec so the
+                          CSS translate drifts with the section's position.
+     Runs even under prefers-reduced-motion for --sp/--sec bookkeeping is
+     skipped entirely — the CSS falls back to static values. */
+  var scrollEngineDone = false;
+  function initScrollEngine() {
+    if (scrollEngineDone || reduceMotion) return;
+    scrollEngineDone = true;
+    var ticking = false;
+
+    function update() {
+      ticking = false;
+      var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      var docH = document.documentElement.scrollHeight - window.innerHeight;
+      var sp = docH > 0 ? Math.min(Math.max(scrollTop / docH, 0), 1) : 0;
+      document.documentElement.style.setProperty('--sp', String(sp));
+
+      var vh = window.innerHeight;
+      var pars = document.querySelectorAll('.par');
+      Array.prototype.forEach.call(pars, function (el) {
+        var rect = el.getBoundingClientRect();
+        // 0 when the element enters the bottom of the viewport,
+        // 1 when it leaves through the top.
+        var p = (vh - rect.top) / (vh + rect.height);
+        p = Math.min(Math.max(p, 0), 1);
+        el.style.setProperty('--sec', String(p));
+        var depth = parseFloat(el.getAttribute('data-par-depth'));
+        if (depth) el.style.setProperty('--par-amount', (-depth) + 'px');
+      });
+    }
+
+    window.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(update);
+    }, { passive: true });
+    window.addEventListener('resize', function () {
+      if (!ticking) { ticking = true; requestAnimationFrame(update); }
+    }, { passive: true });
+    update();
+  }
+
   /* ---------------- Boot everything ---------------- */
   function bootAll(root) {
     initReveals(root);
@@ -280,6 +325,7 @@
     initRipple(root);
     initProgress();
     initBackToTop();
+    initScrollEngine();
   }
 
   window.IEPmotion = {
@@ -293,6 +339,7 @@
     ripple: initRipple,
     progress: initProgress,
     backToTop: initBackToTop,
+    scrollEngine: initScrollEngine,
     bootAll: bootAll
   };
 

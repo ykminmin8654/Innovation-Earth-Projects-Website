@@ -25,15 +25,20 @@
   <!-- Shared styles -->
   <link rel="stylesheet" href="../shared/tokens.css" />
   <link rel="stylesheet" href="../shared/base.css" />
-  <link rel="stylesheet" href="../shared/nav.css?v=20261019p" />
-  <link rel="stylesheet" href="../shared/motion.css?v=20261019d" />
+  <link rel="stylesheet" href="../shared/nav.css?v=20261019q" />
+  <link rel="stylesheet" href="../shared/motion.css?v=20261019q" />
 
   <!-- Local styles -->
-  <link rel="stylesheet" href="./products.css?v=20261019d" />
+  <link rel="stylesheet" href="./products.css?v=20261019q" />
   <link rel="icon" type="image/png" href="/images/logo.png" />
 </head>
 
 <body data-page="products">
+
+  <div class="bg-orbs" aria-hidden="true">
+    <span class="orb orb--teal par" data-par-depth="80"></span>
+    <span class="orb orb--cyan par" data-par-depth="50"></span>
+  </div>
 
   <!-- Nav injected by shared/nav.js -->
   <div id="nav-mount"></div>
@@ -43,7 +48,7 @@
     <!-- ============================================================
          PAGE HEADER
          ============================================================ -->
-    <section class="page-head">
+    <section class="page-head reveal">
       <div class="container">
         <span class="eyebrow">Products</span>
         <h1 class="page-head__title">Everything we've built</h1>
@@ -103,7 +108,7 @@
          ============================================================ -->
     <section class="section section--tint">
       <div class="container">
-        <div class="callout">
+        <div class="callout reveal">
           <div class="callout__mark" aria-hidden="true">$0</div>
           <div class="callout__body">
             <h3>Free tools, and we'll tell you when one isn't</h3>
@@ -123,7 +128,7 @@
          ============================================================ -->
     <section class="section">
       <div class="container">
-        <div class="cta">
+        <div class="cta reveal">
           <div class="cta__copy">
             <h2>Missing a tool?</h2>
             <p>Tell us what would help you. We build what students actually need.</p>
@@ -141,11 +146,11 @@
   <div id="footer-mount"></div>
 
   <!-- Shared JS -->
-  <script src="../shared/nav.js?v=20261019p" defer></script>
+  <script src="../shared/nav.js?v=20261019q" defer></script>
   <script src="../shared/motion.js" defer></script>
 
   <!-- Local JS -->
-  <script src="./products.js?v=20261019d" defer></script>
+  <script src="./products.js?v=20261019q" defer></script>
 
 </body>
 </html>

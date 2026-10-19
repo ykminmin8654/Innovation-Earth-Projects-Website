@@ -226,7 +226,7 @@ async function handleProducts(request, env, ctx) {
 
 const GH_API = 'https://api.github.com';
 
-const BUILD_ID = '2026-10-19.39';
+const BUILD_ID = '2026-10-19.40';
 
 // ---------------------------------------------------------------------------
 // ADMIN GATE — password check endpoint (Decap removed; admin page is custom).
@@ -577,6 +577,140 @@ async function handleContact(request, env) {
 }
 
 // ---------------------------------------------------------------------------
+// POST /newsletter — subscribe an email to the IEP newsletter
+// ---------------------------------------------------------------------------
+// Providers supported (set NEWSLETTER_PROVIDER secret):
+//   "buttondown"  -> requires BUTTONDOWN_API_KEY secret (https://buttondown.com)
+//   "beehiiv"     -> requires BEEHIIV_API_KEY + BEEHIIV_PUBLICATION_ID secrets
+// If no provider is configured, valid signups are still accepted and logged
+// (console.log in the Workers live logs) so nothing breaks before you choose.
+// Protection layers: honeypot field, Cloudflare Turnstile (same site key as
+// the contact form, verified with TURNSTILE_SECRET_KEY), email format check,
+// per-IP rate limit of 3 signups / 10 minutes.
+
+function validEmailBasic(e) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(e || '').trim());
+}
+
+async function verifyTurnstile(env, request, token) {
+  // Same contract as the contact form: when TURNSTILE_SECRET_KEY is set, a
+  // valid token is mandatory; while unset, requests pass through.
+  if (!env.TURNSTILE_SECRET_KEY) return { ok: true };
+  if (!token) return { ok: false, error: 'Please complete the human check first.' };
+  let tsRes;
+  try {
+    tsRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        secret: env.TURNSTILE_SECRET_KEY,
+        response: token,
+        remoteip: request.headers.get('CF-Connecting-IP') || undefined,
+      }),
+    });
+  } catch {
+    return { ok: false, error: 'The human check timed out. Please try again.' };
+  }
+  const tsData = await tsRes.json().catch(() => ({}));
+  if (!tsData.success) {
+    return { ok: false, error: 'The human check failed. Please try again.', codes: tsData['error-codes'] || [] };
+  }
+  return { ok: true };
+}
+
+async function handleNewsletter(request, env) {
+  if (request.method !== 'POST') return json({ ok: false, error: 'Use POST' }, 405);
+
+  let payload;
+  try {
+    payload = await request.json();
+  } catch {
+    return json({ ok: false, error: 'Invalid JSON body.' }, 400);
+  }
+
+  const email = String(payload.email || '').trim().toLowerCase().slice(0, 254);
+  const name = String(payload.name || '').trim().slice(0, 120);
+  const company = String(payload.company || '');          // honeypot — must be empty
+  const turnstileToken = String(payload.turnstile || ''); // #nl-turnstile-token
+
+  // Bot filled the hidden field: pretend success, drop silently.
+  if (company !== '') return json({ ok: true });
+
+  const ts = await verifyTurnstile(env, request, turnstileToken);
+  if (!ts.ok) {
+    return json({ ok: false, error: ts.error, codes: ts.codes || [] }, 403);
+  }
+
+  if (!validEmailBasic(email)) {
+    return json({ ok: false, error: 'That does not look like a valid email address.' }, 422);
+  }
+
+  // Rate limit: max 3 signups per IP per 10 minutes (Cache API based).
+  const ip = (request.headers.get('CF-Connecting-IP') || 'unknown').replace(/[^a-zA-Z0-9.:_-]/g, '');
+  const rlKey = new Request(`https://rl.newsletter/${ip}`);
+  const cache = caches.default;
+  const hit = await cache.match(rlKey);
+  const count = hit ? Number(hit.headers.get('X-Count') || 0) : 0;
+  if (count >= 3) {
+    return json({ ok: false, error: 'Too many signups from this address. Please try again later.' }, 429);
+  }
+  await cache.put(
+    rlKey,
+    new Response(null, { headers: { 'X-Count': String(count + 1), 'Cache-Control': 'max-age=600' } })
+  );
+
+  const provider = String(env.NEWSLETTER_PROVIDER || '').toLowerCase().trim();
+
+  try {
+    if (provider === 'buttondown') {
+      if (!env.BUTTONDOWN_API_KEY) {
+        return json({ ok: false, error: 'Newsletter is not fully configured yet (BUTTONDOWN_API_KEY missing).' }, 500);
+      }
+      const res = await fetch('https://api.buttondown.com/v1/subscribers', {
+        method: 'POST',
+        headers: {
+          Authorization: `Token ${env.BUTTONDOWN_API_KEY}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({ email_address: email, name: name || undefined }),
+      });
+      if (res.status === 409 || res.ok) return json({ ok: true }); // 409 = already subscribed → success
+      console.error('Buttondown error:', res.status, await res.text().catch(() => ''));
+      return json({ ok: false, error: 'Something went wrong subscribing you. Please try again shortly.' }, 502);
+    }
+
+    if (provider === 'beehiiv') {
+      if (!env.BEEHIIV_API_KEY || !env.BEEHIIV_PUBLICATION_ID) {
+        return json({ ok: false, error: 'Newsletter is not fully configured yet (BEEHIIV keys missing).' }, 500);
+      }
+      const res = await fetch(
+        `https://api.beehiiv.com/v2/publications/${encodeURIComponent(env.BEEHIIV_PUBLICATION_ID)}/subscriptions`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${env.BEEHIIV_API_KEY}`,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({ email, custom_fields: [{ _json: { id: 'name', value: name || '' } }] }),
+        }
+      );
+      if (res.ok) return json({ ok: true });
+      console.error('Beehiiv error:', res.status, await res.text().catch(() => ''));
+      return json({ ok: false, error: 'Something went wrong subscribing you. Please try again shortly.' }, 502);
+    }
+
+    // No provider configured yet: accept + log so the UI works end-to-end.
+    console.log('NEWSLETTER_SIGNUP (no provider configured):', email, name || '');
+    return json({ ok: true });
+  } catch (err) {
+    console.error('Newsletter error:', err);
+    return json({ ok: false, error: 'Something went wrong subscribing you. Please try again shortly.' }, 502);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Router
 // ---------------------------------------------------------------------------
 
@@ -597,6 +731,7 @@ export default {
       return handleGithubProxy(request, env, url);
     }
     if (url.pathname === '/contact' && request.method === 'POST') return handleContact(request, env);
+    if (url.pathname === '/newsletter' && request.method === 'POST') return handleNewsletter(request, env);
 
     if (url.pathname === '/') {
       // Status/diagnostics endpoint. BUILD_ID changes with every paste+deploy,
@@ -605,7 +740,7 @@ export default {
         service: 'decap-proxy',
         build: BUILD_ID,
         turnstile_configured: Boolean(env.TURNSTILE_SECRET_KEY),
-        routes: ['/products', '/gate (POST)', '/contact (POST)', '/api/v1/github/*', '/github/*'],
+        routes: ['/products', '/gate (POST)', '/contact (POST)', '/newsletter (POST)', '/api/v1/github/*', '/github/*'],
         admin_gate_configured: Boolean(env.ADMIN_KEY),
         write_token_present: Boolean(env.WRITE_TOKEN),
         github_token_present: Boolean(env.GITHUB_TOKEN),
@@ -613,6 +748,6 @@ export default {
       });
     }
 
-    return json({ error: 'Not found', running_build: BUILD_ID, routes: ['/products', '/gate (POST)', '/contact (POST)', '/api/v1/github/*', '/github/*'], hint: 'If this build id is not the newest one in DEPLOY.md, paste worker/products-proxy.js into Cloudflare and Deploy.' }, 404);
+    return json({ error: 'Not found', running_build: BUILD_ID, routes: ['/products', '/gate (POST)', '/contact (POST)', '/newsletter (POST)', '/api/v1/github/*', '/github/*'], hint: 'If this build id is not the newest one in DEPLOY.md, paste worker/products-proxy.js into Cloudflare and Deploy.' }, 404);
   },
 };

@@ -29,6 +29,26 @@
     { href: '/contact',  label: 'Contact'  }
   ];
 
+  /* Newsletter sign-up block injected as an extra footer column on every
+     page (except /admin/). Wired by shared/newsletter.js; posts to the
+     Worker's POST /newsletter endpoint with Turnstile + honeypot. */
+  var FOOTER_NEWSLETTER_HTML =
+    '<div class="footer__col footer__nl">' +
+      '<h4>Newsletter</h4>' +
+      '<p class="footer__nl-blurb">New tools, changelogs, and student-build tips. One email a month, no spam.</p>' +
+      '<form class="nl-form" id="iep-newsletter" data-nl-form autocomplete="on" novalidate>' +
+        '<input type="text" name="company" tabindex="-1" aria-hidden="true" class="nl-hp" autocomplete="off" />' +
+        '<label class="sr-only" for="iep-nl-email">Email address</label>' +
+        '<div class="nl-row">' +
+          '<input class="nl-input" id="iep-nl-email" type="email" name="email" inputmode="email" required placeholder="you@example.com" autocomplete="email" />' +
+          '<button class="btn btn--primary nl-submit" type="submit"><span class="nl-submit__label">Subscribe</span></button>' +
+        '</div>' +
+        '<div class="cf-turnstile nl-turnstile" data-sitekey="0x4AAAAAAFMinCrsCsyi7S6X" data-theme="light" data-size="flexible" data-action="newsletter" data-callback="iepNlTurnstileCb" data-expired-callback="iepNlTurnstileExpired"></div>' +
+        '<input type="hidden" id="iep-nl-token" name="turnstile" value="" />' +
+        '<p class="nl-msg" role="status" aria-live="polite"></p>' +
+      '</form>' +
+    '</div>';
+
   var SECTIONS = {
     'home':     '/home/index.html',
     'about':    '/about/index.html',
@@ -136,8 +156,27 @@
     if (!mount) return;
     if (mount.nextElementSibling && mount.nextElementSibling.classList.contains('footer')) return;
     var wrapper = document.createElement('div');
-    wrapper.innerHTML = FOOTER_HTML;
+    // Add the newsletter column before injecting (skip it inside /admin/).
+    var html = FOOTER_HTML;
+    if (!/^\/admin/i.test(window.location.pathname)) {
+      html = html.replace('<div class="container footer__bottom">', FOOTER_NEWSLETTER_HTML + '<div class="container footer__bottom">');
+    }
+    wrapper.innerHTML = html;
     mount.parentNode.replaceChild(wrapper.firstChild, mount);
+  }
+
+  function loadNewsletterScript() {
+    // Wire up the footer form + Turnstile widget. Skipped inside /admin/.
+    if (/^\/admin/i.test(window.location.pathname)) return;
+    var existing = document.getElementById('iep-newsletter-script');
+    if (existing && existing.dataset.loaded === '1') return;
+    if (!existing) {
+      var s = document.createElement('script');
+      s.id = 'iep-newsletter-script';
+      s.src = '/shared/newsletter.js?v=20261019q';
+      s.onload = function () { s.dataset.loaded = '1'; };
+      document.body.appendChild(s);
+    }
   }
 
   function injectCookieBanner() {
@@ -409,6 +448,7 @@
   function boot() {
     injectNav();
     injectFooter();
+    loadNewsletterScript();
     injectCookieBanner();
     setActiveLink();
     setYear();
