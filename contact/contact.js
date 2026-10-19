@@ -101,7 +101,7 @@
   }
 
   // Called by the Turnstile api.js via ?onload=... as soon as it is ready.
-  window.iepTurnstileAuto = function () { renderTurnstile(); };
+  window.iepTurnstileAuto = function () { startTokenPoll(); renderTurnstile(); };
 
   function resetTurnstile() {
     turnstileToken = '';
