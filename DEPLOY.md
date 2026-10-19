@@ -81,3 +81,10 @@ Open `https://innovationearthprojects.org/admin/`, enter the key from step 1.
 | Save fails: "Write blocked" | Shouldn't happen from the UI; the proxy only allows `products/data/*` and `images/*` in your repo. |
 | Product saved but not on site | Wait ~1 min for GitHub Pages rebuild + 60 s Worker cache; hard-refresh (Ctrl+Shift+R). |
 | Status endpoint shows old build | Paste failed — reopen Code tab, replace ALL content, Deploy again. |
+
+
+## Newsletter (added 2026-10-19)
+- Footer of every public page now has a Newsletter sign-up (Turnstile + honeypot + per-IP rate limit).
+- It POSTs to the Worker route /newsletter. To activate: paste worker/products-proxy.js (build 2026-10-19.40) into Cloudflare -> decap-proxy -> Deploy.
+- Verify: curl https://decap-proxy.ykminmin8654.workers.dev/ should report build 2026-10-19.40.
+- Optional delivery provider secrets: NEWSLETTER_PROVIDER=buttondown + BUTTONDOWN_API_KEY, or NEWSLETTER_PROVIDER=beehiiv + BEEHIIV_API_KEY + BEEHIIV_PUBLICATION_ID. Without them, signups are accepted and logged in Workers live logs only.
