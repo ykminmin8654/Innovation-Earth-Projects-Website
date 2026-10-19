@@ -104,12 +104,9 @@
 
             <div class="form-status" id="form-status" role="status" aria-live="polite"></div>
 
-            <!-- Cloudflare Turnstile human check (invisible fallback: managed) -->
+            <!-- Cloudflare Turnstile human check — rendered explicitly by contact.js -->
             <div class="cf-turnstile-wrap" id="cf-turnstile-wrap">
-              <div class="cf-turnstile" id="cf-turnstile"
-                   data-sitekey="0x4AAAAAAFMinCrsCsyi7S6X"
-                   data-theme="light"
-                   data-size="flex"></div>
+              <div id="cf-turnstile" aria-label="Human verification"></div>
             </div>
 
             <button type="submit" class="btn btn--primary btn--lg btn--block" id="cf-submit">
@@ -162,6 +159,6 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=iepTurnstileAuto&render=explicit" async defer></script>
   <script src="../shared/nav.js"></script>
   <script src="../shared/motion.js"></script>
-  <script src="./contact.js?v=20261019f"></script>
+  <script src="./contact.js?v=20261019g"></script>
 </body>
 </html>

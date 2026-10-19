@@ -47,16 +47,20 @@
 
   function renderTurnstile() {
     var mount = document.getElementById('cf-turnstile');
-    if (!window.turnstile || !mount || mount.childElementCount > 0) return; // already rendered
+    if (!window.turnstile || !mount) return;
+    // Guard against double-rendering (api.js onload + our own init can both fire).
+    if (turnstileWidgetId != null || mount.getAttribute('data-rendered') === '1') return;
     try {
       turnstileWidgetId = window.turnstile.render(mount, {
         sitekey: TURNSTILE_SITE_KEY,
         theme: 'light',
         size: 'flex',
+        appearance: 'always',   // keep the checkbox visible even after success
         callback: function (token) { turnstileToken = token; },
         'error-callback': function () { turnstileToken = ''; },
         'expired-callback': function () { turnstileToken = ''; }
       });
+      mount.setAttribute('data-rendered', '1');
     } catch (e) { /* widget failed to render; Worker-side check will still gate */ }
   }
 
