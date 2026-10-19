@@ -29,7 +29,7 @@
   <link rel="stylesheet" href="../shared/motion.css?v=20261019q" />
 
   <!-- Local styles -->
-  <link rel="stylesheet" href="./products.css?v=20261020a" />
+  <link rel="stylesheet" href="./products.css?v=20261020b" />
   <link rel="icon" type="image/png" href="/images/logo.png" />
 </head>
 
@@ -65,7 +65,27 @@
     <section class="section section--tight">
       <div class="container">
 
-        <!-- Filter tabs -->
+        <!-- Search + filter tabs -->
+        <div class="products-toolbar">
+          <div class="search" role="search">
+            <i class="fas fa-magnifying-glass search__icon" aria-hidden="true"></i>
+            <input
+              type="search"
+              id="product-search"
+              class="search__input"
+              placeholder="Search products, tags, descriptions…"
+              autocomplete="off"
+              spellcheck="false"
+              aria-label="Search products"
+            />
+            <button type="button" class="search__clear" id="search-clear" hidden aria-label="Clear search">
+              <i class="fas fa-xmark"></i>
+            </button>
+            <kbd class="search__kbd" aria-hidden="true">/</kbd>
+          </div>
+          <span class="search-status" id="search-status" role="status" aria-live="polite"></span>
+        </div>
+
         <nav class="tabs" id="product-tabs" aria-label="Filter products">
           <button class="tab tab--active" data-filter="all">
             <i class="fas fa-th"></i> All
@@ -150,7 +170,7 @@
   <script src="../shared/motion.js" defer></script>
 
   <!-- Local JS -->
-  <script src="./products.js?v=20261020a" defer></script>
+  <script src="./products.js?v=20261020b" defer></script>
 
 </body>
 </html>

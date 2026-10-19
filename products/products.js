@@ -19,6 +19,8 @@
   // ------------------------------------------------------------
   let allProducts = [];
   let activeFilter = 'all';
+  let searchQuery = '';            // current (trimmed, lowercased) search text
+  let searchDebounce = null;       // trailing-edge timer for the input
   let isFetching = false;          // never overlap poll requests
   let pollTimer = null;            // single interval, survives SPA re-boots
   let lastSignature = '';          // skip re-renders when nothing changed
@@ -340,14 +342,16 @@
     // Background polling re-calls this every ~20s. If the visible set is
     // unchanged, skip the DOM write entirely — no flicker, no animation
     // replay, no wasted work.
-    const sig = items.map((p) => (p.slug || p.title || '') + ':' + (p.updatedAt || p.order || '')).join('|') + '#' + activeFilter;
+    const sig = items.map((p) => (p.slug || p.title || '') + ':' + (p.updatedAt || p.order || '')).join('|') + '#' + activeFilter + '#' + searchQuery;
     if (sig === lastSignature && grid.children.length) return;
     lastSignature = sig;
 
     if (!items.length) {
-      const emptyMsg = allProducts.length
-        ? 'No products match this filter.'
-        : 'No products have been published yet. Check back soon — new tools ship every week.';
+      const emptyMsg = searchQuery
+        ? `Nothing matches "${searchQuery}". Try a shorter word, or clear the search.`
+        : allProducts.length
+          ? 'No products match this filter.'
+          : 'No products have been published yet. Check back soon — new tools ship every week.';
 
       grid.innerHTML = `
         <div class="state">
@@ -442,12 +446,54 @@
     });
   }
 
+  // ------------------------------------------------------------
+  // Search
+  // ------------------------------------------------------------
+  // Build one lowercase haystack per product from every field a visitor
+  // might reasonably type: title, description, tags (array OR comma
+  // string), status label, pricing and slug.
+  function searchHaystack(p) {
+    const tags = Array.isArray(p.tags)
+      ? p.tags.join(' ')
+      : String(p.tags || '').replace(/\[|\]|["']/g, ' ');
+    return [
+      p.title || '',
+      p.description || '',
+      tags,
+      statusMeta(p.status).label,
+      p.pricing || '',
+      p.slug || '',
+    ].join(' \u0000 ').toLowerCase();
+  }
+
+  // Multi-word queries are ANDed: every token must appear somewhere.
+  function matchesSearch(p, q) {
+    if (!q) return true;
+    const hay = searchHaystack(p);
+    return q.split(/\s+/).every((token) => hay.includes(token));
+  }
+
+  function updateSearchStatus(shown, total) {
+    const el = document.getElementById('search-status');
+    if (!el) return;
+    if (searchQuery) {
+      el.textContent = shown === 1 ? '1 product matches your search'
+                       : `${shown} products match your search`;
+    } else if (total) {
+      el.textContent = `Showing all ${total} product${total === 1 ? '' : 's'}`;
+    } else {
+      el.textContent = '';
+    }
+  }
+
   function applyFilter(filter) {
     activeFilter = filter;
-    const filtered = filter === 'all'
+    let filtered = filter === 'all'
       ? allProducts
       : allProducts.filter(p => statusMeta(p.status).cls === filter);
+    if (searchQuery) filtered = filtered.filter(p => matchesSearch(p, searchQuery));
     renderGrid(filtered);
+    updateSearchStatus(filtered.length, allProducts.length);
   }
 
   function showRetry(show) {
@@ -467,6 +513,61 @@
         applyFilter(tab.dataset.filter || 'all');
       });
     });
+  }
+
+  function wireSearch() {
+    const input = document.getElementById('product-search');
+    const clearBtn = document.getElementById('search-clear');
+    if (!input) return;
+
+    // Re-entrancy guard: SPA navigations re-execute this script and re-query
+    // the same DOM node — without the flag we'd stack duplicate listeners.
+    if (input.dataset.wired === '1') return;
+    input.dataset.wired = '1';
+
+    const setQuery = (raw) => {
+      searchQuery = String(raw || '').trim().toLowerCase();
+      if (clearBtn) clearBtn.hidden = !searchQuery;
+      const kbd = document.querySelector('.search__kbd');
+      if (kbd) kbd.style.display = searchQuery ? 'none' : '';
+      applyFilter(activeFilter);
+    };
+
+    input.addEventListener('input', () => {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(() => setQuery(input.value), 150);
+    });
+
+    // Esc clears; Enter just commits immediately (skip the debounce wait).
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { input.value = ''; setQuery(''); input.blur(); }
+      if (e.key === 'Enter') { clearTimeout(searchDebounce); setQuery(input.value); }
+    });
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        input.value = '';
+        setQuery('');
+        input.focus();
+      });
+    }
+
+    // "/" focuses the search box from anywhere on the products page
+    // (unless the visitor is already typing in some other field).
+    if (!window.__iepSearchHotkey) {
+      window.__iepSearchHotkey = true;
+      document.addEventListener('keydown', (e) => {
+        if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
+        const t = e.target;
+        const tag = t && t.tagName ? t.tagName.toLowerCase() : '';
+        if (tag === 'input' || tag === 'textarea' || (t && t.isContentEditable)) return;
+        if (!document.getElementById('product-search')) return; // not on products page
+        e.preventDefault();
+        const el = document.getElementById('product-search');
+        el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        el.focus();
+      });
+    }
   }
 
   function wireRetry() {
@@ -551,6 +652,7 @@
   // ------------------------------------------------------------
   function boot() {
     wireTabs();
+    wireSearch();
     wireRetry();
     load();
     startPolling();

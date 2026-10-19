@@ -163,13 +163,31 @@ const PL_STALE_MS = 15 * 1000;        // 15s — near-real-time, burst-safe
 async function buildProductList(env) {
   const listUrl =
     `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${PRODUCTS_DIR}`;
-  const listRes = await fetch(listUrl, { headers: ghHeaders(env), cache: 'no-store' });
-  if (!listRes.ok) throw new Error(`GitHub listing failed: ${listRes.status}`);
-  const entries = await listRes.json();
+  // Read EVERY .md file in the directory. Previously this used the Contents
+  // API response as-is, which silently caps at 1,000 entries per request —
+  // past that limit new products were dropped from the feed with no error.
+  // We now page through with `?per_page=100&page=N` until a short page comes
+  // back, so the grid always shows all data files, not just the first ones.
+  let entries = [];
+  for (let page = 1; page <= 20; page++) {
+    const res = await fetch(`${listUrl}?per_page=100&page=${page}`, {
+      headers: ghHeaders(env),
+      cache: 'no-store',
+    });
+    if (!res.ok) throw new Error(`GitHub listing failed: ${res.status}`);
+    const chunk = await res.json();
+    if (!Array.isArray(chunk)) break;
+    entries = entries.concat(chunk);
+    if (chunk.length < 100) break; // last page reached
+  }
 
-  const files = (Array.isArray(entries) ? entries : []).filter(
-    (e) => e.type === 'file' && e.name.endsWith('.md')
-  );
+  const seen = new Set();
+  const files = entries.filter((e) => {
+    if (!e || e.type !== 'file' || !e.name.endsWith('.md')) return false;
+    if (seen.has(e.name)) return false; // dedupe across pages
+    seen.add(e.name);
+    return true;
+  });
 
   const results = await Promise.all(
     files.map(async (f) => {
