@@ -222,12 +222,71 @@ async function getProductsFresh(env) {
   return items;
 }
 
+// Admin-only extra: attach each file's current git blob sha so the admin page
+// can DELETE it (GitHub requires the sha). One batched Contents API call for
+// up to 100 files; anything beyond that is fetched lazily by the admin's
+// existing per-file lookup before a delete. Items are shallow-copied so the
+// shared in-memory feed cache never carries _sha to public visitors.
+async function attachDeleteShas(env, items) {
+  try {
+    const res = await fetch(
+      `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${PRODUCTS_DIR}?per_page=100&page=1`,
+      { headers: ghHeaders(env), cache: 'no-store' }
+    );
+    if (!res.ok) return items;
+    const entries = await res.json();
+    if (!Array.isArray(entries)) return items;
+    const shaByName = {};
+    entries.forEach(function (e) {
+      if (e && e.type === 'file' && /\.md$/i.test(e.name || '')) shaByName[e.name] = e.sha;
+    });
+    return items.map(function (p) {
+      const sha = shaByName[p.slug + '.md'];
+      return sha ? Object.assign({}, p, { _sha: sha }) : p;
+    });
+  } catch (e) {
+    return items; // shas are optional here — the admin re-looks-up on demand
+  }
+}
+
 async function handleProducts(request, env, ctx) {
   const url = new URL(request.url);
 
+  // Single source of truth: the ADMIN PAGE and the PUBLIC PRODUCTS GRID both
+  // read their list from THIS handler. Previously the admin listed files by
+  // calling GitHub's Contents API directly through the /api/v1/github proxy
+  // (a second, separate code path with its own parsing quirks), so the two
+  // could disagree — e.g. the site showed a product the admin didn't, or the
+  // admin said "No products yet" while the grid had cards. Now the admin
+  // fetches /products exactly like the site does (with an admin ticket for
+  // freshness + delete-sha metadata).
+  //
+  // Admin mode is opt-in via ?admin=1 + a valid gate ticket, so public
+  // visitors never pay the cost of per-file sha lookups.
+  const isAdminFeed = url.searchParams.get('admin') === '1';
+  let adminTicketOk = false;
+  if (isAdminFeed && env.ADMIN_KEY) {
+    const bearer = (request.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
+    adminTicketOk = await checkTicket(env, bearer, 'iep-admin');
+    if (!adminTicketOk && env.ADMIN_KEYS) {
+      const keys = String(env.ADMIN_KEYS).split(',').map(function (k) { return k.trim(); }).filter(Boolean);
+      for (const altKey of keys) {
+        if (await checkTicket({ ADMIN_KEY: altKey }, bearer, 'iep-admin')) { adminTicketOk = true; break; }
+      }
+    }
+  }
+
   let items;
   try {
-    items = await getProductsFresh(env);
+    if (isAdminFeed && adminTicketOk) {
+      // The admin just saved/deleted a file and needs to see it immediately —
+      // bypass the 15s in-memory window entirely.
+      plCache.at = 0;
+      items = await getProductsFresh(env);
+      items = await attachDeleteShas(env, items);
+    } else {
+      items = await getProductsFresh(env);
+    }
   } catch (err) {
     // GitHub is rate-limiting us or momentarily unavailable. Instead of
     // killing the site with a 502, serve the last good snapshot we have
@@ -275,7 +334,7 @@ async function handleProducts(request, env, ctx) {
 
 const GH_API = 'https://api.github.com';
 
-const BUILD_ID = '2026-10-20.43';
+const BUILD_ID = '2026-10-20.44';
 
 // ---------------------------------------------------------------------------
 // ADMIN GATE — password check endpoint (Decap removed; admin page is custom).
@@ -837,7 +896,13 @@ export default {
       return new Response(null, { status: 204, headers: CORS_HEADERS });
     }
 
-    if (url.pathname === '/products') return handleProducts(request, env, ctx);
+    // ?refresh=1 bumps the 15s in-memory window so the next read rebuilds
+    // from GitHub — this is what makes an admin save/delete show up on the
+    // public grid immediately instead of up to 15s later.
+    if (url.pathname === '/products') {
+      if (url.searchParams.get('refresh') === '1') plCache.at = 0;
+      return handleProducts(request, env, ctx);
+    }
     // ADMIN GATE v3: password check endpoint (returns signed ticket).
     if (url.pathname === '/gate' && request.method === 'POST') return handleGate(request, env);
     // Decap's github backend appends "/github/..." to base_url, so accept

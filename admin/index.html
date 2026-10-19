@@ -367,111 +367,67 @@
     });
 
     // ---- list -------------------------------------------------------------
+    // SINGLE SOURCE OF TRUTH: the admin list is built from the Worker's
+    // /products feed — literally the same endpoint (and the same parsing and
+    // sorting code) that the public /products/ grid renders. The old version
+    // of this page listed products by calling GitHub's Contents API directly
+    // through the /api/v1/github proxy, i.e. a second, independent reader of
+    // the data; when the two paths disagreed (different front-matter quirks,
+    // different cache staleness) the admin showed a different set of products
+    // than the site. Now whatever the grid displays, the admin displays —
+    // byte-for-byte the same JSON. ?admin=1 + the gate ticket makes the
+    // Worker bypass its 15s revalidation window and attach each file's git
+    // sha (_sha) so deletes work without an extra lookup.
     function loadList() {
       setMsg('<span class="spinner"></span>Loading products…', '');
-      gh(REPO + '/contents/' + DIR + '?' + cb()).then(function (entries) {
-        var files = (Array.isArray(entries) ? entries : []).filter(function (e) {
-          return e.type === 'file' && /\.md$/i.test(e.name) && !/^readme/i.test(e.name);
-        });
-        if (!files.length) {
-          setMsg('', '');
-          // Even with an empty repo folder, show whatever the public feed has
-          // (it may be mid-sync) so the admin never falsely says "No products
-          // yet" while the live site displays cards.
-          return mergeWithFeed([]).then(function (merged) { render(merged); purgeFeedCache(); });
+      return fetch(WORKER + '/products?admin=1&_cb=' + Date.now() + '-' + (++CB), {
+        cache: 'no-store',
+        headers: { Authorization: 'Bearer ' + (sessionStorage.getItem(TICKET_KEY) || '') }
+      }).then(function (r) {
+        if (r.status === 401) {
+          var err = new Error('session required'); err.status = 401; throw err;
         }
-        return Promise.all(files.map(function (f) {
-          return gh(REPO + '/contents/' + f.path + '?' + cb(), { headers: { Accept: 'application/vnd.github.raw+json' } })
-            .then(function (raw) { var p = parseFm(raw, f.name.replace(/\.md$/i, '')); if (p) p._sha = raw && raw.sha; return p; })
-            .catch(function () { return null; });
-        })).then(function (items) {
-          items = items.filter(Boolean);
-          items.sort(function (a, b) { return (Number(a.order) || 999) - (Number(b.order) || 999); });
-          setMsg('', '');
-          return mergeWithFeed(items).then(function (merged) {
-            render(merged);
-            purgeFeedCache();
+        if (!r.ok) {
+          return r.text().then(function (b) {
+            var m = b; try { m = JSON.parse(b).error || b; } catch (e) {}
+            throw new Error(String(m || ('HTTP ' + r.status)));
           });
+        }
+        return r.json();
+      }).then(function (items) {
+        if (!Array.isArray(items)) items = [];
+        items = items.filter(function (p) { return p && p.slug && p.title; });
+        items.sort(function (a, b) {
+          var ao = Number(a.order ?? 999), bo = Number(b.order ?? 999);
+          if (ao !== bo) return ao - bo;
+          return String(a.title || '').localeCompare(String(b.title || ''));
         });
+        setMsg('', '');
+        render(items);
       }).catch(function (e) {
-        // Only a *rejected ticket* (401 from the Worker's own gate check, which
-        // always carries running_build) means the session is gone. A 403 is
-        // GitHub itself (rate limit / token scope) — show it instead of
-        // falsely logging the user out right after unlocking.
-        if (e.status === 401 && /session required/i.test(e.message)) {
+        if (e.status === 401) {
           setMsg('Session expired — please unlock again.', 'err');
           sessionStorage.removeItem(TICKET_KEY);
           setTimeout(function () { location.reload(); }, 1200);
-          return;
+          throw e; // let the session-resume caller skip enterApp()
         }
         setMsg('Could not load products: ' + e.message, 'err');
       });
     }
 
-    // Purge the public site's cached product feed on the Worker so the grid
-    // updates immediately after a save/delete instead of up to 60s later.
-    // Fire-and-forget; any failure just means the short cache TTL expires
-    // naturally.
+    // The Worker's /products feed is now the single source of truth for BOTH
+    // the admin list and the public grid (see loadList above). After a save
+    // or delete we bump the feed's in-memory revalidation window so the very
+    // next public poll rebuilds from GitHub instead of serving a snapshot up
+    // to 15 seconds old. Fire-and-forget; if it fails, the TTL expires on its
+    // own and nothing breaks.
     function purgeFeedCache() {
       try { fetch(WORKER + '/products?refresh=1', { method: 'GET', cache: 'no-store' }).catch(function () {}); } catch (e) {}
     }
 
-    // The public /products/ page reads its grid from the Worker's /products
-    // feed — but that feed can lag behind GitHub by minutes when the Worker
-    // is rate-limited or an old build serves a stale snapshot. So the admin
-    // list ALSO cross-checks the feed against the live repo contents and
-    // merges: anything in the repo shows up even if the feed hasn't caught
-    // up yet, and entries the feed knows about but the repo no longer has
-    // are dropped. Result: "No products yet" can only appear when the repo
-    // folder really is empty.
-    function mergeWithFeed(items) {
-      items = items || [];
-      return fetch(WORKER + '/products', { cache: 'no-store' })
-        .then(function (r) { return r.ok ? r.json() : []; })
-        .catch(function () { return []; })
-        .then(function (feed) {
-          if (!Array.isArray(feed)) feed = [];
-          var bySlug = {};
-          items.forEach(function (p) { bySlug[p.slug] = p; });
-          // Feed entries whose files still exist in the repo: fill in fields
-          // the repo parse may lack (e.g. _sha) but never override fresh data.
-          feed.forEach(function (f) {
-            if (f && f.slug && bySlug[f.slug]) {
-              Object.keys(f).forEach(function (k) {
-                if (bySlug[f.slug][k] === undefined) bySlug[f.slug][k] = f[k];
-              });
-            }
-          });
-          // Merge order: repo items first (they're authoritative), then any
-          // feed-only items appended so nothing visible on the public site is
-          // hidden from the admin list.
-          var merged = items.slice();
-          feed.forEach(function (f) {
-            if (f && f.slug && !bySlug[f.slug]) { merged.push(f); bySlug[f.slug] = f; }
-          });
-          merged.sort(function (a, b) { return (Number(a.order) || 999) - (Number(b.order) || 999); });
-          return merged;
-        });
-    }
-
-    // Minimal front-matter parser (same subset the public site uses).
-    function parseFm(md, slug) {
-      var m = String(md).match(/^---\s*\r?\n([\s\S]*?)\r?\n---/);
-      if (!m) return null;
-      var data = { slug: slug }, cur = null;
-      m[1].split(/\r?\n/).forEach(function (line) {
-        var li = line.match(/^\s+-\s+(.*)$/);
-        if (li && cur) { if (!Array.isArray(data[cur])) data[cur] = []; data[cur].push(strip(li[1])); return; }
-        var kv = line.match(/^([A-Za-z0-9_\-]+):\s*(.*)$/);
-        if (kv) { cur = kv[1]; var v = kv[2].trim(); data[cur] = v === '' ? [] : strip(v); }
-        else if (cur && /^\s+\S/.test(line) && typeof data[cur] === 'string') { data[cur] += ' ' + line.trim(); }
-      });
-      if (!data.title) return null;
-      if (Array.isArray(data.tags)) data.tags = data.tags.join(', ');
-      return data;
-      function strip(s) { s = String(s).trim(); if ((s[0] === '"' && s.slice(-1) === '"') || (s[0] === "'" && s.slice(-1) === "'")) return s.slice(1, -1); return s; }
-    }
-
+    // NOTE: the admin no longer parses .md files itself — it reads the
+    // Worker's already-parsed /products feed, identical to what the public
+    // grid renders (single source of truth).
     function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 
     function statusBadge(st) {
@@ -583,6 +539,7 @@
         .then(function () {
           $('editor').close();
           setMsg('Saved "' + p.title + '". Live on the site within about a minute.', 'ok');
+          purgeFeedCache();
           loadList();
         })
         .catch(function (e) { $('edMsg').textContent = 'Save failed: ' + e.message; })
@@ -605,7 +562,7 @@
             body: JSON.stringify({ message: 'Delete product "' + editing.title + '" via admin', sha: info.sha })
           });
         })
-        .then(function () { $('editor').close(); setMsg('Deleted.', 'ok'); loadList(); })
+        .then(function () { $('editor').close(); setMsg('Deleted.', 'ok'); purgeFeedCache(); loadList(); })
         .catch(function (e) { $('edMsg').textContent = 'Delete failed: ' + e.message; });
     });
 
@@ -615,16 +572,18 @@
 
     // ---- auto-resume session (ticket valid ~30 min) ----------------------
     if (sessionStorage.getItem(TICKET_KEY)) {
-      gh(REPO + '/contents/' + DIR).then(function () { enterApp(); })
-        .catch(function (e) {
-          // Only drop the stored ticket when the Worker itself rejects it.
-          // GitHub-side errors (rate limit, scope) must not force a re-login.
-          if (e && e.status === 401 && /session required/i.test(e.message)) {
-            sessionStorage.removeItem(TICKET_KEY);
-          } else {
-            enterApp(); // show the app; loadList() will surface the real error
-          }
-        });
+      // Validate the stored ticket by loading the list through the same
+      // /products?admin=1 feed the public grid reads — one endpoint, one
+      // source of truth. A 401 from the Worker means the ticket expired;
+      // any other error (GitHub rate limit, etc.) must NOT force a re-login.
+      loadList().then(function () { enterApp(); }).catch(function (e) {
+        if (e && e.status === 401) {
+          sessionStorage.removeItem(TICKET_KEY);
+          location.reload();
+        } else {
+          enterApp(); // show the app; loadList() already surfaced the real error
+        }
+      });
     }
   })();
   </script>
