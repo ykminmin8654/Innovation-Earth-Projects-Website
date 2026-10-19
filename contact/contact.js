@@ -50,6 +50,17 @@
     if (!window.turnstile || !mount) return;
     // Guard against double-rendering (api.js onload + our own init can both fire).
     if (turnstileWidgetId != null || mount.getAttribute('data-rendered') === '1') return;
+    // The widget div now carries class="cf-turnstile" + data-sitekey, so api.js
+    // may AUTO-render it before our explicit call. If the iframe/hidden input is
+    // already there, adopt that widget instead of rendering a second one.
+    var existingInput = document.querySelector('#cf-turnstile-response, #cf-turnstile input[name="cf-turnstile-response"]');
+    if (existingInput && existingInput.value !== undefined) {
+      mount.setAttribute('data-rendered', '1');
+      turnstileToken = existingInput.value || turnstileToken;
+      // Watch the auto-created hidden input for token updates via interval below.
+      startTokenPoll();
+      return;
+    }
     try {
       turnstileWidgetId = window.turnstile.render(mount, {
         sitekey: TURNSTILE_SITE_KEY,
@@ -62,6 +73,18 @@
       });
       mount.setAttribute('data-rendered', '1');
     } catch (e) { /* widget failed to render; Worker-side check will still gate */ }
+  }
+
+  // Safety net: if the widget was auto-rendered (or rendered later by Cloudflare),
+  // continuously mirror the hidden response input into turnstileToken so submit
+  // always sends a fresh token.
+  var tokenPollTimer = null;
+  function startTokenPoll() {
+    if (tokenPollTimer) return;
+    tokenPollTimer = setInterval(function () {
+      var inp = document.querySelector('#cf-turnstile input[name="cf-turnstile-response"], #cf-turnstile-response, .cf-turnstile-response');
+      if (inp && inp.value) turnstileToken = inp.value;
+    }, 500);
   }
 
   function initTurnstile() {
