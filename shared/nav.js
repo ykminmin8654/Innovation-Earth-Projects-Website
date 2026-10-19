@@ -149,7 +149,7 @@
     if (!existing) {
       var s = document.createElement('script');
       s.id = 'iep-cookies-script';
-      s.src = '/shared/cookies.js?v=20261019l';
+      s.src = '/shared/cookies.js?v=20261019p';
       s.onload = function () { s.dataset.loaded = '1'; };
       document.body.appendChild(s);
     }
