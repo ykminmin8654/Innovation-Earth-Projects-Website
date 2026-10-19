@@ -20,8 +20,8 @@
           '<strong>We value your privacy.</strong> We use only essential storage to' +
           ' remember this choice and Cloudflare Turnstile to keep bots out of our forms.' +
           ' No tracking cookies. Read our' +
-          ' <a href="/legal#privacy">Privacy Policy</a> and' +
-          ' <a href="/legal#tos">Terms of Service</a>.' +
+          ' <a href="/legal/privacy">Privacy Policy</a> and' +
+          ' <a href="/legal/tos">Terms of Service</a>.' +
         '</div>' +
         '<div class="cookie-banner__actions">' +
           '<button class="btn btn--ghost cookie-banner__btn" data-consent="essential" type="button">Reject</button>' +

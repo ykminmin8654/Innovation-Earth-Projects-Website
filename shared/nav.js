@@ -110,9 +110,9 @@
       '<div class="container footer__bottom">' +
         '<span>&copy; <span id="footer-year"></span> Innovation Earth Projects LLC &middot; Utah, USA</span>' +
         '<span class="footer__legal">' +
-          '<a href="/legal#privacy">Privacy Policy</a>' +
+          '<a href="/legal/privacy">Privacy Policy</a>' +
           '<span aria-hidden="true"> &middot; </span>' +
-          '<a href="/legal#tos">Terms of Service</a>' +
+          '<a href="/legal/tos">Terms of Service</a>' +
         '</span>' +
         '<span>Built by students.</span>' +
       '</div>' +
@@ -243,6 +243,14 @@
     var section = segments[0].toLowerCase();
     if (!SECTIONS[section]) return null;
 
+    // /legal/privacy and /legal/tos → the legal page with a ?doc= param so
+    // the address bar keeps the clean URL and legal.js opens the right tab.
+    if (section === 'legal' && segments.length === 2) {
+      var docSeg = segments[1].toLowerCase().replace(/\.html?$/, '');
+      if (/^privacy/.test(docSeg)) return '/legal/index.html?doc=privacy';
+      if (docSeg === 'tos' || /^terms/.test(docSeg)) return '/legal/index.html?doc=tos';
+    }
+
     var rest = segments.slice(1).join('/');
     if (rest && /\.\w+$/.test(rest)) {
       return '/' + section + '/' + rest;
@@ -306,8 +314,13 @@
         // URL bar — strip /index.html and trailing slash
         if (push) {
           var displayUrl = url
-            .replace(/\/index\.html$/i, '')
+            .replace(/\/index\.html(?=\?|$)/i, '')
+            .replace(/\/\?/, '?')   // "/legal/?doc=x" → "/?doc=x" handled below
             .replace(/\/$/, '');
+          // /legal/index.html?doc=privacy|tos keeps the pretty path:
+          // /legal/privacy or /legal/tos (no hash, no query in the address bar).
+          var docMatch = url.match(/\/legal\/index\.html\?doc=(privacy|tos)$/i);
+          if (docMatch) displayUrl = '/legal/' + docMatch[1].toLowerCase();
           if (!displayUrl || displayUrl === '') displayUrl = '/home';
           history.pushState({ shim: true }, '', displayUrl);
         }
@@ -349,7 +362,7 @@
     var resolved = resolveCleanUrl(href);
     if (!resolved) return;
 
-    // Hash deep-links (e.g. /legal#tos, /legal#privacy): let the browser do
+    // Hash deep-links (e.g. /legal/tos, /legal/privacy): let the browser do
     // a normal full navigation instead of SPA injection. The shim's loadPage
     // pushes the URL WITHOUT the hash and never fires hashchange, so both
     // footer legal links would render the identical default tab. A real page

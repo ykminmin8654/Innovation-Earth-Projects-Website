@@ -116,7 +116,17 @@
       //   - any section whose index.html exists but whose edge-cached 404
       //     served us this shim anyway (fresh deploys): redirecting is safer
       //     than injecting when the caller passed a #hash.
-      var HARD_REDIRECT = { 'legal': true };
+      var HARD_REDIRECT = {};
+
+      // /legal/privacy and /legal/tos are clean URLs for the two legal docs.
+      // Forward to the real page with ?doc=<name> so legal.js opens the right
+      // tab — no hash ever appears in the address bar. (The site's nav shim
+      // also routes these client-side; this covers direct hits & refreshes.)
+      if (segments[0].toLowerCase() === 'legal' && segments.length === 2) {
+        var docSeg = segments[1].toLowerCase().replace(/\.html?$/, '');
+        if (/^privacy/.test(docSeg)) { location.replace('/legal/?doc=privacy'); return; }
+        if (docSeg === 'tos' || /^terms/.test(docSeg)) { location.replace('/legal/?doc=tos'); return; }
+      }
       if (segments.length === 1 && SECTIONS[segments[0].toLowerCase()]) {
         var secKey = segments[0].toLowerCase();
         if (HARD_REDIRECT[secKey] || hash) {
