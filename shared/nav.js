@@ -33,7 +33,8 @@
     'home':     '/home/index.html',
     'about':    '/about/index.html',
     'products': '/products/index.html',
-    'contact':  '/contact/index.html'
+    'contact':  '/contact/index.html',
+    'legal':    '/legal/index.html'
   };
 
   /* ============================================================
@@ -108,6 +109,11 @@
       '</div>' +
       '<div class="container footer__bottom">' +
         '<span>&copy; <span id="footer-year"></span> Innovation Earth Projects LLC &middot; Utah, USA</span>' +
+        '<span class="footer__legal">' +
+          '<a href="/legal#privacy">Privacy Policy</a>' +
+          '<span aria-hidden="true"> &middot; </span>' +
+          '<a href="/legal#tos">Terms of Service</a>' +
+        '</span>' +
         '<span>Built by students.</span>' +
       '</div>' +
     '</footer>';
@@ -132,6 +138,21 @@
     var wrapper = document.createElement('div');
     wrapper.innerHTML = FOOTER_HTML;
     mount.parentNode.replaceChild(wrapper.firstChild, mount);
+  }
+
+  function injectCookieBanner() {
+    // Load shared/cookies.js once per page; it self-injects and handles
+    // SPA re-navigation on its own. Skipped automatically inside /admin/.
+    if (/^\/admin/i.test(window.location.pathname)) return;
+    var existing = document.getElementById('iep-cookies-script');
+    if (existing && existing.dataset.loaded === '1') return;
+    if (!existing) {
+      var s = document.createElement('script');
+      s.id = 'iep-cookies-script';
+      s.src = '/shared/cookies.js?v=20261019l';
+      s.onload = function () { s.dataset.loaded = '1'; };
+      document.body.appendChild(s);
+    }
   }
 
   /* ============================================================
@@ -351,6 +372,7 @@
   function boot() {
     injectNav();
     injectFooter();
+    injectCookieBanner();
     setActiveLink();
     setYear();
     wireMobileToggle();
