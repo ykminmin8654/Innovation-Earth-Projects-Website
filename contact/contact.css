@@ -260,5 +260,7 @@
   margin: 0 0 1.25rem;
   min-height: 0;
 }
-.cf-turnstile-wrap:empty { display: none; }
-#cf-turnstile { transform-origin: top center; }
+/* NOTE: do NOT use :empty { display:none } here — the Turnstile iframe is
+   injected into #cf-turnstile, which leaves .cf-turnstile-wrap technically
+   ":empty"-adjacent in some engines and hid the widget entirely. */
+#cf-turnstile { transform-origin: top center; min-height: 65px; }
