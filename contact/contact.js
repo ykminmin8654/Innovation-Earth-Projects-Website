@@ -45,9 +45,9 @@
   var turnstileWidgetId = null;
   var turnstileToken = '';
 
-  function initTurnstile() {
+  function renderTurnstile() {
     var mount = document.getElementById('cf-turnstile');
-    if (!mount || !window.turnstile) return;
+    if (!window.turnstile || !mount || mount.childElementCount > 0) return; // already rendered
     try {
       turnstileWidgetId = window.turnstile.render(mount, {
         sitekey: TURNSTILE_SITE_KEY,
@@ -59,6 +59,22 @@
       });
     } catch (e) { /* widget failed to render; Worker-side check will still gate */ }
   }
+
+  function initTurnstile() {
+    renderTurnstile();
+    if (!window.turnstile) {
+      // api.js may still be loading — retry briefly so the box always appears
+      var tries = 0;
+      var t = setInterval(function () {
+        tries++;
+        if (window.turnstile) { renderTurnstile(); clearInterval(t); }
+        else if (tries > 40) { clearInterval(t); }
+      }, 250);
+    }
+  }
+
+  // Called by the Turnstile api.js via ?onload=... as soon as it is ready.
+  window.iepTurnstileAuto = function () { renderTurnstile(); };
 
   function resetTurnstile() {
     turnstileToken = '';
