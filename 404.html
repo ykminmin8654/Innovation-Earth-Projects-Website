@@ -107,14 +107,22 @@
       var cleaned  = pathname.replace(/^\/+|\/+$/g, '');
       var segments = cleaned.split('/').filter(Boolean);
 
-      // If the shim itself was served at a real section URL (e.g. /legal or
-      // /contact, whose index.html exists but GitHub Pages' edge cache may
-      // still 404 for a few minutes after a push), redirect straight to the
-      // actual page instead of injecting it — this preserves #hash deep
-      // links (#privacy / #tos) and avoids running page scripts twice.
+      // Section names that must ALWAYS land on their real index.html via a
+      // full redirect instead of SPA injection:
+      //   - 'legal': its tabs are driven by #privacy / #tos deep links. The
+      //     shim injects content without changing location.hash, so both
+      //     footer links would render the identical default screen. A hard
+      //     redirect lets legal.js read the hash and pick the right tab.
+      //   - any section whose index.html exists but whose edge-cached 404
+      //     served us this shim anyway (fresh deploys): redirecting is safer
+      //     than injecting when the caller passed a #hash.
+      var HARD_REDIRECT = { 'legal': true };
       if (segments.length === 1 && SECTIONS[segments[0].toLowerCase()]) {
-        window.location.replace(SECTIONS[segments[0].toLowerCase()] + search + hash);
-        return;
+        var secKey = segments[0].toLowerCase();
+        if (HARD_REDIRECT[secKey] || hash) {
+          window.location.replace(SECTIONS[secKey] + search + hash);
+          return;
+        }
       }
 
       var subEl = document.getElementById('loader-sub');

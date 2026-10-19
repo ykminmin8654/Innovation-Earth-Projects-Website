@@ -349,6 +349,30 @@
     var resolved = resolveCleanUrl(href);
     if (!resolved) return;
 
+    // Hash deep-links (e.g. /legal#tos, /legal#privacy): let the browser do
+    // a normal full navigation instead of SPA injection. The shim's loadPage
+    // pushes the URL WITHOUT the hash and never fires hashchange, so both
+    // footer legal links would render the identical default tab. A real page
+    // load lets legal.js read location.hash and open the right document.
+    var hashIdx = href.indexOf('#');
+    if (hashIdx !== -1) {
+      var wantHash = href.slice(hashIdx);
+      var here = window.location.pathname + window.location.search;
+      var targetPath = href.slice(0, hashIdx).replace(/\/index\.html$/i, '').replace(/\/$/, '') || '/home';
+      if (here === targetPath || ('/' + here.replace(/^\/+/, '')) === ('/' + targetPath.replace(/^\/+/, ''))) {
+        // Same page already loaded — just switch tabs via the hash.
+        if (location.hash !== wantHash) {
+          history.pushState(null, '', targetPath + wantHash);
+          window.dispatchEvent(new Event('hashchange'));
+        }
+        e.preventDefault();
+        return;
+      }
+      // Different page: full navigation (no preventDefault) so the hash
+      // arrives with the fresh document and the 404 shim hard-redirects it.
+      return;
+    }
+
     e.preventDefault();
     console.log('🔗 Intercepting clean-URL navigation:', href, '→', resolved);
     loadPage(resolved, true);
