@@ -34,7 +34,7 @@ Workers & Pages → **decap-proxy** → Settings → **Variables and secrets**:
 |---|---|---|
 | `ADMIN_KEY` | Secret text | Pick any strong password. This IS your admin login. Change it anytime by editing this value + Deploy. |
 | `WRITE_TOKEN` | Secret text | A GitHub fine-grained PAT (see below) used server-side for saves. Never sent to browsers. |
-| `TURNSTILE_SECRET_KEY` | Secret text | Your Turnstile widget's **secret** key (dash.cloudflare.com → Turnstile → your widget → copy Secret Key). Enables real bot-blocking on the admin gate + contact form. Without it, the checkbox shows but is NOT verified server-side. |
+| `TURNSTILE_SECRET_KEY` | Secret text | Your Turnstile widget's **secret** key (dash.cloudflare.com → Turnstile → your widget → copy Secret Key). Now used ONLY by the contact + newsletter forms — the admin gate no longer requires Turnstile (it uses a 5-attempt / 10-minute lockout instead). You can also delete this secret if you ever drop Turnstile from the public forms too. |
 | `FORMSPREE_ENDPOINT` | Variable | Your Formspree form URL (contact form → Gmail). Keep as-is if already set. |
 | `GITHUB_TOKEN` | Variable (optional) | Read-only PAT; raises the products-feed rate limit. Keep if already set. |
 
@@ -76,17 +76,25 @@ Open `https://innovationearthprojects.org/admin/`, enter the key from step 1.
 | Symptom | Fix |
 |---|---|
 | "Admin gate not configured yet" | `ADMIN_KEY` secret missing — add it (step 1), Deploy. |
-| "Wrong admin key." | Typo or you changed ADMIN_KEY — use the current value. |
+| "Wrong admin key." | Typo or you changed ADMIN_KEY — use the current value. After 5 wrong tries your IP is locked for 10 minutes (the login page shows a countdown); wait it out or reconnect to get a new IP. |
 | Save fails: "Worker cannot write" | `WRITE_TOKEN` missing/expired/scoped wrong — redo step 1. |
 | Save fails: "Write blocked" | Shouldn't happen from the UI; the proxy only allows `products/data/*` and `images/*` in your repo. |
 | Product saved but not on site | Wait ~1 min for GitHub Pages rebuild + 60 s Worker cache; hard-refresh (Ctrl+Shift+R). |
 | Status endpoint shows old build | Paste failed — reopen Code tab, replace ALL content, Deploy again. |
 
 
+## Admin login protection (updated 2026-10-20)
+The /admin/ login no longer uses a Cloudflare Turnstile human check. The Worker's
+/gate endpoint now enforces: at most **5 wrong keys per IP**, then that IP is
+**locked out for 10 minutes**. Wrong tries show "N attempts left" messages; once
+locked, the login page disables the form and counts down until you can try again.
+No secrets to configure for this — it works as soon as build 2026-10-20.42 is
+deployed. (Contact + newsletter forms still use Turnstile.)
+
 ## Newsletter (added 2026-10-19, updated 2026-10-20)
 - Public page at /newsletter/ (linked from the top nav; NOT in the footer). Protection: Turnstile + honeypot + per-IP rate limit.
-- It POSTs to the Worker route /newsletter. To activate: paste worker/products-proxy.js (build 2026-10-20.41) into Cloudflare -> decap-proxy -> Deploy.
-- Verify: curl https://decap-proxy.ykminmin8654.workers.dev/ should report build 2026-10-20.41.
+- It POSTs to the Worker route /newsletter. To activate: paste worker/products-proxy.js (build 2026-10-20.42) into Cloudflare -> decap-proxy -> Deploy.
+- Verify: curl https://decap-proxy.ykminmin8654.workers.dev/ should report build 2026-10-20.42.
 - WHERE THE EMAILS GO — pick ONE by setting the `NEWSLETTER_PROVIDER` secret:
   1. **Email straight to your Gmail (simplest)**: set `NEWSLETTER_PROVIDER=email`.
      Each signup is forwarded through the existing `FORMSPREE_ENDPOINT` (the same
@@ -104,3 +112,21 @@ Open `https://innovationearthprojects.org/admin/`, enter the key from step 1.
     Logs → Start live logs, then submit a test signup on /newsletter/ and look
     for `NEWSLETTER_SIGNUP`). They do NOT email you until you configure a provider.
 - After changing secrets: click Deploy once so they take effect.
+
+### FAQ — "Can I just set a secret to my email address?"
+No. The Worker cannot send email directly from Cloudflare, so **no secret takes a
+plain email address as its value**. Your Gmail address is already wired in through
+your *Formspree form* (the one `FORMSPREE_ENDPOINT` points at). To get signups in
+your inbox you only need:
+1. `NEWSLETTER_PROVIDER` = `email`  ← the literal word "email", NOT your address
+2. (optional but recommended) create a second free form at formspree.io with YOUR
+   Gmail as the recipient, then change `FORMSPREE_ENDPOINT` to that new URL so
+   newsletter signups don't mix with contact messages.
+Then Deploy and submit a test signup — it arrives in Gmail like a contact message.
+
+If you'd rather receive signups WITHOUT Formspree, use the Resend provider instead
+(set `NEWSLETTER_PROVIDER=resend` + `RESEND_API_KEY` + `NEWSLETTER_TO_EMAIL=<your
+address>` + `RESEND_FROM=<verified sender>`), or paste worker/mail-to.js into a
+second Worker (`iep-mail-to`) and set `MAILTO_WORKER_URL` — it emails you via a
+mail-to-email gateway (less reliable than Resend; no Turnstile needed since the
+main Worker validates before calling it).

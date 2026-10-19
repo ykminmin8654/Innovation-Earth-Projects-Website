@@ -154,8 +154,6 @@
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation: none !important; transition: none !important; }
     }
-    .cf-turnstile-wrap { margin: 1rem 0 .25rem; min-height: 65px; display: flex; justify-content: center; }
-    .cf-turnstile-wrap:empty { min-height: 0; margin: 0; } /* widget script blocked/offline -> no layout gap */
   </style>
 </head>
 <body>
@@ -168,16 +166,6 @@
       <form id="keyForm" autocomplete="off">
         <label for="adminKey">Admin key</label>
         <input type="password" id="adminKey" placeholder="Enter the admin key" required autofocus />
-        <!-- Cloudflare Turnstile human check (same widget as the contact form) -->
-        <div class="cf-turnstile-wrap" id="cf-turnstile-wrap">
-          <!-- Real widget Site Key (dash.cloudflare.com → Turnstile). If you ever
-               rotate this widget, update it here and in contact/contact.js — the
-               Worker verifies tokens with the matching TURNSTILE_SECRET_KEY secret. -->
-          <div class="cf-turnstile" id="cf-turnstile"
-               data-sitekey="0x4AAAAAAFMinCrsCsyi7S6X"
-               data-theme="light"
-               data-size="flex"></div>
-        </div>
         <button type="submit" id="keyBtn" style="width:100%">Unlock</button>
       </form>
       <div class="msg err" id="gateMsg"></div>
@@ -242,7 +230,8 @@
   /* ============================================================================
    * ADMIN v2 — standalone, Decap-free. Same logic as v1, restyled.
    * Auth: type the admin key -> POST /gate on the Cloudflare Worker returns a
-   * signed 30-min ticket. All GitHub calls go THROUGH the Worker proxy
+   * signed 30-min ticket. No Turnstile widget: the Worker enforces max 5 wrong
+   * keys per IP, then a 10-minute lockout (with a live countdown shown here). All GitHub calls go THROUGH the Worker proxy
    * (/api/v1/github/*) with that ticket as Bearer auth, so the browser never
    * touches github.com directly and there is no login redirect at all.
    * Data: products/data/*.md front matter, same format the site already reads.
@@ -253,43 +242,35 @@
     var REPO = '/repos/ykminmin8654/Innovation-Earth-Projects-Website';
     var DIR = 'products/data';
     var TICKET_KEY = 'iep-admin-ticket';
-    // Cloudflare Turnstile — same widget/site key as the contact form.
-    // Replace the placeholder with your real site key (dash.cloudflare.com →
-    // Turnstile). Also update data-sitekey on #cf-turnstile above. The Worker
-    // verifies tokens with TURNSTILE_SECRET_KEY; until that secret is set,
-    // unlocking works without the check.
-    // Site key is read from the widget div's data-sitekey attribute so there
-    // is a single source of truth — change it in ONE place (the div above).
-    var TURNSTILE_PLACEHOLDER_KEYS = ['1x00000000000000000000AA']; // Cloudflare docs test key
-    var turnstileWidgetId = null;
-    var turnstileToken = '';
-    function getTurnstileSiteKey() {
-      var mount = document.getElementById('cf-turnstile');
-      // Single source of truth: the data-sitekey attribute on the widget div.
-      return (mount && mount.getAttribute('data-sitekey')) || TURNSTILE_PLACEHOLDER_KEYS[0];
+    // ---- lockout handling -------------------------------------------------
+    // The Worker's /gate endpoint allows at most 5 wrong keys per IP, then
+    // locks that IP out for 10 minutes (this replaced the old Turnstile human
+    // check). While locked we disable the form and show a live countdown; when
+    // it hits zero the form re-enables automatically.
+    var lockTimer = null;
+    function fmtLeft(sec) {
+      var m = Math.floor(sec / 60), r = sec % 60;
+      return m + ':' + (r < 10 ? '0' : '') + r;
     }
-    function initTurnstile() {
-      var mount = document.getElementById('cf-turnstile');
-      if (!mount) return;
-      if (!window.turnstile) return; // script not loaded (blocked/offline) — gate still works server-side
-      try {
-        turnstileWidgetId = window.turnstile.render(mount, {
-          sitekey: getTurnstileSiteKey(),
-          theme: 'light',
-          size: 'flex',
-          appearance: 'always',   // keep the checkbox visible even after success
-          callback: function (token) { turnstileToken = token; },
-          'error-callback': function () { turnstileToken = ''; },
-          'expired-callback': function () { turnstileToken = ''; }
-        });
-      } catch (e) { /* widget failed to render; server-side gate still applies */ }
+    function startLockCountdown(seconds, msgEl) {
+      if (lockTimer) { clearInterval(lockTimer); lockTimer = null; }
+      var btn = $('keyBtn'), input = $('adminKey');
+      var left = Math.max(1, Math.ceil(Number(seconds) || 600));
+      btn.disabled = true; input.disabled = true; btn.textContent = 'Locked (' + fmtLeft(left) + ')';
+      if (msgEl) msgEl.textContent = 'Too many failed attempts. Locked for about ' + fmtLeft(left) + '. You can try again when the countdown ends.';
+      lockTimer = setInterval(function () {
+        left -= 1;
+        if (left <= 0) {
+          clearInterval(lockTimer); lockTimer = null;
+          btn.disabled = false; input.disabled = false; btn.textContent = 'Unlock';
+          if (msgEl) msgEl.textContent = 'Lockout over — you can try again.';
+          try { input.focus(); } catch (e) {}
+        } else {
+          btn.textContent = 'Locked (' + fmtLeft(left) + ')';
+        }
+      }, 1000);
     }
-    function resetTurnstile() {
-      turnstileToken = '';
-      if (window.turnstile && turnstileWidgetId != null) {
-        try { window.turnstile.reset(turnstileWidgetId); } catch (e) {}
-      }
-    }
+
     // Cache-buster for every GitHub read this page makes. The Worker proxy and
     // Cloudflare's edge cache can otherwise serve a directory listing from up
     // to 60s ago — which made freshly saved products look "missing" from the
@@ -345,32 +326,34 @@
     }
 
     // ---- gate -------------------------------------------------------------
-    // Render the Turnstile widget as soon as its script is available (it's
-    // loaded async, so also hook the window load event as a fallback).
-    if (document.readyState === 'complete') initTurnstile();
-    else window.addEventListener('load', initTurnstile);
-
     $('keyForm').addEventListener('submit', function (ev) {
       ev.preventDefault();
+      if ($('keyBtn').disabled) return; // locked out — countdown running
       var btn = $('keyBtn'), msg = $('gateMsg');
       msg.textContent = ''; btn.disabled = true; btn.textContent = 'Checking…';
       fetch(WORKER + '/gate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key: $('adminKey').value,
-          turnstile: turnstileToken || (document.querySelector('#cf-turnstile-response') || {}).value || ''
-        })
-      }).then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        body: JSON.stringify({ key: $('adminKey').value })
+      }).then(function (r) { return r.json().then(function (d) { return { status: r.status, ok: r.ok, d: d }; }); })
         .then(function (res) {
-          if (!res.ok || !res.d.ok) throw new Error(res.d.error || 'Server refused the key.');
+          if (!res.ok || !res.d.ok) {
+            if (res.status === 429 || res.d.locked) {
+              startLockCountdown(res.d.retry_after_seconds || 600, msg);
+            } else {
+              throw new Error(res.d.error || 'Server refused the key.');
+            }
+            return;
+          }
           sessionStorage.setItem(TICKET_KEY, res.d.ticket);
           enterApp();
         })
         .catch(function (e) {
           msg.textContent = e.message;
-          resetTurnstile(); // tokens are single-use — get a fresh one for the retry
+          $('adminKey').value = '';
         })
-        .finally(function () { btn.disabled = false; btn.textContent = 'Unlock'; });
+        .finally(function () {
+          if (!lockTimer) { btn.disabled = false; btn.textContent = 'Unlock'; }
+        });
     });
 
     function enterApp() {
@@ -644,27 +627,6 @@
         });
     }
   })();
-  </script>
-  <!-- Cloudflare Turnstile: load with render=auto so the widget renders from its
-       data-sitekey attribute even if the explicit-render call above never fires.
-       The div is emptied first to avoid a duplicate render. -->
-  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=iepTurnstileAuto" async defer></script>
-  <script>
-    window.iepTurnstileAuto = function () {
-      try {
-        var mount = document.getElementById('cf-turnstile');
-        if (mount && mount.childElementCount === 0) window.turnstile.render(mount);
-      } catch (e) {}
-    };
-    // Safety net: if the API script loads but onload already missed, poll once on load.
-    window.addEventListener('load', function () {
-      setTimeout(function () {
-        var mount = document.getElementById('cf-turnstile');
-        if (window.turnstile && mount && mount.childElementCount === 0) {
-          try { window.turnstile.render(mount); } catch (e) {}
-        }
-      }, 300);
-    });
   </script>
 </body>
 </html>

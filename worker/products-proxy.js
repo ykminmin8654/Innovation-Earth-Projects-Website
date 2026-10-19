@@ -6,6 +6,8 @@
  * Routes:
  *   GET  /products            -> JSON array of product cards (cached)
  *   POST /gate                -> admin key check, returns signed session ticket
+ *                                (no Turnstile; max 5 wrong keys per IP, then
+ *                                 a 10-minute lockout)
  *   ANY  /api/v1/github/*     -> GitHub API proxy for the custom admin page
  *                                (reads public; writes need /gate ticket +
  *                                 WRITE_TOKEN secret). Decap CMS/OAuth REMOVED.
@@ -226,7 +228,7 @@ async function handleProducts(request, env, ctx) {
 
 const GH_API = 'https://api.github.com';
 
-const BUILD_ID = '2026-10-20.41';
+const BUILD_ID = '2026-10-20.42';
 
 // ---------------------------------------------------------------------------
 // ADMIN GATE — password check endpoint (Decap removed; admin page is custom).
@@ -264,50 +266,91 @@ async function checkTicket(env, ticket, cid) {
   const want = await hmacHex(env.ADMIN_KEY, parts[0] + '.' + parts[1]);
   return safeEqual(want, parts[2]);
 }
+// Brute-force protection replaces the old Cloudflare Turnstile check on this
+// endpoint: at most GATE_MAX_ATTEMPTS wrong keys per client IP, then that IP
+// is locked out for GATE_LOCKOUT_MS (10 minutes). State lives in memory, so
+// each Cloudflare datacenter counts independently — fine for one admin, and
+// it means zero third-party calls on every attempt (no siteverify latency,
+// no widget to maintain, no "human check timed out" failures). A successful
+// unlock clears the counter. The ticket system itself is unchanged.
+const GATE_MAX_ATTEMPTS = 5;
+const GATE_LOCKOUT_MS = 10 * 60 * 1000; // 10 minutes
+const gateAttempts = new Map(); // ip -> { count, firstAt, lockedUntil }
+
+function gateClientIp(request) {
+  return request.headers.get('CF-Connecting-IP') ||
+         (request.headers.get('X-Forwarded-For') || '').split(',')[0].trim() ||
+         'unknown';
+}
+
+function gateState(ip) {
+  const now = Date.now();
+  let st = gateAttempts.get(ip);
+  // Window expired (and not locked): start over.
+  if (st && !st.lockedUntil && now - st.firstAt > GATE_LOCKOUT_MS) {
+    gateAttempts.delete(ip);
+    st = null;
+  }
+  // Lock elapsed: allow attempts again with a clean slate.
+  if (st && st.lockedUntil && now >= st.lockedUntil) {
+    gateAttempts.delete(ip);
+    st = null;
+  }
+  if (!st) {
+    st = { count: 0, firstAt: now, lockedUntil: 0 };
+    gateAttempts.set(ip, st);
+    // Keep the table small even if many IPs probe us.
+    if (gateAttempts.size > 10000) {
+      for (const [k, v] of gateAttempts) {
+        if (now - v.firstAt > GATE_LOCKOUT_MS) gateAttempts.delete(k);
+      }
+    }
+  }
+  return st;
+}
+
+function gateLockBody(st) {
+  const remainS = Math.max(1, Math.ceil((st.lockedUntil - Date.now()) / 1000));
+  const mins = Math.ceil(remainS / 60);
+  return json({
+    ok: false,
+    locked: true,
+    retry_after_seconds: remainS,
+    error: 'Too many failed attempts. Locked for about ' + mins + ' minute' + (mins === 1 ? '' : 's') + '.',
+  }, 429);
+}
+
 async function handleGate(request, env) {
   if (request.method !== 'POST') return json({ error: 'Use POST' }, 405);
   if (!env.ADMIN_KEY) {
     return json({ error: 'Admin gate not configured yet: add ADMIN_KEY in Workers → Settings → Variables & Secrets, then Deploy.' }, 501);
   }
-  let key = '', turnstileToken = '';
+  let key = '';
   try {
     const body = await request.json();
     key = String(body.key || '');
-    turnstileToken = String(body.turnstile || '');
   } catch (e) { /* fallthrough */ }
 
-  // Cloudflare Turnstile: the same human check the contact form uses. When
-  // TURNSTILE_SECRET_KEY is set, unlocking the admin page requires a valid
-  // token from the widget embedded in the login form. While unset, unlocks
-  // pass through (so the admin keeps working before the widget is created).
-  if (env.TURNSTILE_SECRET_KEY) {
-    if (!turnstileToken) {
-      return json({ ok: false, turnstile_required: true, error: 'Please complete the human check, then unlock again.' }, 400);
-    }
-    let tsRes;
-    try {
-      tsRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          secret: env.TURNSTILE_SECRET_KEY,
-          response: turnstileToken,
-          remoteip: request.headers.get('CF-Connecting-IP') || undefined,
-        }),
-      });
-    } catch {
-      return json({ ok: false, error: 'The human check timed out. Please try again.' }, 502);
-    }
-    const tsData = await tsRes.json().catch(() => ({}));
-    if (!tsData.success) {
-      return json({ ok: false, turnstile_failed: true, error: 'The human check failed. Please try again.', codes: tsData['error-codes'] || [] }, 403);
-    }
-  }
+  const ip = gateClientIp(request);
+  const st = gateState(ip);
+  if (st.lockedUntil && Date.now() < st.lockedUntil) return gateLockBody(st);
 
   // Constant-time-ish comparison via HMAC of both values.
   const okA = await hmacHex(env.ADMIN_KEY, 'verify:' + key);
   const okB = await hmacHex(env.ADMIN_KEY, 'verify:' + String(env.ADMIN_KEY));
-  if (!safeEqual(okA, okB)) return json({ error: 'Wrong admin key.' }, 401);
+  if (!safeEqual(okA, okB)) {
+    st.count += 1;
+    let msg = 'Wrong admin key.';
+    if (st.count >= GATE_MAX_ATTEMPTS) {
+      st.lockedUntil = Date.now() + GATE_LOCKOUT_MS;
+      return gateLockBody(st);
+    }
+    const left = GATE_MAX_ATTEMPTS - st.count;
+    msg += ' ' + left + ' attempt' + (left === 1 ? '' : 's') + ' left before a 10-minute lockout.';
+    return json({ error: msg, attempts_left: left }, 401);
+  }
+  // Success: clear any failure history for this IP.
+  gateAttempts.delete(ip);
   const ticket = await makeTicket(env, 'iep-admin');
   return json({ ok: true, ticket, expires_in_ms: TICKET_TTL_MS });
 }
