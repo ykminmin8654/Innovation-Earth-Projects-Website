@@ -277,6 +277,7 @@
           sitekey: getTurnstileSiteKey(),
           theme: 'light',
           size: 'flex',
+          appearance: 'always',   // keep the checkbox visible even after success
           callback: function (token) { turnstileToken = token; },
           'error-callback': function () { turnstileToken = ''; },
           'expired-callback': function () { turnstileToken = ''; }
