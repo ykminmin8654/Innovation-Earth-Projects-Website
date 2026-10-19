@@ -283,7 +283,16 @@ async function handleProducts(request, env, ctx) {
       // bypass the 15s in-memory window entirely.
       plCache.at = 0;
       items = await getProductsFresh(env);
-      items = await attachDeleteShas(env, items);
+      // attachDeleteShas does one extra GitHub call PER product. If any of
+      // those calls fail (rate limit / hiccup) we must NOT throw away the
+      // products we already fetched — the _sha is only needed for deletes,
+      // and the admin can always fetch it on demand. So degrade gracefully:
+      // serve the list without shas instead of a 502 "Could not load products".
+      try {
+        items = await attachDeleteShas(env, items);
+      } catch (shaErr) {
+        console.error('sha attach failed (serving list anyway):', shaErr);
+      }
     } else {
       items = await getProductsFresh(env);
     }
@@ -334,7 +343,7 @@ async function handleProducts(request, env, ctx) {
 
 const GH_API = 'https://api.github.com';
 
-const BUILD_ID = '2026-10-20.44';
+const BUILD_ID = '2026-10-20.45';
 
 // ---------------------------------------------------------------------------
 // ADMIN GATE — password check endpoint (Decap removed; admin page is custom).
