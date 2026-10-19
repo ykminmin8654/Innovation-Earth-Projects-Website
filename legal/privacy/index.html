@@ -3,25 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <!-- ============================================================================
-       legal/doc.html — GitHub Pages "directory URL" shim.
+       legal/privacy/index.html — GitHub Pages "directory URL" shim.
 
        A request for /legal/privacy hits this file (GitHub Pages serves the
        nearest index-ish HTML inside a directory when the exact path doesn't
        exist). We forward the visitor to the real document at /legal/ and let
        legal.js open the matching tab from the ?doc= parameter, so clean URLs
-       like innovationearthprojects.org/legal/privacy and .../legal/tos work
-       with NO hash in the address bar.
+       like innovationearthprojects.org/legal/privacy work with NO hash in the
+       address bar.
 
-       Deep links from the cookie banner / footer that still use #privacy or
-       #tos are also honored here.
+       Deep links that still use #privacy are also honored here.
        ==========================================================================*/ -->
   <title>Innovation Earth Projects — Legal</title>
   <script>
     (function () {
-      var seg = window.location.pathname.split('/').filter(Boolean).pop() || '';
-      var doc = null;
-      if (/^privacy/i.test(seg)) doc = 'privacy';
-      else if (/^(tos|terms)/i.test(seg)) doc = 'tos';
+      var doc = 'privacy';
+      // If we were reached some other way, fall back to path/hash sniffing.
+      if (!doc) {
+        var seg = window.location.pathname.split('/').filter(Boolean).pop() || '';
+        if (/^privacy/i.test(seg)) doc = 'privacy';
+        else if (/^(tos|terms)/i.test(seg)) doc = 'tos';
+      }
       if (!doc) {
         var q = new URLSearchParams(window.location.search);
         var d = (q.get('doc') || '').toLowerCase();
