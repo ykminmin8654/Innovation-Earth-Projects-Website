@@ -34,6 +34,7 @@ Workers & Pages → **decap-proxy** → Settings → **Variables and secrets**:
 |---|---|---|
 | `ADMIN_KEY` | Secret text | Pick any strong password. This IS your admin login. Change it anytime by editing this value + Deploy. |
 | `WRITE_TOKEN` | Secret text | A GitHub fine-grained PAT (see below) used server-side for saves. Never sent to browsers. |
+| `TURNSTILE_SECRET_KEY` | Secret text | Your Turnstile widget's **secret** key (dash.cloudflare.com → Turnstile → your widget → copy Secret Key). Enables real bot-blocking on the admin gate + contact form. Without it, the checkbox shows but is NOT verified server-side. |
 | `FORMSPREE_ENDPOINT` | Variable | Your Formspree form URL (contact form → Gmail). Keep as-is if already set. |
 | `GITHUB_TOKEN` | Variable (optional) | Read-only PAT; raises the products-feed rate limit. Keep if already set. |
 
