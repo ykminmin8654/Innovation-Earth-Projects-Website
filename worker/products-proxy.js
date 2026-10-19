@@ -226,7 +226,7 @@ async function handleProducts(request, env, ctx) {
 
 const GH_API = 'https://api.github.com';
 
-const BUILD_ID = '2026-10-19.40';
+const BUILD_ID = '2026-10-20.41';
 
 // ---------------------------------------------------------------------------
 // ADMIN GATE — password check endpoint (Decap removed; admin page is custom).
@@ -582,6 +582,10 @@ async function handleContact(request, env) {
 // Providers supported (set NEWSLETTER_PROVIDER secret):
 //   "buttondown"  -> requires BUTTONDOWN_API_KEY secret (https://buttondown.com)
 //   "beehiiv"     -> requires BEEHIIV_API_KEY + BEEHIIV_PUBLICATION_ID secrets
+//   "email"       -> sends each signup to your inbox via FORMSPREE_ENDPOINT
+//                    (a Formspree form URL that delivers to Gmail; reuses the
+//                    same endpoint as the contact form — create a second free
+//                    Formspree form for cleaner separation if you prefer)
 // If no provider is configured, valid signups are still accepted and logged
 // (console.log in the Workers live logs) so nothing breaks before you choose.
 // Protection layers: honeypot field, Cloudflare Turnstile (same site key as
@@ -698,6 +702,27 @@ async function handleNewsletter(request, env) {
       );
       if (res.ok) return json({ ok: true });
       console.error('Beehiiv error:', res.status, await res.text().catch(() => ''));
+      return json({ ok: false, error: 'Something went wrong subscribing you. Please try again shortly.' }, 502);
+    }
+
+    if (provider === 'email') {
+      // Deliver each signup as an email to your inbox via Formspree
+      // (FORMSPREE_ENDPOINT already points at a form that forwards to Gmail).
+      if (!env.FORMSPREE_ENDPOINT) {
+        return json({ ok: false, error: 'Newsletter is not fully configured yet (FORMSPREE_ENDPOINT missing).' }, 500);
+      }
+      const res = await fetch(env.FORMSPREE_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          _subject: `Newsletter signup: ${email}`,
+          type: 'newsletter',
+          email,
+          name: name || '',
+        }),
+      });
+      if (res.ok) return json({ ok: true });
+      console.error('Formspree newsletter error:', res.status, await res.text().catch(() => ''));
       return json({ ok: false, error: 'Something went wrong subscribing you. Please try again shortly.' }, 502);
     }
 

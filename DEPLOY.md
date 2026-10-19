@@ -83,8 +83,24 @@ Open `https://innovationearthprojects.org/admin/`, enter the key from step 1.
 | Status endpoint shows old build | Paste failed — reopen Code tab, replace ALL content, Deploy again. |
 
 
-## Newsletter (added 2026-10-19)
-- Footer of every public page now has a Newsletter sign-up (Turnstile + honeypot + per-IP rate limit).
-- It POSTs to the Worker route /newsletter. To activate: paste worker/products-proxy.js (build 2026-10-19.40) into Cloudflare -> decap-proxy -> Deploy.
-- Verify: curl https://decap-proxy.ykminmin8654.workers.dev/ should report build 2026-10-19.40.
-- Optional delivery provider secrets: NEWSLETTER_PROVIDER=buttondown + BUTTONDOWN_API_KEY, or NEWSLETTER_PROVIDER=beehiiv + BEEHIIV_API_KEY + BEEHIIV_PUBLICATION_ID. Without them, signups are accepted and logged in Workers live logs only.
+## Newsletter (added 2026-10-19, updated 2026-10-20)
+- Public page at /newsletter/ (linked from the top nav; NOT in the footer). Protection: Turnstile + honeypot + per-IP rate limit.
+- It POSTs to the Worker route /newsletter. To activate: paste worker/products-proxy.js (build 2026-10-20.41) into Cloudflare -> decap-proxy -> Deploy.
+- Verify: curl https://decap-proxy.ykminmin8654.workers.dev/ should report build 2026-10-20.41.
+- WHERE THE EMAILS GO — pick ONE by setting the `NEWSLETTER_PROVIDER` secret:
+  1. **Email straight to your Gmail (simplest)**: set `NEWSLETTER_PROVIDER=email`.
+     Each signup is forwarded through the existing `FORMSPREE_ENDPOINT` (the same
+     Formspree form that already delivers contact messages to your Gmail), with
+     subject "Newsletter signup: <email>". No new accounts needed. Tip: create a
+     second free Formspree form for newsletter-only traffic and point
+     FORMSPREE_ENDPOINT at it if you don't want signups mixed with contacts.
+  2. **Buttondown** (free up to 1,000 subscribers, has its own send-newsletter UI):
+     set `NEWSLETTER_PROVIDER=buttondown` + `BUTTONDOWN_API_KEY` (secret, from
+     buttondown.com → Settings → API).
+  3. **Beehiiv**: set `NEWSLETTER_PROVIDER=beehiiv` + `BEEHIIV_API_KEY` +
+     `BEEHIIV_PUBLICATION_ID` (secrets, from beehiiv dashboard → Settings → API).
+  - If `NEWSLETTER_PROVIDER` is unset, signups are accepted but stored ONLY in
+    Workers live logs (dash.cloudflare.com → Workers & Pages → decap-proxy →
+    Logs → Start live logs, then submit a test signup on /newsletter/ and look
+    for `NEWSLETTER_SIGNUP`). They do NOT email you until you configure a provider.
+- After changing secrets: click Deploy once so they take effect.
