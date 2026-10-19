@@ -27,20 +27,12 @@
     { href: '/home',       label: 'Home'       },
     { href: '/about',      label: 'About'      },
     { href: '/products',   label: 'Products'   },
-    { href: '/contact',    label: 'Contact'    },
-    { href: '/newsletter', label: 'Newsletter' }
+    { href: '/contact',    label: 'Contact'    }
   ];
 
-  /* Newsletter CTA in the footer. The sign-up form itself now lives on its
-     own public page (/newsletter/) — the footer just points there. */
-  var FOOTER_NEWSLETTER_HTML =
-    '<div class="footer__col footer__nl">' +
-      '<h4>Newsletter</h4>' +
-      '<p class="footer__nl-blurb">New tools, changelogs, and student-build tips. One email a month, no spam.</p>' +
-      '<a class="btn btn--primary btn--sm shine footer__nl-cta" href="/newsletter">' +
-        'Subscribe <i class="fas fa-arrow-right"></i>' +
-      '</a>' +
-    '</div>';
+  /* NOTE: the footer intentionally contains NO newsletter content any more.
+     The sign-up experience lives entirely on its own page at /newsletter/,
+     reachable from the top navigation only. */
 
   var SECTIONS = {
     'home':       '/home/index.html',
@@ -150,39 +142,25 @@
     if (!mount) return;
     if (mount.nextElementSibling && mount.nextElementSibling.classList.contains('footer')) return;
     var wrapper = document.createElement('div');
-    // Add the newsletter column before injecting (skip it inside /admin/).
-    var html = FOOTER_HTML;
-    if (!/^\/admin/i.test(window.location.pathname)) {
-      html = html.replace('<div class="container footer__bottom">', FOOTER_NEWSLETTER_HTML + '<div class="container footer__bottom">');
-    }
-    wrapper.innerHTML = html;
+    wrapper.innerHTML = FOOTER_HTML;
     mount.parentNode.replaceChild(wrapper.firstChild, mount);
   }
 
   function loadNewsletterScript() {
     // Wire up the sign-up form + Turnstile widget. Skipped inside /admin/.
-    // Outside /newsletter/ there is no form any more (the footer only links
-    // to the newsletter page), so we don't load anything there.
+    // The footer no longer contains any newsletter markup — shared/newsletter.js
+    // is loaded ONLY on the /newsletter/ page itself, and only once per
+    // document. (Re-firing init events on every boot used to stack up during
+    // SPA navigation; the script self-wires via shim:content-loaded instead.)
     if (/^\/admin/i.test(window.location.pathname)) return;
     var onNlPage = /^\/newsletter(\/|$)/i.test(window.location.pathname) ||
                    document.body.getAttribute('data-page') === 'newsletter';
     if (!onNlPage) return;
-    var existing = document.getElementById('iep-newsletter-script');
-    if (existing && existing.dataset.loaded === '1') { initNewsletterForms(); return; }
-    if (!existing) {
-      var s = document.createElement('script');
-      s.id = 'iep-newsletter-script';
-      s.src = '/shared/newsletter.js?v=20261019r';
-      s.onload = function () { s.dataset.loaded = '1'; initNewsletterForms(); };
-      document.body.appendChild(s);
-    }
-  }
-
-  function initNewsletterForms() {
-    // shared/newsletter.js wires itself on DOMContentLoaded + the shim event;
-    // fire the event so a freshly injected newsletter page gets wired even
-    // though the DOM was already loaded when the script arrived.
-    window.dispatchEvent(new Event('shim:content-loaded'));
+    if (document.getElementById('iep-newsletter-script')) return;
+    var s = document.createElement('script');
+    s.id = 'iep-newsletter-script';
+    s.src = '/shared/newsletter.js?v=20261019s';
+    document.body.appendChild(s);
   }
 
   function injectCookieBanner() {

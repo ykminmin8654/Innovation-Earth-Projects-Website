@@ -8,10 +8,25 @@
    in "explicit" mode and renders it into .nl-turnstile so it
    never collides with the contact page's auto-render widget.
    All state changes are announced via the .nl-msg live region.
+
+   Crash guards (this file is re-executed by the SPA router on
+   every visit to /newsletter/ within one page session):
+     • window.__iepNlInit — only ONE instance ever wires forms,
+       loads the Turnstile api.js, or registers global callbacks.
+     • Widgets are tracked per-node and removed from the registry
+       when their form is replaced (e.g. success state) so a stale
+       Turnstile callback can never touch a detached DOM node.
    ============================================================ */
 
 (function () {
   'use strict';
+
+  /* ---- Re-entry guard ----
+     The shim router clones <script> tags on each SPA navigation, so
+     this IIFE can run several times in one document. Only the first
+     copy does any real work; later copies exit immediately. */
+  if (window.__iepNlInit) return;
+  window.__iepNlInit = true;
 
   var ENDPOINT = 'https://decap-proxy.ykminmin8654.workers.dev/newsletter';
   var SITE_KEY = '0x4AAAAAAFMinCrsCsyi7S6X';
@@ -19,6 +34,26 @@
 
   function getStored(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function setStored(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+  /* ---- Live Turnstile widgets, keyed by container node ---- */
+  var widgets = []; // [{ el, id }]
+
+  function dropWidget(el) {
+    for (var i = widgets.length - 1; i >= 0; i--) {
+      if (widgets[i].el === el) {
+        var w = widgets.splice(i, 1)[0];
+        try { if (window.turnstile && window.turnstile.remove) window.turnstile.remove(w.id); } catch (e) {}
+      }
+    }
+  }
+  function dropDetachedWidgets() {
+    for (var i = widgets.length - 1; i >= 0; i--) {
+      if (!document.body.contains(widgets[i].el)) {
+        var w = widgets.splice(i, 1)[0];
+        try { if (window.turnstile && window.turnstile.remove) window.turnstile.remove(w.id); } catch (e) {}
+      }
+    }
+  }
 
   /* ---- Turnstile: expose callbacks BEFORE the api.js load ---- */
   window.iepNlTurnstileCb = function (token) {
@@ -40,6 +75,12 @@
     s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=iepNlTsOnload&render=explicit';
     s.async = true;
     s.defer = true;
+    // If the CDN script fails to load, don't leave a dead stub behind —
+    // remove it so a later init() can retry instead of hanging forever.
+    s.onerror = function () {
+      tsLoaded = false;
+      if (s.parentNode) s.parentNode.removeChild(s);
+    };
     document.head.appendChild(s);
     tsLoaded = true;
   }
@@ -47,12 +88,13 @@
 
   function renderWidgets() {
     if (!window.turnstile) return;
+    dropDetachedWidgets();
     var nodes = document.querySelectorAll('.cf-turnstile.nl-turnstile');
     Array.prototype.forEach.call(nodes, function (node) {
       if (node.dataset.rendered === '1') return;
       node.dataset.rendered = '1';
       try {
-        window.turnstile.render(node, {
+        var id = window.turnstile.render(node, {
           sitekey: SITE_KEY,
           theme: 'light',
           size: 'flexible',
@@ -62,20 +104,31 @@
           'error-callback': function () {
             node.dataset.rendered = '0';
             node.removeAttribute('data-rendered');
+            dropWidget(node);
           }
         });
-      } catch (e) { node.dataset.rendered = '0'; }
+        widgets.push({ el: node, id: id });
+      } catch (e) {
+        node.dataset.rendered = '0';
+        node.removeAttribute('data-rendered');
+      }
     });
   }
 
   /* ---- Form wiring ---- */
   function showSuccess(form, msg) {
+    // Tear down any Turnstile widget inside the form BEFORE replacing its
+    // innerHTML, otherwise Cloudflare keeps ticking against a detached node.
+    var ts = form.querySelector('.cf-turnstile');
+    if (ts) dropWidget(ts);
     form.innerHTML =
       '<div class="nl-success" role="status">' +
         '<span class="nl-success__icon"><i class="fas fa-envelope-circle-check"></i></span>' +
         '<strong>You\'re on the list!</strong>' +
         '<span>' + (msg || 'Check your inbox for a confirmation email.') + '</span>' +
       '</div>';
+    var wrap = form.closest('.nl-form--page') || form.parentElement;
+    if (wrap) wrap.classList.add('is-done');
   }
 
   function wire(form) {
@@ -91,6 +144,9 @@
 
     form.addEventListener('submit', function (ev) {
       ev.preventDefault();
+      // Ignore submits while a request is already in flight — prevents
+      // double posts (and stacked pending fetches) on impatient clicks.
+      if (form.dataset.nlBusy === '1') return;
       msg.textContent = '';
       msg.className = 'nl-msg';
 
@@ -102,6 +158,7 @@
         return;
       }
 
+      form.dataset.nlBusy = '1';
       btn.disabled = true;
       btn.classList.add('is-loading');
       var label = btn.querySelector('.nl-submit__label');
@@ -134,6 +191,7 @@
           msg.classList.add('is-error');
         })
         .finally(function () {
+          delete form.dataset.nlBusy;
           btn.disabled = false;
           btn.classList.remove('is-loading');
           if (label) label.textContent = prevLabel;
@@ -163,6 +221,6 @@
   } else {
     init();
   }
-  // The SPA router re-injects the footer on navigation; re-wire then too.
+  // The SPA router re-injects the newsletter page on navigation; re-wire then too.
   window.addEventListener('shim:content-loaded', init);
 })();

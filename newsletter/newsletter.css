@@ -55,6 +55,36 @@
   margin-bottom: var(--s-4);
 }
 
+/* ---------- Hero entrance (one-shot, pure CSS) ----------
+   .nl-enter is added once by newsletter/newsletter.js. The animation
+   ends fully visible and NEVER depends on scroll observers — if JS or
+   the SPA router misbehaves, content simply stays static and readable. */
+.nl-hero__copy,
+.nl-hero__visual { opacity: 1; }
+
+@keyframes nlRiseIn {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: none; }
+}
+.nl-enter {
+  animation: nlRiseIn 0.8s cubic-bezier(.2, .7, .2, 1) both;
+  animation-delay: var(--nl-enter-delay, 0ms);
+}
+
+/* Card cascades for perks/steps — animation-only (like the products
+   page), so elements can never get stuck at opacity:0. */
+@keyframes nlFadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: none; }
+}
+.nl-stagger > .nl-item {
+  animation: nlFadeUp 0.7s cubic-bezier(.2, .7, .2, 1) both;
+}
+.nl-stagger > .nl-item:nth-child(1) { animation-delay: 60ms; }
+.nl-stagger > .nl-item:nth-child(2) { animation-delay: 130ms; }
+.nl-stagger > .nl-item:nth-child(3) { animation-delay: 200ms; }
+.nl-stagger > .nl-item:nth-child(4) { animation-delay: 270ms; }
+
 /* ---------- Sign-up card (the footer form, promoted to a page) ---------- */
 .nl-form { position: relative; }
 .nl-hp {
@@ -471,9 +501,14 @@
   .nl-spark,
   .nl-plane,
   .nl-steps .step::after,
-  .nl-form--page:not(:focus-within) .nl-input:placeholder-shown {
+  .nl-form--page:not(:focus-within) .nl-input:placeholder-shown,
+  .nl-enter,
+  .nl-stagger > .nl-item {
     animation: none !important;
   }
   .nl-form--page:focus-within { transform: none; }
   .nl-faq details p { animation: none !important; }
 }
+
+/* When JS is disabled the entrance class is never added — everything
+   above already renders statically, so nothing is ever stuck hidden. */

@@ -115,16 +115,12 @@
 
 .footer__inner {
   display: grid;
-  grid-template-columns: 1.8fr 0.9fr 0.9fr 0.9fr 1.5fr;
+  grid-template-columns: 1.8fr 0.9fr 0.9fr 0.9fr;
   gap: var(--s-6);
   margin-bottom: var(--s-7);
 }
 @media (max-width: 1080px) {
-  .footer__inner { grid-template-columns: repeat(3, 1fr); }
-  .footer__nl { grid-column: 1 / -1; max-width: 420px; }
-}
-@media (min-width: 1081px) {
-  .footer__inner { grid-template-columns: 1.8fr 0.9fr 0.9fr 0.9fr 1.3fr; }
+  .footer__inner { grid-template-columns: repeat(2, 1fr); }
 }
 
 .footer__brand {
@@ -300,25 +296,6 @@
 }
 
 .footer__legal a:hover { color: var(--teal); }
-
-/* ============================================================
-   NEWSLETTER — footer CTA column (markup injected by nav.js).
-   The sign-up form itself lives on the /newsletter/ page and is
-   styled there (newsletter/newsletter.css) + wired by
-   shared/newsletter.js.
-   ============================================================ */
-.footer__nl .footer__nl-blurb {
-  color: var(--muted);
-  font-size: 0.85rem;
-  line-height: 1.55;
-  margin: 0 0 var(--s-3);
-}
-.footer__nl-cta i { transition: transform 0.35s cubic-bezier(.2,.7,.2,1); }
-.footer__nl-cta:hover i { transform: translateX(3px); }
-@media (prefers-reduced-motion: reduce) {
-  .footer__nl-cta i { transition: none !important; }
-  .footer__nl-cta:hover i { transform: none; }
-}
 
 /* Screen-reader-only utility */
 .sr-only {

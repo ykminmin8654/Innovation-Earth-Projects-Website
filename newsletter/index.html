@@ -25,11 +25,11 @@
   <!-- Shared styles -->
   <link rel="stylesheet" href="../shared/tokens.css" />
   <link rel="stylesheet" href="../shared/base.css" />
-  <link rel="stylesheet" href="../shared/nav.css?v=20261019r" />
-  <link rel="stylesheet" href="../shared/motion.css" />
+  <link rel="stylesheet" href="../shared/nav.css?v=20261019s" />
+  <link rel="stylesheet" href="../shared/motion.css?v=20261019s" />
 
   <!-- Local styles -->
-  <link rel="stylesheet" href="./newsletter.css?v=20261019r" />
+  <link rel="stylesheet" href="./newsletter.css?v=20261019s" />
   <link rel="icon" type="image/png" href="/images/logo.png" />
 </head>
 
@@ -114,28 +114,28 @@
          ============================================================ -->
     <section class="section nl-perks">
       <div class="container">
-        <header class="section__head reveal">
+        <header class="section__head">
           <h2 class="section__title">What lands in your inbox</h2>
           <p class="section__lede">Every issue is short enough to read with your morning coffee.</p>
         </header>
 
-        <div class="nl-perks__grid">
-          <article class="value-card nl-perk reveal icon-pop">
+        <div class="nl-perks__grid nl-stagger">
+          <article class="value-card nl-perk nl-item">
             <span class="nl-perk__icon nl-perk__icon--teal"><i class="fas fa-rocket"></i></span>
             <h3>New tool drops</h3>
             <p>Be first to try every app we ship — free tools for competitors, learners, and makers.</p>
           </article>
-          <article class="value-card nl-perk reveal icon-pop" data-delay="100">
+          <article class="value-card nl-perk nl-item">
             <span class="nl-perk__icon nl-perk__icon--cyan"><i class="fas fa-code-commit"></i></span>
             <h3>Honest changelogs</h3>
             <p>What changed, what broke, and what we fixed next — written by the students who built it.</p>
           </article>
-          <article class="value-card nl-perk reveal icon-pop" data-delay="200">
+          <article class="value-card nl-perk nl-item">
             <span class="nl-perk__icon nl-perk__icon--lime"><i class="fas fa-lightbulb"></i></span>
             <h3>Student-build tips</h3>
             <p>Short, practical lessons on shipping real software while juggling homework and deadlines.</p>
           </article>
-          <article class="value-card nl-perk reveal icon-pop" data-delay="300">
+          <article class="value-card nl-perk nl-item">
             <span class="nl-perk__icon nl-perk__icon--blue"><i class="fas fa-lock"></i></span>
             <h3>Privacy, always</h3>
             <p>No ads, no trackers, no selling your data. One email a month — that's the whole deal.</p>
@@ -149,23 +149,23 @@
          ============================================================ -->
     <section class="section section--tint nl-steps-section">
       <div class="container">
-        <header class="section__head reveal">
+        <header class="section__head">
           <h2 class="section__title">How it works</h2>
           <p class="section__lede">Three steps. Roughly ten seconds. That's it.</p>
         </header>
 
-        <ol class="steps nl-steps">
-          <li class="step reveal">
+        <ol class="nl-steps nl-stagger">
+          <li class="step nl-item">
             <span class="step__num">1</span>
             <h3>Drop your email</h3>
             <p>Type your address into the box above and hit Subscribe.</p>
           </li>
-          <li class="step reveal" data-delay="150">
+          <li class="step nl-item">
             <span class="step__num">2</span>
             <h3>Tick the human check</h3>
             <p>A quick Cloudflare Turnstile tap keeps bots off the list.</p>
           </li>
-          <li class="step reveal" data-delay="300">
+          <li class="step nl-item">
             <span class="step__num">3</span>
             <h3>Read once a month</h3>
             <p>Issue #1 arrives with the latest news. Unsubscribe any time.</p>
@@ -179,36 +179,36 @@
          ============================================================ -->
     <section class="section nl-faq-section">
       <div class="container">
-        <header class="section__head reveal">
+        <header class="section__head">
           <h2 class="section__title">Questions, answered</h2>
         </header>
 
         <div class="faq nl-faq">
-          <details class="reveal">
+          <details>
             <summary><i class="fas fa-envelope"></i> How often will you actually email me?</summary>
             <p>Once a month, plus an occasional one-off when something big ships. If we can't say anything
                worth reading, we don't send anything.</p>
           </details>
-          <details class="reveal" data-delay="100">
+          <details>
             <summary><i class="fas fa-user-shield"></i> What happens to my email address?</summary>
             <p>It goes straight to our newsletter provider (and our privacy policy covers the details).
                We never sell it, rent it, or hand it to advertisers.</p>
           </details>
-          <details class="reveal" data-delay="200">
+          <details>
             <summary><i class="fas fa-arrow-right-rotate"></i> Can I unsubscribe easily?</summary>
             <p>Yes — every issue has a one-click unsubscribe link in the footer. No "are you sure?" mazes.</p>
           </details>
-          <details class="reveal" data-delay="300">
+          <details>
             <summary><i class="fas fa-gift"></i> Does it cost anything?</summary>
             <p>Nope. The newsletter is free, just like everything else we build.</p>
           </details>
         </div>
 
-        <div class="nl-final text-center reveal">
+        <div class="nl-final text-center">
           <h2>Ready? <span class="accent">Join the list.</span></h2>
-          <a href="#iep-newsletter" class="btn btn--primary btn--glow nl-top-link">
+          <button type="button" class="btn btn--primary nl-top-link" id="nl-top-btn">
             Subscribe now <i class="fas fa-arrow-up"></i>
-          </a>
+          </button>
         </div>
       </div>
     </section>
@@ -217,8 +217,7 @@
 
   <div id="footer-mount"></div>
 
-  <script src="../shared/nav.js?v=20261019r"></script>
-  <script src="../shared/motion.js"></script>
-  <script src="./newsletter.js?v=20261019r"></script>
+  <script src="../shared/nav.js?v=20261019s"></script>
+  <script src="./newsletter.js?v=20261019s"></script>
 </body>
 </html>

@@ -2,10 +2,19 @@
    NEWSLETTER PAGE — local script (/newsletter/)
    The form itself is wired by shared/newsletter.js (loaded by
    shared/nav.js). This file only adds page-level polish:
-     • re-runs the shared reveal/stagger engine after SPA nav
+     • one-shot "rise-in" entrance for the hero copy/visual
+       (pure CSS animation — can never leave content stuck hidden,
+       unlike scroll-observer reveals)
      • a tiny burst of teal "confetti" when signup succeeds
-     • smooth-scrolls the final CTA back to the form
    Plain ES5, respects prefers-reduced-motion.
+
+   Robustness notes:
+     • The SPA router re-executes this file on every visit to
+       /newsletter/, so everything here is guarded to run at most
+       once per document and tears down its own listeners.
+     • No IntersectionObserver / MutationObserver loops are kept
+       alive after boot — the old stacked observers were what made
+       animations freeze up during navigation.
    ============================================================ */
 
 (function () {
@@ -13,17 +22,26 @@
 
   var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* ---------- Reveal / stagger on boot and after SPA navigation ---------- */
-  function runMotion() {
-    if (window.IEPmotion) {
-      if (window.IEPmotion.reveals) window.IEPmotion.reveals();
-      if (window.IEPmotion.stagger) window.IEPmotion.stagger();
-    }
+  /* ---------- One-shot entrance (never depends on JS observing) ----------
+     Adds .nl-enter to the hero halves on load; the CSS animation plays
+     once with `both` fill and ends fully visible even if it is interrupted. */
+  function playEntrance() {
+    if (reduceMotion) return; // CSS shows everything statically in that case
+    var targets = document.querySelectorAll('.nl-hero__copy, .nl-hero__visual');
+    Array.prototype.forEach.call(targets, function (el, i) {
+      el.style.setProperty('--nl-enter-delay', (i * 120) + 'ms');
+      el.classList.add('nl-enter');
+    });
   }
 
   /* ---------- Success confetti ----------
-     Watches the form for .nl-success (injected by newsletter.js) and
-     fires one short particle burst from its centre. */
+     Watches the current form for .nl-success (injected by newsletter.js)
+     and fires ONE short particle burst. Re-attaches after each SPA
+     navigation but always disconnects the previous observer first. */
+  var burstObserver = null;
+  var burstFired = false;
+  var confettiTimer = null;
+
   function burst(x, y) {
     if (reduceMotion) return;
     var colors = ['#008080', '#00CED1', '#32CD32', '#1E90FF'];
@@ -43,25 +61,33 @@
       frag.appendChild(p);
     }
     document.body.appendChild(frag);
-    setTimeout(function () {
+    clearTimeout(confettiTimer);
+    confettiTimer = setTimeout(function () {
       var nodes = document.querySelectorAll('.nl-confetti');
       Array.prototype.forEach.call(nodes, function (n) { n.remove(); });
     }, 1400);
   }
 
   function watchForSuccess() {
-    var form = document.querySelector('form[data-nl-form]');
-    if (!form || form.dataset.nlPageWatched === '1') return;
-    form.dataset.nlPageWatched = '1';
+    // Tear down any observer left over from a previous visit.
+    if (burstObserver) { burstObserver.disconnect(); burstObserver = null; }
 
-    var mo = new MutationObserver(function () {
+    var form = document.querySelector('form[data-nl-form]');
+    if (!form) return;
+
+    // Already showing success (e.g. returning visitor via localStorage)?
+    if (form.querySelector('.nl-success')) return;
+
+    burstObserver = new MutationObserver(function () {
       var ok = form.querySelector('.nl-success');
-      if (!ok || form.dataset.nlBurst === '1') return;
-      form.dataset.nlBurst = '1';
+      if (!ok) return;
+      if (burstObserver) { burstObserver.disconnect(); burstObserver = null; }
+      if (burstFired) return;
+      burstFired = true;
       var r = ok.getBoundingClientRect();
       burst(r.left + r.width / 2, r.top + r.height / 2);
     });
-    mo.observe(form, { childList: true, subtree: true });
+    burstObserver.observe(form, { childList: true, subtree: true });
   }
 
   /* ---------- Inject confetti keyframes once ---------- */
@@ -78,14 +104,40 @@
     document.head.appendChild(s);
   }
 
-  /* ---------- Boot ---------- */
+  /* ---------- Final CTA smooth scroll (no shared magnetic engine) ---------- */
+  function wireTopButton() {
+    var btn = document.getElementById('nl-top-btn');
+    if (!btn || btn.dataset.wired === '1') return;
+    btn.dataset.wired = '1';
+    btn.addEventListener('click', function () {
+      var formEl = document.getElementById('iep-newsletter');
+      if (!formEl) return;
+      try {
+        formEl.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+      } catch (e) {
+        formEl.scrollIntoView();
+      }
+      var input = formEl.querySelector('.nl-input');
+      if (input && !formEl.querySelector('.nl-success')) {
+        setTimeout(function () { try { input.focus({ preventScroll: true }); } catch (e) {} }, reduceMotion ? 0 : 500);
+      }
+    });
+  }
+
+  /* ---------- Boot ----------
+     Runs on DOMContentLoaded AND on shim:content-loaded (SPA nav into
+     /newsletter/), but the entrance animation only plays once per
+     document to avoid restarting mid-transition. */
+  var entranceDone = false;
+
   function boot() {
-    // Fresh DOM after an SPA navigation → reset the per-form burst flag.
-    var form = document.querySelector('form[data-nl-form]');
-    if (form) delete form.dataset.nlBurst;
+    if (!entranceDone) {
+      entranceDone = true;
+      playEntrance();
+    }
     injectConfettiCss();
     watchForSuccess();
-    runMotion();
+    wireTopButton();
   }
 
   if (document.readyState === 'loading') {
