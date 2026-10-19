@@ -36,7 +36,7 @@
      Then paste its Site Key below (also set in index.html data-sitekey)
      and add the matching Secret Key to the Worker as TURNSTILE_SECRET_KEY.
      Until both are configured the form still submits normally. */
-  var TURNSTILE_SITE_KEY = '1x00000000000000000000AA'; // replace with your widget's site key
+  var TURNSTILE_SITE_KEY = '0x4AAAAAAFMinCrsCsyi7S6X'; // your widget's site key (same as admin login)
 
   /* ------------------------------------------------------- */
 

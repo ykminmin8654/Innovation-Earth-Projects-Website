@@ -170,11 +170,11 @@
         <input type="password" id="adminKey" placeholder="Enter the admin key" required autofocus />
         <!-- Cloudflare Turnstile human check (same widget as the contact form) -->
         <div class="cf-turnstile-wrap" id="cf-turnstile-wrap">
-          <!-- Paste your real widget Site Key in data-sitekey below (dash.cloudflare.com → Turnstile →
-               your widget). Leave as-is until then: the script falls back to Cloudflare's visible
-               "always passes" test key so the checkbox actually renders. -->
+          <!-- Real widget Site Key (dash.cloudflare.com → Turnstile). If you ever
+               rotate this widget, update it here and in contact/contact.js — the
+               Worker verifies tokens with the matching TURNSTILE_SECRET_KEY secret. -->
           <div class="cf-turnstile" id="cf-turnstile"
-               data-sitekey="3x00000000000000000000FF"
+               data-sitekey="0x4AAAAAAFMinCrsCsyi7S6X"
                data-theme="light"
                data-size="flex"></div>
         </div>
@@ -265,10 +265,8 @@
     var turnstileToken = '';
     function getTurnstileSiteKey() {
       var mount = document.getElementById('cf-turnstile');
-      var k = (mount && mount.getAttribute('data-sitekey')) || TURNSTILE_PLACEHOLDER_KEYS[0];
-      // If nobody pasted the real widget key yet, fall back to Cloudflare's
-      // documented "always passes" test key so the box visibly renders.
-      return TURNSTILE_PLACEHOLDER_KEYS.indexOf(k) !== -1 ? '3x00000000000000000000FF' : k;
+      // Single source of truth: the data-sitekey attribute on the widget div.
+      return (mount && mount.getAttribute('data-sitekey')) || TURNSTILE_PLACEHOLDER_KEYS[0];
     }
     function initTurnstile() {
       var mount = document.getElementById('cf-turnstile');
