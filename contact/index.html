@@ -29,7 +29,7 @@
   <link rel="stylesheet" href="../shared/motion.css" />
 
   <!-- Local styles -->
-  <link rel="stylesheet" href="./contact.css?v=20261019h" />
+  <link rel="stylesheet" href="./contact.css?v=20261019i" />
   <link rel="icon" type="image/png" href="/images/logo.png" />
 </head>
 
@@ -104,11 +104,12 @@
 
             <div class="form-status" id="form-status" role="status" aria-live="polite"></div>
 
-            <!-- Cloudflare Turnstile human check — rendered explicitly by contact.js -->
-            <div class="cf-turnstile-wrap" id="cf-turnstile-wrap">
-              <div id="cf-turnstile" aria-label="Human verification"></div>
-            </div>
-
+            <!-- Cloudflare Turnstile human check. The api.js script is loaded
+                 with render=explicit, so contact.js renders the widget into
+                 #cf-turnstile via turnstile.render(). As a safety net (e.g. if
+                 the JS somehow fails), we ALSO place a standard .cf-turnstile
+                 div below the form which auto-renders once api.js executes.
+                 Duplicate widgets are cleaned up by contact.js. -->
             <button type="submit" class="btn btn--primary btn--lg btn--block" id="cf-submit">
               <i class="fas fa-paper-plane"></i> Send message
             </button>
@@ -117,6 +118,13 @@
               We only use your email to reply to this message. No newsletters,
               no spam, no sharing with third parties.
             </p>
+
+            <!-- Cloudflare Turnstile human check — sits UNDER the form, as requested.
+                 Rendered explicitly by contact.js into #cf-turnstile (appearance:'always'
+                 keeps the checkbox visible). -->
+            <div class="cf-turnstile-wrap" id="cf-turnstile-wrap">
+              <div id="cf-turnstile" aria-label="Human verification"></div>
+            </div>
           </form>
         </div>
 
@@ -159,6 +167,6 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=iepTurnstileAuto&render=explicit" async defer></script>
   <script src="../shared/nav.js"></script>
   <script src="../shared/motion.js"></script>
-  <script src="./contact.js?v=20261019h"></script>
+  <script src="./contact.js?v=20261019i"></script>
 </body>
 </html>
