@@ -5,7 +5,8 @@ status: "beta"
 url: "https://paymentsimulator.androidapps.innovationearthprojects.org"
 pricing: "Free"
 tags: ["Android", "App", "Payment"]
-order: 1
-updatedAt: "2026-10-19"
+order: 2
+icon: "fa-server"
+updatedAt: "2026-10-20"
 ---
 
