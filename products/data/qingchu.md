@@ -1,5 +1,5 @@
 ---
-title: "qingchu"
+title: "Qingchu"
 description: "Qingchu Coding Language"
 status: "beta"
 pricing: "Free"
