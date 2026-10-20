@@ -6,7 +6,6 @@ url: "https://paymentsimulator.androidapps.innovationearthprojects.org"
 pricing: "Free"
 tags: ["Android", "App", "Payment"]
 order: 2
-icon: "fa-server"
 updatedAt: "2026-10-20"
 ---
 
