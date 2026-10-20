@@ -31,6 +31,12 @@
  * Optional:
  *   GITHUB_TOKEN           Fine-grained PAT (Contents: Read-only on this repo)
  *                          Raises /products rate limit from 60/hr to 5000/hr.
+ *   PRODUCT_CACHE          (Recommended) Workers KV namespace bound as a KV
+ *                          binding named PRODUCT_CACHE. The Worker mirrors the
+ *                          last good product list here, so even if GitHub is
+ *                          down or rate-limiting, /products still returns your
+ *                          products instead of a 502. Without it the Worker
+ *                          still works — it just falls back to Cache API only.
  * ==========================================================================*/
 
 const REPO_OWNER = 'ykminmin8654';
@@ -160,92 +166,148 @@ function normalizeTags(v) {
 let plCache = { at: 0, items: null }; // in-memory revalidation window
 const PL_STALE_MS = 15 * 1000;        // 15s — near-real-time, burst-safe
 
+// ---------------------------------------------------------------------------
+// GitHub Tree API loader (single source of truth for public grid AND admin)
+// ---------------------------------------------------------------------------
+// WHY THIS EXISTS: the previous implementation listed the products folder via
+// the Contents API and then made ONE EXTRA FETCH PER PRODUCT FILE (up to 21
+// sequential round-trips per request). That repeatedly hit Cloudflare's
+// subrequest limits / timed out under the site's 20-second polling, producing
+// the "Could not load products. (502)" errors — even after redeploying.
+//
+// The new approach needs exactly TWO GitHub calls no matter how many products
+// exist:
+//   1. GET /repos/<owner>/<repo>/git/trees/<branch>?recursive=1
+//      -> every file path + blob sha in the repo (one call). The sha doubles
+//         as the delete-sha the admin needs, so NO second pass per file.
+//   2. GET raw.githubusercontent.com/.../products/data/<file>.md per product,
+//      served straight from GitHub's CDN (no api.github.com rate limit, no
+//      auth needed, and these run in parallel).
+// On top of that, every successful result is mirrored into Workers KV, so if
+// GitHub ever fails we still serve the full product list from our own storage
+// instead of a 502.
+
+const RAW_BASE = `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}`;
+const BRANCH = 'main';
+const KV_TTL_SECONDS = 60 * 60 * 24 * 30; // keep last-good list ~30 days in KV
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function fetchJsonWithRetry(url, headers, attempts) {
+  let lastErr = null;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(url, { headers, cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status} for ${url.split('/').slice(-1)[0]}`);
+      return await res.json();
+    } catch (e) {
+      lastErr = e;
+      if (i < attempts - 1) await sleep(250 * (i + 1));
+    }
+  }
+  throw lastErr || new Error('fetch failed');
+}
+
+async function fetchTextWithRetry(url, headers, attempts) {
+  let lastErr = null;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(url, { headers, cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.text();
+    } catch (e) {
+      lastErr = e;
+      if (i < attempts - 1) await sleep(250 * (i + 1));
+    }
+  }
+  throw lastErr || new Error('fetch failed');
+}
+
+// Returns { items: [...], shaBySlug: { slug: blobSha } }.
+// shaBySlug comes free with the tree call — the admin uses it for deletes,
+// so there is zero extra cost per product.
 async function buildProductList(env) {
-  const listUrl =
-    `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${PRODUCTS_DIR}`;
-  // Read EVERY .md file in the directory. Previously this used the Contents
-  // API response as-is, which silently caps at 1,000 entries per request —
-  // past that limit new products were dropped from the feed with no error.
-  // We now page through with `?per_page=100&page=N` until a short page comes
-  // back, so the grid always shows all data files, not just the first ones.
-  let entries = [];
-  for (let page = 1; page <= 20; page++) {
-    const res = await fetch(`${listUrl}?per_page=100&page=${page}`, {
-      headers: ghHeaders(env),
-      cache: 'no-store',
-    });
-    if (!res.ok) throw new Error(`GitHub listing failed: ${res.status}`);
-    const chunk = await res.json();
-    if (!Array.isArray(chunk)) break;
-    entries = entries.concat(chunk);
-    if (chunk.length < 100) break; // last page reached
+  const treeUrl =
+    `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/git/trees/${BRANCH}?recursive=1`;
+  const tree = await fetchJsonWithRetry(treeUrl, ghHeaders(env), 3);
+  if (!tree || !Array.isArray(tree.tree)) throw new Error('Unexpected tree response from GitHub');
+
+  const wanted = [];
+  const shaBySlug = {};
+  const seen = new Set();
+  const prefix = PRODUCTS_DIR + '/';
+  for (const t of tree.tree) {
+    if (!t || t.type !== 'blob') continue;
+    if (!t.path.startsWith(prefix)) continue;
+    const rel = t.path.slice(prefix.length);
+    if (rel.includes('/') || !/\.md$/i.test(rel)) continue; // only direct .md files
+    const name = rel.replace(/\.md$/i, '');
+    if (seen.has(name)) continue;
+    seen.add(name);
+    wanted.push({ name, path: t.path });
+    shaBySlug[name] = t.sha;
   }
 
-  const seen = new Set();
-  const files = entries.filter((e) => {
-    if (!e || e.type !== 'file' || !e.name.endsWith('.md')) return false;
-    if (seen.has(e.name)) return false; // dedupe across pages
-    seen.add(e.name);
-    return true;
-  });
+  // Parallel raw fetches — bounded to keep one huge folder from exploding the
+  // isolate. Each raw call is a CDN hit, so this is cheap and fast.
+  const BATCH = 50;
+  const items = [];
+  for (let i = 0; i < wanted.length; i += BATCH) {
+    const batch = wanted.slice(i, i + BATCH);
+    const results = await Promise.all(
+      batch.map(async (f) => {
+        try {
+          const text = await fetchTextWithRetry(
+            `${RAW_BASE}/${BRANCH}/${f.path}`,
+            { 'User-Agent': 'decap-proxy-worker' },
+            2
+          );
+          const fm = parseFrontMatter(text);
+          if (!fm || !fm.title) return null; // README/.gitkeep-style files -> skip
+          if (fm.tags !== undefined) fm.tags = normalizeTags(fm.tags);
+          return { slug: f.name, ...fm };
+        } catch {
+          return null; // one bad file must never kill the whole feed
+        }
+      })
+    );
+    for (const r of results) if (r) items.push(r);
+  }
 
-  const results = await Promise.all(
-    files.map(async (f) => {
-      try {
-        const res = await fetch(f.url, {
-          headers: { ...ghHeaders(env), Accept: 'application/vnd.github.raw+json' },
-          cache: 'no-store',
-        });
-        if (!res.ok) return null;
-        const fm = parseFrontMatter(await res.text());
-        if (!fm || !fm.title) return null; // README.md etc. -> skip
-        // Normalize list fields (tags) to a clean comma string so both the
-        // Worker feed and the site's fallback parser handle them the same.
-        if (fm.tags !== undefined) fm.tags = normalizeTags(fm.tags);
-        return { slug: f.name.replace(/\.md$/, ''), ...fm };
-      } catch {
-        return null;
-      }
-    })
-  );
-
-  const items = results.filter(Boolean);
   items.sort((a, b) => (Number(a.order) || 999) - (Number(b.order) || 999));
-  return items;
+  return { items, shaBySlug };
 }
 
 async function getProductsFresh(env) {
   const now = Date.now();
   if (plCache.items && now - plCache.at < PL_STALE_MS) return plCache.items;
-  const items = await buildProductList(env);
+  const { items } = await buildProductList(env);
   plCache = { at: now, items };
   return items;
 }
 
-// Admin-only extra: attach each file's current git blob sha so the admin page
-// can DELETE it (GitHub requires the sha). One batched Contents API call for
-// up to 100 files; anything beyond that is fetched lazily by the admin's
-// existing per-file lookup before a delete. Items are shallow-copied so the
-// shared in-memory feed cache never carries _sha to public visitors.
-async function attachDeleteShas(env, items) {
+// Mirror the good list into KV so GitHub outages/rate-limits can't blank the
+// site. Fire-and-forget via ctx.waitUntil in handleProducts.
+async function saveSnapshotKv(env, items) {
+  if (!env.PRODUCT_CACHE) return;
   try {
-    const res = await fetch(
-      `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${PRODUCTS_DIR}?per_page=100&page=1`,
-      { headers: ghHeaders(env), cache: 'no-store' }
-    );
-    if (!res.ok) return items;
-    const entries = await res.json();
-    if (!Array.isArray(entries)) return items;
-    const shaByName = {};
-    entries.forEach(function (e) {
-      if (e && e.type === 'file' && /\.md$/i.test(e.name || '')) shaByName[e.name] = e.sha;
-    });
-    return items.map(function (p) {
-      const sha = shaByName[p.slug + '.md'];
-      return sha ? Object.assign({}, p, { _sha: sha }) : p;
+    await env.PRODUCT_CACHE.put('products-list', JSON.stringify(items), {
+      ttl: KV_TTL_SECONDS,
     });
   } catch (e) {
-    return items; // shas are optional here — the admin re-looks-up on demand
+    console.error('KV snapshot write failed (non-fatal):', e);
+  }
+}
+
+async function loadSnapshotKv(env) {
+  if (!env.PRODUCT_CACHE) return null;
+  try {
+    const raw = await env.PRODUCT_CACHE.get('products-list');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch (e) {
+    return null;
   }
 }
 
@@ -280,28 +342,33 @@ async function handleProducts(request, env, ctx) {
   try {
     if (isAdminFeed && adminTicketOk) {
       // The admin just saved/deleted a file and needs to see it immediately —
-      // bypass the 15s in-memory window entirely.
+      // bypass the 15s in-memory window entirely. buildProductList now returns
+      // each file's git blob sha FOR FREE (it comes from the single tree call),
+      // so delete buttons work without any extra per-product GitHub requests.
       plCache.at = 0;
-      items = await getProductsFresh(env);
-      // attachDeleteShas does one extra GitHub call PER product. If any of
-      // those calls fail (rate limit / hiccup) we must NOT throw away the
-      // products we already fetched — the _sha is only needed for deletes,
-      // and the admin can always fetch it on demand. So degrade gracefully:
-      // serve the list without shas instead of a 502 "Could not load products".
-      try {
-        items = await attachDeleteShas(env, items);
-      } catch (shaErr) {
-        console.error('sha attach failed (serving list anyway):', shaErr);
-      }
+      const built = await buildProductList(env);
+      items = built.items.map(function (p) {
+        const sha = built.shaBySlug[p.slug];
+        return sha ? Object.assign({}, p, { _sha: sha }) : p;
+      });
+      plCache = { at: Date.now(), items: built.items };
     } else {
       items = await getProductsFresh(env);
     }
   } catch (err) {
     // GitHub is rate-limiting us or momentarily unavailable. Instead of
-    // killing the site with a 502, serve the last good snapshot we have
-    // (stored in the Cache API under /products-snapshot). If that exists,
-    // the browser sees valid JSON and stale data beats an empty grid.
+    // killing the site with a 502, serve the last good snapshot — first from
+    // Workers KV (survives deploys/cold starts, full product list), then the
+    // Cache API copy. Stale data beats an empty grid every time.
     console.error('products error:', err);
+    const kvSnap = await loadSnapshotKv(env);
+    if (kvSnap && kvSnap.length) {
+      if (isAdminFeed && adminTicketOk) {
+        // Deletes fetch their sha on demand, so serving shas-less KV rows here
+        // still lets the admin browse/edit; only delete needs one extra lookup.
+      }
+      return json(kvSnap, 200, { 'X-Products-Source': 'kv-snapshot' });
+    }
     try {
       const snap = await caches.default.match(new Request(`${url.origin}/products-snapshot`));
       if (snap) {
@@ -321,7 +388,8 @@ async function handleProducts(request, env, ctx) {
     return json({ error: 'Could not load products.' }, 502);
   }
 
-  // Keep a longer-lived copy for the failure path above.
+  // Keep longer-lived copies for the failure path above (KV survives deploys).
+  ctx.waitUntil(saveSnapshotKv(env, items));
   ctx.waitUntil(
     caches.default.put(
       new Request(`${url.origin}/products-snapshot`),
@@ -343,7 +411,7 @@ async function handleProducts(request, env, ctx) {
 
 const GH_API = 'https://api.github.com';
 
-const BUILD_ID = '2026-10-20.45';
+const BUILD_ID = '2026-10-20.46';
 
 // ---------------------------------------------------------------------------
 // ADMIN GATE — password check endpoint (Decap removed; admin page is custom).

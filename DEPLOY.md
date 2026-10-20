@@ -93,8 +93,23 @@ deployed. (Contact + newsletter forms still use Turnstile.)
 
 ## Newsletter (added 2026-10-19, updated 2026-10-20)
 - Public page at /newsletter/ (linked from the top nav; NOT in the footer). Protection: Turnstile + honeypot + per-IP rate limit.
-- It POSTs to the Worker route /newsletter. To activate: paste worker/products-proxy.js (build 2026-10-20.42) into Cloudflare -> decap-proxy -> Deploy.
-- Verify: curl https://decap-proxy.ykminmin8654.workers.dev/ should report build 2026-10-20.42.
+- It POSTs to the Worker route /newsletter. To activate: paste worker/products-proxy.js (build 2026-10-20.46) into Cloudflare -> decap-proxy -> Deploy.
+- Verify: curl https://decap-proxy.ykminmin8654.workers.dev/status should report build 2026-10-20.46.
+
+## Products feed 502 fix (2026-10-20, build 2026-10-20.46)
+The old loader made up to 21 sequential GitHub API calls per request (listing +
+one fetch per product file), which hit Cloudflare subrequest limits/timeouts and
+caused "Could not load products (502)" on both the site and admin. The new
+loader uses exactly TWO GitHub calls regardless of product count: one recursive
+git-tree call (which also supplies each file's delete-sha for the admin for
+free) plus parallel raw.githubusercontent.com CDN reads. Every good result is
+mirrored to Workers KV so a GitHub outage serves the last full list instead of
+an error. ACTION REQUIRED: paste worker/products-proxy.js into the decap-proxy
+worker and Deploy; confirm /status shows build 2026-10-20.46. Optional but
+recommended: Storage & Databases -> KV -> create namespace "iep-product-cache",
+then in decap-proxy -> Settings -> Bindings add a KV namespace binding named
+exactly `PRODUCT_CACHE` pointing at it (the Worker works without it, just with
+weaker fallback).
 - WHERE THE EMAILS GO — pick ONE by setting the `NEWSLETTER_PROVIDER` secret:
   1. **Email straight to your Gmail (simplest)**: set `NEWSLETTER_PROVIDER=email`.
      Each signup is forwarded through the existing `FORMSPREE_ENDPOINT` (the same
