@@ -115,12 +115,43 @@
 
 .footer__inner {
   display: grid;
-  grid-template-columns: 1.8fr 0.9fr 0.9fr 0.9fr;
+  grid-template-columns: 1.8fr 0.9fr 0.9fr 1.1fr 0.9fr;
   gap: var(--s-6);
   margin-bottom: var(--s-7);
 }
 @media (max-width: 1080px) {
   .footer__inner { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* "Projects" column — external links to separately-branded initiatives */
+.footer__note {
+  color: var(--muted);
+  font-size: var(--fs-xs);
+  line-height: 1.5;
+  margin: 0 0 var(--s-2);
+}
+.footer__ext {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+}
+.footer__ext i {
+  font-size: 0.7em;
+  opacity: 0.7;
+  transition: transform 0.25s var(--ease);
+}
+.footer__ext:hover i { transform: translate(2px, -2px); }
+.footer__ext-tag {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--teal-deep);
+  background: rgba(0, 128, 128, 0.1);
+  border: 1px solid rgba(0, 128, 128, 0.25);
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
 }
 
 .footer__brand {

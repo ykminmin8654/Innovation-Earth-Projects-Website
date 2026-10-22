@@ -30,7 +30,7 @@
     { href: '/contact',    label: 'Contact'    }
   ];
 
-  /* NOTE: the footer intentionally contains NO newsletter content any more.
+  /* NOTE: the footer intentionally contains NO newsletter FORM any more.
      The sign-up experience lives entirely on its own page at /newsletter/,
      reachable from the top navigation only. */
 
@@ -107,6 +107,13 @@
           '</ul>' +
         '</div>' +
         '<div class="footer__col">' +
+          '<h4>Projects</h4>' +
+          '<p class="footer__note">Runs outside this site &mdash; its own project:</p>' +
+          '<ul>' +
+            '<li><a class="footer__ext" href="https://researchpapers.innovationearthprojects.org" target="_blank" rel="noopener">Research Papers <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i><span class="footer__ext-tag">separate initiative</span></a></li>' +
+          '</ul>' +
+        '</div>' +
+        '<div class="footer__col">' +
           '<h4>Contact</h4>' +
           '<ul>' +
             '<li><a href="mailto:InnovationEarthProjects@gmail.com"><i class="fas fa-envelope"></i> Email us</a></li>' +
@@ -166,7 +173,7 @@
     window.__iepNlScriptDone = true;        // set BEFORE append: never re-load
     var s = document.createElement('script');
     s.id = 'iep-newsletter-script';
-    s.src = '/shared/newsletter.js?v=20261020a';
+    s.src = '/shared/newsletter.js?v=20261022b';
     document.body.appendChild(s);
   }
 

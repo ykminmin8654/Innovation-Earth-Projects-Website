@@ -30,7 +30,10 @@
 
   var ENDPOINT = 'https://decap-proxy.ykminmin8654.workers.dev/newsletter';
   var SITE_KEY = '0x4AAAAAAFMinCrsCsyi7S6X';
-  var DONE_KEY = 'iep_newsletter_done'; // remember success across pages
+  /* Multiple sign-ups are allowed by design: people can subscribe several
+     addresses (personal + school), and returning visitors always see the
+     live form instead of a one-time "success" screen that could never be
+     reset. No localStorage gate any more. */
   var MAX_WAIT_MS = 12000;              // hard cap on a submit fetch
 
   function getStored(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -117,16 +120,17 @@
   }
 
   /* ---- Form wiring ---- */
-  function showSuccess(form, msg) {
+  function showSuccess(form, email) {
     // Tear down any Turnstile widget inside the form BEFORE replacing its
     // innerHTML, otherwise Cloudflare keeps ticking against a detached node.
     var ts = form.querySelector('.cf-turnstile');
     if (ts) dropWidget(ts);
+    var shown = email ? ' <strong class="nl-success__email">' + String(email).replace(/[<>&"]/g, '') + '</strong>' : '';
     form.innerHTML =
       '<div class="nl-success" role="status">' +
         '<span class="nl-success__icon"><i class="fas fa-envelope-circle-check"></i></span>' +
         '<strong>You\'re on the list!</strong>' +
-        '<span>' + (msg || 'Check your inbox for a confirmation email.') + '</span>' +
+        '<span>Confirmation sent to' + shown + ' — check your inbox. Need another address? Just reload the page.</span>' +
       '</div>';
     var wrap = form.closest('.nl-form--page') || form.parentElement;
     if (wrap) wrap.classList.add('is-done');
@@ -139,9 +143,6 @@
     var msg = form.querySelector('.nl-msg');
     var btn = form.querySelector('.nl-submit');
     if (!input || !btn) return;
-
-    // Already subscribed from another page? Show the thank-you state.
-    if (getStored(DONE_KEY)) { showSuccess(form); return; }
 
     form.addEventListener('submit', function (ev) {
       ev.preventDefault();
@@ -186,8 +187,7 @@
         .then(function (r) { return r.json().catch(function () { return {}; }); })
         .then(function (data) {
           if (data && data.ok) {
-            setStored(DONE_KEY, '1');
-            showSuccess(form);
+            showSuccess(form, email);
             return;
           }
           throw new Error((data && data.error) || 'Something went wrong. Please try again.');

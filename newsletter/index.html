@@ -25,14 +25,14 @@
   <!-- Shared styles -->
   <link rel="stylesheet" href="../shared/tokens.css" />
   <link rel="stylesheet" href="../shared/base.css" />
-  <link rel="stylesheet" href="../shared/nav.css?v=20261020a" />
-  <link rel="stylesheet" href="../shared/motion.css?v=20261020a" />
+  <link rel="stylesheet" href="../shared/nav.css?v=20261022b" />
+  <link rel="stylesheet" href="../shared/motion.css?v=20261022b" />
 
   <!-- Local styles. NOTE: motion.js is intentionally NOT loaded here —
        every entrance on this page is a one-shot CSS animation, so there
        are no scroll observers that can stack up or leave content stuck
        hidden during SPA navigation. -->
-  <link rel="stylesheet" href="./newsletter.css?v=20261020a" />
+  <link rel="stylesheet" href="./newsletter.css?v=20261022b" />
   <link rel="icon" type="image/png" href="/images/logo.png" />
 </head>
 
@@ -178,7 +178,31 @@
     </section>
 
     <!-- ============================================================
-         4. FAQ
+         4. RESEARCH PAPERS — separate initiative
+         ============================================================ -->
+    <section class="section nl-rp-section">
+      <div class="container">
+        <a class="nl-rp grad-border" href="https://researchpapers.innovationearthprojects.org"
+           target="_blank" rel="noopener" aria-label="Research Papers — separate initiative, opens in a new tab">
+          <span class="nl-rp__icon"><i class="fas fa-flask-vial"></i></span>
+          <span class="nl-rp__body">
+            <span class="nl-rp__title">
+              Research Papers
+              <span class="nl-rp__tag">separate initiative</span>
+            </span>
+            <span class="nl-rp__desc">
+              Our student research library lives on its own site — it is <strong>not</strong> part of this
+              newsletter or these tools. Browse and read the papers free at
+              <em>researchpapers.innovationearthprojects.org</em>.
+            </span>
+          </span>
+          <span class="nl-rp__arrow" aria-hidden="true"><i class="fas fa-arrow-up-right-from-square"></i></span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ============================================================
+         5. FAQ
          ============================================================ -->
     <section class="section nl-faq-section">
       <div class="container">
@@ -220,7 +244,7 @@
 
   <div id="footer-mount"></div>
 
-  <script src="../shared/nav.js?v=20261020a"></script>
-  <script src="./newsletter.js?v=20261020a"></script>
+  <script src="../shared/nav.js?v=20261022b"></script>
+  <script src="./newsletter.js?v=20261022b"></script>
 </body>
 </html>
