@@ -85,9 +85,35 @@
 }
 .nav__logo-img { animation: iepLogoBob 5s ease-in-out infinite; }
 
+/* ---------- External "separate initiative" nav tab (Research Papers) ---------- */
+.nav__ext { white-space: nowrap; }
+.nav__ext-icon {
+  font-size: 0.68em;
+  margin-left: 0.2rem;
+  color: var(--teal);
+  transition: transform 0.25s var(--ease);
+}
+.nav__ext:hover .nav__ext-icon { transform: translate(2px, -2px); }
+.nav__ext-tag {
+  display: none; /* desktop: shown via tooltip/aria; mobile drawer: visible */
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--teal-deep);
+  background: rgba(0, 128, 128, 0.1);
+  border: 1px solid rgba(0, 128, 128, 0.25);
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  margin-left: 0.45rem;
+  vertical-align: middle;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .nav__logo-img { animation: none !important; }
   .nav__links a::before { transition: none !important; }
+  .nav__ext-icon { transition: none !important; }
 }
 
 .nav__cta { margin-left: var(--s-2); }
@@ -225,6 +251,8 @@
   .nav__links.is-open {
     display: flex;
   }
+  /* Mobile drawer: show the "separate initiative" badge inline */
+  .nav__ext-tag { display: inline-block; }
   .nav__cta { display: none; }
   .nav__toggle { display: inline-flex; margin-left: auto; }
 

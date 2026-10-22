@@ -16,10 +16,14 @@
 
   /* NOTE: the Admin panel (/admin/) is intentionally NOT linked here.
      It must only be reachable by typing the URL directly. */
+  /* `external: true` links leave the site immediately (real browser
+     navigation, new tab) — the SPA router never touches them. */
   var NAV_LINKS = [
     { href: '/about',      label: 'About',      key: 'about' },
     { href: '/products',   label: 'Products',   key: 'products' },
     { href: '/newsletter', label: 'Newsletter', key: 'newsletter' },
+    { href: 'https://researchpapers.innovationearthprojects.org',
+      label: 'Research Papers', key: 'research-papers', external: true },
     { href: '/contact',    label: 'Contact',    key: 'contact' }
   ];
 
@@ -51,7 +55,19 @@
     var out = '';
     for (var i = 0; i < NAV_LINKS.length; i++) {
       var l = NAV_LINKS[i];
-      out += '<a href="' + l.href + '" data-nav="' + l.key + '">' + l.label + '</a>';
+      if (l.external) {
+        // Separate initiative — real external site on its own subdomain.
+        // Opens in a new tab; the SPA router never intercepts it.
+        out += '<a href="' + l.href + '" data-nav="' + l.key + '"' +
+               ' target="_blank" rel="noopener"' +
+               ' class="nav__ext" aria-label="' + l.label + ' — separate initiative, opens in a new tab">' +
+               l.label +
+               ' <i class="fas fa-arrow-up-right-from-square nav__ext-icon" aria-hidden="true"></i>' +
+               '<span class="nav__ext-tag">separate initiative</span>' +
+               '</a>';
+      } else {
+        out += '<a href="' + l.href + '" data-nav="' + l.key + '">' + l.label + '</a>';
+      }
     }
     return out;
   }
