@@ -395,8 +395,11 @@
         : '';
 
       const linkLabel = meta.cls === 'beta' ? 'Try beta' : 'Open';
+      /* Site-wide tab rule: IEP domains/subdomains (extensions of this
+         site) open in the SAME tab; anything else opens a new tab. */
+      const sameTab = !!(window.IEP && window.IEP.isIepDomain(url));
       const linkHtml = hasUrl
-        ? `<a class="product-card__link" href="${escapeHtml(url)}" target="_blank" rel="noopener">
+        ? `<a class="product-card__link" href="${escapeHtml(url)}"${sameTab ? '' : ' target="_blank" rel="noopener noreferrer"'}>
              ${linkLabel} <i class="fas fa-arrow-right"></i>
            </a>`
         : `<span class="product-card__link product-card__link--disabled">

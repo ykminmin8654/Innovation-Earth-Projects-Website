@@ -16,8 +16,25 @@
 
   /* NOTE: the Admin panel (/admin/) is intentionally NOT linked here.
      It must only be reachable by typing the URL directly. */
-  /* `external: true` links leave the site immediately (real browser
-     navigation, new tab) — the SPA router never touches them. */
+  /* Opening-tab rule for the WHOLE site (nav, footer, product cards):
+       - innovationearthprojects.org (root or ANY subdomain, e.g.
+         researchpapers.) → SAME tab: these are extensions of this site.
+       - anything else (social media, external product URLs, ...) → NEW tab.
+     isIepDomain() is the single source of truth; nav.js also enforces it on
+     every rendered anchor via enforceTabPolicy() so future hand-written
+     links can't drift from the rule. */
+  function isIepDomain(href) {
+    try {
+      var u = new URL(href, location.href);
+      if (!/^https?:$/.test(u.protocol)) return false; // mailto:, tel:, #...
+      return /(^|\.)innovationearthprojects\.org$/i.test(u.hostname) ||
+             /\.innovationearthprojects\.workers\.dev$/i.test(u.hostname);
+    } catch (e) { return false; }
+  }
+
+  /* `external: true` links leave the SPA (real browser navigation, not a
+     client-side route), but per the rule above IEP-subdomain externals open
+     in the SAME tab. Social/other domains keep target="_blank". */
   var NAV_LINKS = [
     { href: '/about',      label: 'About',      key: 'about' },
     { href: '/products',   label: 'Products',   key: 'products' },
@@ -56,8 +73,9 @@
     for (var i = 0; i < NAV_LINKS.length; i++) {
       var l = NAV_LINKS[i];
       if (l.external) {
-        // Separate initiative — its own subdomain, but treated as an
-        // extension of this site: navigates in the SAME tab (no _blank).
+        // Separate initiative — its own IEP subdomain, so per the site-wide
+        // rule it's an extension of this site: SAME tab (no _blank).
+        // Non-IEP externals added here later would get target="_blank".
         out += '<a href="' + l.href + '" data-nav="' + l.key + '"' +
                ' class="nav__ext" aria-label="' + l.label + ' — separate initiative">' +
                l.label +
@@ -116,9 +134,9 @@
         '<div class="footer__col">' +
           '<h4>Follow</h4>' +
           '<ul>' +
-            '<li><a href="https://www.instagram.com/innovationearthprojects/"><i class="fab fa-instagram"></i> Instagram</a></li>' +
-            '<li><a href="https://youtube.com/@innovationearthprojects"><i class="fab fa-youtube"></i> YouTube</a></li>' +
-            '<li><a href="https://www.tiktok.com/@innovationearthprojects"><i class="fab fa-tiktok"></i> TikTok</a></li>' +
+            '<li><a href="https://www.instagram.com/innovationearthprojects/" target="_blank" rel="noopener"><i class="fab fa-instagram"></i> Instagram</a></li>' +
+            '<li><a href="https://youtube.com/@innovationearthprojects" target="_blank" rel="noopener"><i class="fab fa-youtube"></i> YouTube</a></li>' +
+            '<li><a href="https://www.tiktok.com/@innovationearthprojects" target="_blank" rel="noopener"><i class="fab fa-tiktok"></i> TikTok</a></li>' +
           '</ul>' +
         '</div>' +
         '<div class="footer__col">' +
@@ -466,7 +484,34 @@
     setActiveLink();
     setYear();
     wireMobileToggle();
+    enforceTabPolicy(document);
     console.log('✅ Nav + footer injected');
+  }
+
+  /* ------------------------------------------------------------
+     SITE-WIDE OPENING-TAB RULE (single enforcement point):
+       innovationearthprojects.org (root or any subdomain) → SAME tab
+       everything else (social media, external product URLs…) → NEW tab
+     Runs on every boot and after every SPA content swap, so links in
+     static HTML and dynamically rendered cards both get corrected. */
+  function enforceTabPolicy(rootEl) {
+    var anchors = (rootEl || document).querySelectorAll('a[href]');
+    for (var i = 0; i < anchors.length; i++) {
+      var a = anchors[i];
+      var href = a.getAttribute('href') || '';
+      if (href.charAt(0) === '#' || /^mailto:|^tel:/i.test(href)) continue;
+      if (isIepDomain(href)) {
+        // IEP domain/subdomain — extension of this site: same tab.
+        a.removeAttribute('target');
+      } else if (/^https?:\/\//i.test(href)) {
+        // Any other domain — new tab, with standard hardening.
+        if (!a.target) a.target = '_blank';
+        if (!/noopener/.test(a.rel || '')) {
+          a.rel = (a.rel ? a.rel + ' ' : '') + 'noopener noreferrer';
+        }
+      }
+      // relative paths (/about, ./x.html…) are inherently same-tab; skip.
+    }
   }
 
   if (document.readyState === 'loading') {
@@ -476,5 +521,11 @@
   }
 
   window.addEventListener('shim:content-loaded', boot);
+
+  /* Exposed so page scripts (products grid, home featured cards, future
+     project lists) can build links that follow the same rule directly. */
+  window.IEP = window.IEP || {};
+  window.IEP.isIepDomain = isIepDomain;
+  window.IEP.enforceTabPolicy = enforceTabPolicy;
 
 })();

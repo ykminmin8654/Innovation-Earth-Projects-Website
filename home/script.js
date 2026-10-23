@@ -264,7 +264,10 @@
             }).join('') + '</div>'
           : '';
         var linkHtml = url
-          ? '<a class="product-card__link" href="' + esc(url) + '" target="_blank" rel="noopener">Open <i class="fas fa-arrow-right"></i></a>'
+          ? '<a class="product-card__link" href="' + esc(url) + '"' +
+            // Site-wide tab rule: IEP domains open same tab, others new tab.
+            ((window.IEP && window.IEP.isIepDomain(url)) ? '' : ' target="_blank" rel="noopener noreferrer"') +
+            '>Open <i class="fas fa-arrow-right"></i></a>'
           : '<span class="product-card__link product-card__link--disabled">Coming soon</span>';
 
         return '' +
