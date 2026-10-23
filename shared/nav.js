@@ -56,11 +56,10 @@
     for (var i = 0; i < NAV_LINKS.length; i++) {
       var l = NAV_LINKS[i];
       if (l.external) {
-        // Separate initiative — real external site on its own subdomain.
-        // Opens in a new tab; the SPA router never intercepts it.
+        // Separate initiative — its own subdomain, but treated as an
+        // extension of this site: navigates in the SAME tab (no _blank).
         out += '<a href="' + l.href + '" data-nav="' + l.key + '"' +
-               ' target="_blank" rel="noopener"' +
-               ' class="nav__ext" aria-label="' + l.label + ' — separate initiative, opens in a new tab">' +
+               ' class="nav__ext" aria-label="' + l.label + ' — separate initiative">' +
                l.label +
                ' <i class="fas fa-arrow-up-right-from-square nav__ext-icon" aria-hidden="true"></i>' +
                '<span class="nav__ext-tag">separate initiative</span>' +
@@ -117,16 +116,16 @@
         '<div class="footer__col">' +
           '<h4>Follow</h4>' +
           '<ul>' +
-            '<li><a href="https://www.instagram.com/innovationearthprojects/" target="_blank" rel="noopener"><i class="fab fa-instagram"></i> Instagram</a></li>' +
-            '<li><a href="https://youtube.com/@innovationearthprojects" target="_blank" rel="noopener"><i class="fab fa-youtube"></i> YouTube</a></li>' +
-            '<li><a href="https://www.tiktok.com/@innovationearthprojects" target="_blank" rel="noopener"><i class="fab fa-tiktok"></i> TikTok</a></li>' +
+            '<li><a href="https://www.instagram.com/innovationearthprojects/"><i class="fab fa-instagram"></i> Instagram</a></li>' +
+            '<li><a href="https://youtube.com/@innovationearthprojects"><i class="fab fa-youtube"></i> YouTube</a></li>' +
+            '<li><a href="https://www.tiktok.com/@innovationearthprojects"><i class="fab fa-tiktok"></i> TikTok</a></li>' +
           '</ul>' +
         '</div>' +
         '<div class="footer__col">' +
           '<h4>Projects</h4>' +
           '<p class="footer__note">Runs outside this site &mdash; its own project:</p>' +
           '<ul>' +
-            '<li><a class="footer__ext" href="https://researchpapers.innovationearthprojects.org" target="_blank" rel="noopener">Research Papers <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i><span class="footer__ext-tag">separate initiative</span></a></li>' +
+            '<li><a class="footer__ext" href="https://researchpapers.innovationearthprojects.org">Research Papers <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i><span class="footer__ext-tag">separate initiative</span></a></li>' +
           '</ul>' +
         '</div>' +
         '<div class="footer__col">' +
