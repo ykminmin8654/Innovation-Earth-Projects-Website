@@ -242,6 +242,42 @@
     var REPO = '/repos/ykminmin8654/Innovation-Earth-Projects-Website';
     var DIR = 'products/data';
     var TICKET_KEY = 'iep-admin-ticket';
+    // ---- boot diagnostics ---------------------------------------------------
+    // 2026-10-27: users reported "admin page not loading" with no visible
+    // cause. The page now logs every Worker request (status + timing) and
+    // shows a red banner with the exact failing URL if anything goes wrong —
+    // so the next report can be diagnosed from one screenshot instead of
+    // guessing. window.IEP_ADMIN_DIAG holds the log for console inspection.
+    var DIAG = (window.IEP_ADMIN_DIAG = { startedAt: Date.now(), requests: [], errors: [] });
+    function diagError(text, kind) {
+      DIAG.errors.push({ at: Date.now() - DIAG.startedAt, text: String(text), kind: kind || '' });
+      var el = $('diagBanner');
+      if (!el) {
+        el = document.createElement('div');
+        el.id = 'diagBanner';
+        el.style.cssText = 'background:#b91c1c;color:#fff;padding:10px 14px;border-radius:8px;margin:10px 0;font-size:13px;line-height:1.5;word-break:break-all';
+        var host = $('appMsg') && $('appMsg').parentNode || document.body;
+        host.insertBefore(el, host.firstChild);
+      }
+      el.textContent = '⚠ ' + text;
+    }
+    window.addEventListener('error', function (e) {
+      diagError('Page error: ' + (e.message || 'unknown') + (e.filename ? ' @ ' + e.filename.split('/').pop() + ':' + e.lineno : ''), 'window');
+    });
+    window.addEventListener('unhandledrejection', function (e) {
+      var r = e.reason;
+      diagError('Unhandled promise rejection: ' + ((r && r.message) || String(r)), 'promise');
+    });
+    function tracedFetch(label, url, opts) {
+      var t0 = Date.now();
+      return fetch(url, opts).then(function (r) {
+        DIAG.requests.push({ label: label, url: String(url), status: r.status, ms: Date.now() - t0 });
+        return r;
+      }, function (netErr) {
+        DIAG.requests.push({ label: label, url: String(url), status: 'NETWORK ERROR: ' + netErr.message, ms: Date.now() - t0 });
+        throw netErr;
+      });
+    }
     // ---- lockout handling -------------------------------------------------
     // The Worker's /gate endpoint allows at most 5 wrong keys per IP, then
     // locks that IP out for 10 minutes (this replaced the old Turnstile human
@@ -309,7 +345,7 @@
         // sending text/plain on reads made some proxies mangle the response.
         'Content-Type': 'application/json'
       }, opts.headers || {});
-      return fetch(WORKER + '/api/v1/github' + path, opts).then(function (r) {
+      return tracedFetch('gh ' + (opts.method || 'GET'), WORKER + '/api/v1/github' + path, opts).then(function (r) {
         return r.text().then(function (body) {
           if (!r.ok) {
             var msg = body; try { msg = (JSON.parse(body).error || JSON.parse(body).message) || body; } catch (e) {}
@@ -326,15 +362,33 @@
     }
 
     // ---- gate -------------------------------------------------------------
+    // DIAGNOSTIC (added 2026-10-27 after "admin page not loading" reports):
+    // the /gate fetch used to assume the reply was always JSON. If a browser
+    // extension, proxy, or security filter blocked/rewrote the request, the
+    // .json() parse threw a cryptic "Unexpected token < ..." error and the
+    // real cause stayed hidden in the console. Now we surface HTTP status,
+    // content-type, and a snippet of whatever actually came back.
+    function readGateResponse(r) {
+      var ct = r.headers.get('content-type') || '';
+      return r.text().then(function (body) {
+        if (ct.indexOf('json') !== -1) {
+          try { return { status: r.status, ok: r.ok, d: JSON.parse(body) }; } catch (e) {}
+        }
+        var snip = String(body).replace(/\s+/g, ' ').slice(0, 120);
+        var err = new Error('Worker returned HTTP ' + r.status + ' (' + (ct || 'no content-type') + ') instead of JSON: "' + snip + '" — something between the browser and Cloudflare (extension/proxy/firewall) intercepted the request.');
+        err.status = r.status;
+        throw err;
+      });
+    }
     $('keyForm').addEventListener('submit', function (ev) {
       ev.preventDefault();
       if ($('keyBtn').disabled) return; // locked out — countdown running
       var btn = $('keyBtn'), msg = $('gateMsg');
       msg.textContent = ''; btn.disabled = true; btn.textContent = 'Checking…';
-      fetch(WORKER + '/gate', {
+      tracedFetch('gate', WORKER + '/gate', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: $('adminKey').value })
-      }).then(function (r) { return r.json().then(function (d) { return { status: r.status, ok: r.ok, d: d }; }); })
+      }).then(readGateResponse)
         .then(function (res) {
           if (!res.ok || !res.d.ok) {
             if (res.status === 429 || res.d.locked) {
@@ -380,7 +434,7 @@
     // sha (_sha) so deletes work without an extra lookup.
     function loadList() {
       setMsg('<span class="spinner"></span>Loading products…', '');
-      return fetch(WORKER + '/products?admin=1&_cb=' + Date.now() + '-' + (++CB), {
+      return tracedFetch('products?admin=1', WORKER + '/products?admin=1&_cb=' + Date.now() + '-' + (++CB), {
         cache: 'no-store',
         headers: { Authorization: 'Bearer ' + (sessionStorage.getItem(TICKET_KEY) || '') }
       }).then(function (r) {
@@ -390,10 +444,23 @@
         if (!r.ok) {
           return r.text().then(function (b) {
             var m = b; try { m = JSON.parse(b).error || b; } catch (e) {}
-            throw new Error(String(m || ('HTTP ' + r.status)));
+            var err = new Error(String(m || ('HTTP ' + r.status))); err.status = r.status; throw err;
           });
         }
-        return r.json();
+        var ct = r.headers.get('content-type') || '';
+        return r.text().then(function (body) {
+          if (ct.indexOf('json') === -1) {
+            // A captive portal / extension / proxy returned HTML where JSON was
+            // expected. Show the real URL that failed instead of a blank page.
+            diagError('Products feed returned non-JSON (' + (ct || 'unknown type') + '): "' + String(body).replace(/\s+/g, ' ').slice(0, 120) + '" from ' + WORKER + '/products — check browser extensions or network filters blocking the Worker.', 'feed');
+            var err = new Error('non-JSON response'); err.status = 0; throw err;
+          }
+          try { return JSON.parse(body); }
+          catch (e) {
+            diagError('Products feed returned invalid JSON: ' + e.message, 'feed');
+            var err = new Error('invalid JSON from feed'); err.status = 0; throw err;
+          }
+        });
       }).then(function (items) {
         if (!Array.isArray(items)) items = [];
         items = items.filter(function (p) { return p && p.slug && p.title; });

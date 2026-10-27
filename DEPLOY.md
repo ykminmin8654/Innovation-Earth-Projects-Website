@@ -78,6 +78,7 @@ Open `https://innovationearthprojects.org/admin/`, enter the key from step 1.
 | "Admin gate not configured yet" | `ADMIN_KEY` secret missing — add it (step 1), Deploy. |
 | "Wrong admin key." | Typo or you changed ADMIN_KEY — use the current value. After 5 wrong tries your IP is locked for 10 minutes (the login page shows a countdown); wait it out or reconnect to get a new IP. |
 | Save fails: "Worker cannot write" | `WRITE_TOKEN` missing/expired/scoped wrong — redo step 1. |
+| Admin page shows **"Bad credentials"** / console says it cannot connect | The GitHub PAT stored in Cloudflare as `WRITE_TOKEN` has expired or been revoked (fine-grained PATs expire on their chosen date). Create a new one (step 1), paste it into Workers → decap-proxy → Settings → Variables & Secrets → `WRITE_TOKEN`, click **Deploy**. Build `2026-10-27.1` onward also detects this automatically: browsing keeps working (reads fall back to anonymous) and saving shows a clear "WRITE_TOKEN was rejected by GitHub" message instead of the raw error. |
 | Save fails: "Write blocked" | Shouldn't happen from the UI; the proxy only allows `products/data/*` and `images/*` in your repo. |
 | Product saved but not on site | Wait ~1 min for GitHub Pages rebuild + 60 s Worker cache; hard-refresh (Ctrl+Shift+R). |
 | Status endpoint shows old build | Paste failed — reopen Code tab, replace ALL content, Deploy again. |

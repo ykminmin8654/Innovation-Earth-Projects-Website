@@ -411,7 +411,46 @@ async function handleProducts(request, env, ctx) {
 
 const GH_API = 'https://api.github.com';
 
-const BUILD_ID = '2026-10-20.46';
+const BUILD_ID = '2026-10-27.1';
+
+// ---------------------------------------------------------------------------
+// WRITE_TOKEN health check — cached so we don't ping GitHub on every request.
+// If the secret stored in Cloudflare (WRITE_TOKEN) is an expired/revoked/
+// restricted token, GitHub answers "Bad credentials" (401). Previously that
+// raw GitHub error was forwarded to the admin page verbatim ("cannot connect
+// / bad credentials" in the console) with no hint about what to do. Now we
+// detect it: reads fall back to anonymous (public repo data is still
+// available), and writes return a clear, actionable message instead.
+// ---------------------------------------------------------------------------
+const TOKEN_CHECK_TTL_MS = 5 * 60 * 1000; // re-verify at most every 5 min
+let writeTokenCheck = { at: 0, ok: null }; // { at, ok: true|false }
+
+async function writeTokenIsUsable(env) {
+  if (!env.WRITE_TOKEN) return false;
+  const now = Date.now();
+  if (writeTokenCheck.ok !== null && now - writeTokenCheck.at < TOKEN_CHECK_TTL_MS) {
+    return writeTokenCheck.ok;
+  }
+  let ok = true;
+  try {
+    const res = await fetch(`${GH_API}/rate_limit`, {
+      headers: {
+        Authorization: `Bearer ${env.WRITE_TOKEN}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'User-Agent': 'decap-proxy-worker',
+      },
+      cache: 'no-store',
+    });
+    // 401 = token revoked/expired/bad. Anything else (403, 5xx, network) we
+    // treat as "usable" so a transient issue never blocks saves.
+    ok = res.status !== 401;
+  } catch (e) {
+    ok = true; // can't verify -> don't block
+  }
+  writeTokenCheck = { at: now, ok };
+  return ok;
+}
 
 // ---------------------------------------------------------------------------
 // ADMIN GATE — password check endpoint (Decap removed; admin page is custom).
@@ -622,6 +661,16 @@ async function handleGithubProxy(request, env, url) {
     if (!env.WRITE_TOKEN) {
       return json({ error: 'Worker cannot write: add the WRITE_TOKEN secret (fine-grained PAT with Contents: Read&Write on this repo) in Workers → Settings → Variables & Secrets, then Deploy.', running_build: BUILD_ID }, 501);
     }
+    // If the stored WRITE_TOKEN is expired/revoked/restricted, GitHub would
+    // answer every save with "Bad credentials". Detect that up front and tell
+    // the admin exactly what to fix instead of leaking the raw GitHub error.
+    if (!(await writeTokenIsUsable(env))) {
+      return json({
+        error: 'The GitHub token stored in Cloudflare (WRITE_TOKEN) was rejected by GitHub ("Bad credentials") — it has most likely expired or been revoked. Create a new fine-grained PAT (Contents: Read & Write, scoped ONLY to ykminmin8654/Innovation-Earth-Projects-Website), paste it into Cloudflare → Workers → decap-proxy → Settings → Variables & Secrets as WRITE_TOKEN, click Deploy, and try saving again.',
+        code: 'WRITE_TOKEN_REJECTED',
+        running_build: BUILD_ID,
+      }, 503);
+    }
     if (!writePathAllowed(path)) {
       // Include the exact path we received so a mismatch is immediately
       // obvious instead of a mystery "blocked" message.
@@ -634,9 +683,25 @@ async function handleGithubProxy(request, env, url) {
     // Anonymous reads share one Cloudflare egress IP and hit GitHub's 60/hr
     // limit fast; that used to surface as 403s, which the admin page wrongly
     // read as "session expired". Using WRITE_TOKEN for reads prevents that.
-    if (env.GITHUB_TOKEN) headers.Authorization = `Bearer ${env.GITHUB_TOKEN}`;
-    else if (env.WRITE_TOKEN) headers.Authorization = `Bearer ${env.WRITE_TOKEN}`;
-    else if (bearer && !bearer.includes('.')) headers.Authorization = `Bearer ${bearer}`; // raw PAT passthrough (legacy)
+    //
+    // IMPORTANT: a revoked/expired/restricted token makes GitHub answer every
+    // request with 401 "Bad credentials" — which previously leaked straight
+    // through to the admin page ("cannot connect / bad credentials"). So we
+    // only attach a server token when it is actually usable; otherwise we fall
+    // back down the chain and ultimately go anonymously, which keeps public
+    // reads working even while the token secret is broken.
+    if (env.GITHUB_TOKEN) {
+      headers.Authorization = `Bearer ${env.GITHUB_TOKEN}`;
+    } else if (env.WRITE_TOKEN && !(await writeTokenIsUsable(env))) {
+      // WRITE_TOKEN is dead: skip it and go anonymous rather than letting
+      // GitHub's 401 "Bad credentials" leak through to the admin page.
+    } else if (env.WRITE_TOKEN) {
+      headers.Authorization = `Bearer ${env.WRITE_TOKEN}`;
+    }
+    if (!headers.Authorization && bearer && !bearer.includes('.') && /^github_pat_|^ghp_/.test(bearer)) {
+      headers.Authorization = `Bearer ${bearer}`; // raw PAT passthrough (legacy)
+    }
+    // else: anonymous read — GitHub answers fine for public repo contents.
   }
 
   // Buffer the body so a failed upstream read can never surface as an opaque
@@ -663,27 +728,33 @@ async function handleGithubProxy(request, env, url) {
     body: reqBody,
     cache: wantsWrite ? 'no-store' : undefined,
   });
-  const buf = await upstream.arrayBuffer();
+  let status = upstream.status;
+  let buf = await upstream.arrayBuffer();
+
   // If GitHub rate-limited an (effectively anonymous) read, retry once with
   // any available token so the admin page never sees a raw 403 that it would
   // misread as "session expired".
-  if (upstream.status === 403 && !headers.Authorization) {
+  if (status === 403 && !headers.Authorization) {
     const tok = env.GITHUB_TOKEN || env.WRITE_TOKEN;
     if (tok) {
       headers.Authorization = `Bearer ${tok}`;
       const retry = await fetch(target, { method: request.method, headers, body: reqBody });
-      return new Response(await retry.arrayBuffer(), {
-        status: retry.status,
-        headers: {
-          'Content-Type': retry.headers.get('Content-Type') || 'application/json',
-          ...NO_STORE,
-          ...CORS_HEADERS,
-        },
-      });
+      status = retry.status;
+      buf = await retry.arrayBuffer();
     }
   }
+  // Safety net: if GitHub still answered 401 "Bad credentials" even though we
+  // attached a server-side token (health-check race, IP block, etc.), drop
+  // auth and retry anonymously — public repo reads work without a token, and
+  // this stops the raw "Bad credentials" error from ever reaching the browser.
+  if (status === 401 && headers.Authorization && !wantsWrite) {
+    delete headers.Authorization;
+    const anon = await fetch(target, { method: request.method, headers, body: reqBody });
+    status = anon.status;
+    buf = await anon.arrayBuffer();
+  }
   return new Response(buf, {
-    status: upstream.status,
+    status,
     headers: {
       'Content-Type': upstream.headers.get('Content-Type') || 'application/json',
       ...NO_STORE,
