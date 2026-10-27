@@ -4,6 +4,19 @@ Everything is pushed to GitHub (`main`). Two things need a manual step:
 1. **Cloudflare Worker** (can only be updated from the Cloudflare dashboard).
 2. Nothing else — the website deploys automatically via GitHub Pages.
 
+## ⚡ Fastest Worker deploy (no copy-paste)
+
+The exact Worker code now lives at a raw-GitHub URL, so you can upload it directly:
+
+1. Open https://github.com/ykminmin8654/Innovation-Earth-Projects-Website/blob/main/worker/products-proxy.js → click **Raw** → save the page as `products-proxy.js` (or just right-click → Save link as).
+2. Cloudflare dashboard → **Workers & Pages** → **decap-proxy** → **Code** tab (editor).
+3. Delete everything in the editor, then drag/drop or paste the file contents, click **Deploy**.
+   (Or use **Settings → Services bindings / Quick edit** — but plain paste + Deploy is enough; this Worker needs no build step.)
+4. Verify: open https://decap-proxy.ykminmin8654.workers.dev/ — the JSON must show `"build":"2026-10-27.1"` (or newer). If it still shows `2026-10-20.46`, the new code was not deployed.
+
+Canonical URL of the code file:
+`https://raw.githubusercontent.com/ykminmin8654/Innovation-Earth-Projects-Website/main/worker/products-proxy.js`
+
 ---
 
 ## What changed (Oct 19): Decap CMS fully removed
