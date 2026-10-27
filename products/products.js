@@ -25,6 +25,8 @@
   let pollTimer = null;            // single interval, survives SPA re-boots
   let lastSignature = '';          // skip re-renders when nothing changed
   let firstLoadDone = false;       // only background polls after the first paint
+  let lastWorkerSignature = '';    // fingerprint of the last Worker feed list
+  let lastWorkerChangeAt = 0;      // when that fingerprint last changed
 
   const POLL_INTERVAL_MS = 20 * 1000; // constantly checking: every 20 seconds
 
@@ -264,6 +266,9 @@
       const res = await fetch(WORKER_PRODUCTS_URL + '?_cb=' + Date.now(), { cache: 'no-cache' });
       if (res.ok) {
         const json = await res.json();
+        // IMPORTANT: when the Worker fails over to its KV snapshot it answers
+        // 200 with a JSON *object* ({error:...}) — previously we only accepted
+        // arrays and silently fell through to the GitHub-API path below.
         if (Array.isArray(json)) {
           const items = json
             .filter((p) => p && typeof p.title === 'string' && p.title.trim())
@@ -274,6 +279,54 @@
             if (ao !== bo) return ao - bo;
             return String(a.title || '').localeCompare(String(b.title || ''));
           });
+
+          // Staleness guard against browser-level caching: if this exact list
+          // was already rendered once and NOTHING changed in it for longer
+          // than CACHE_TTL, the response is almost certainly served from the
+          // browser's HTTP cache (Cloudflare sends no-store, but old cached
+          // copies of this endpoint can linger). Re-fetch once with a unique
+          // cache-buster that bypasses every cache layer so a freshly saved
+          // product actually shows up instead of an identical stale copy.
+          const sigNow = items.map((p) => (p.slug || '') + ':' + (p.updatedAt || '') + ':' + (p.title || '')).join('|');
+          let usedStaleBypass = false;
+          if (lastWorkerSignature && sigNow === lastWorkerSignature &&
+              lastWorkerChangeAt && Date.now() - lastWorkerChangeAt > CACHE_TTL) {
+            try {
+              const busted = await fetch(WORKER_PRODUCTS_URL + '?nocache=' + Math.random().toString(36).slice(2) + '-' + Date.now(),
+                { cache: 'reload' });
+              if (busted.ok) {
+                const freshJson = await busted.json();
+                if (Array.isArray(freshJson)) {
+                  const freshItems = freshJson
+                    .filter((p) => p && typeof p.title === 'string' && p.title.trim())
+                    .map((p) => ({ ...p }));
+                  freshItems.sort((a, b) => {
+                    const ao = Number(a.order ?? 999);
+                    const bo = Number(b.order ?? 999);
+                    if (ao !== bo) return ao - bo;
+                    return String(a.title || '').localeCompare(String(b.title || ''));
+                  });
+                  items.length = 0;
+                  freshItems.forEach((x) => items.push(x));
+                }
+              }
+            } catch { /* keep the original items */ }
+            lastWorkerChangeAt = Date.now(); // don't hammer the bypass every 20s
+            usedStaleBypass = true;
+          }
+          if (!usedStaleBypass) {
+            if (sigNow !== lastWorkerSignature) {
+              lastWorkerSignature = sigNow;
+              lastWorkerChangeAt = Date.now();
+            }
+          } else {
+            const sigBypass = items.map((p) => (p.slug || '') + ':' + (p.updatedAt || '') + ':' + (p.title || '')).join('|');
+            if (sigBypass !== lastWorkerSignature) {
+              lastWorkerSignature = sigBypass;
+              lastWorkerChangeAt = Date.now();
+            }
+          }
+
           try { localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), items })); } catch {}
           return { items, source: 'cms' };
         }

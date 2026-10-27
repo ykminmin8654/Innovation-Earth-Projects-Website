@@ -79,8 +79,26 @@ function ghHeaders(env) {
     'X-GitHub-Api-Version': '2022-11-28',
     'User-Agent': 'decap-proxy-worker',
   };
-  if (env.GITHUB_TOKEN) h.Authorization = `Bearer ${env.GITHUB_TOKEN}`;
+  // Token preference for READS: GITHUB_TOKEN (read-only PAT) first; otherwise
+  // WRITE_TOKEN — but ONLY if it is actually valid. Attaching an expired/
+  // revoked PAT makes GitHub answer every tree listing with 401 "Bad
+  // credentials", which previously killed the whole feed and surfaced in the
+  // admin console as "cannot connect". Anonymous reads always work for a
+  // public repo, so that's the safe fallback.
+  if (env.GITHUB_TOKEN) {
+    h.Authorization = `Bearer ${env.GITHUB_TOKEN}`;
+  } else if (env.WRITE_TOKEN && writeTokenIsUsableCached()) {
+    h.Authorization = `Bearer ${env.WRITE_TOKEN}`;
+  }
+  // else: anonymous read.
   return h;
+}
+
+// Synchronous view of the token-health cache for header builders. If we have
+// never probed yet, assume usable (the async probe runs on the next proxy
+// request / KV-fallback path and corrects the cache within 5 minutes).
+function writeTokenIsUsableCached() {
+  return writeTokenCheck.ok === null ? true : writeTokenCheck.ok;
 }
 
 // Minimal front-matter parser (matches what admin/config.yml produces).
@@ -149,6 +167,46 @@ function normalizeTags(v) {
       .filter(Boolean);
   }
   return arr.join(', ');
+}
+
+// ---------------------------------------------------------------------------
+// WRITE_TOKEN health check — declared HERE (before both consumers: the
+// /products KV-snapshot fallback below AND the /api/v1/github proxy).
+// If the secret stored in Cloudflare (WRITE_TOKEN) is expired/revoked/
+// restricted, GitHub answers EVERY request carrying it with 401
+// "Bad credentials". We probe it at most once per 5 minutes against
+// GitHub's free /rate_limit endpoint. Only a 401 marks the token dead;
+// network hiccups never block saves.
+// ---------------------------------------------------------------------------
+
+const TOKEN_CHECK_TTL_MS = 5 * 60 * 1000; // re-verify at most every 5 min
+let writeTokenCheck = { at: 0, ok: null }; // { at, ok: true|false }
+
+async function writeTokenIsUsable(env) {
+  if (!env.WRITE_TOKEN) return false;
+  const now = Date.now();
+  if (writeTokenCheck.ok !== null && now - writeTokenCheck.at < TOKEN_CHECK_TTL_MS) {
+    return writeTokenCheck.ok;
+  }
+  let ok = true;
+  try {
+    const res = await fetch('https://api.github.com/rate_limit', {
+      headers: {
+        Authorization: `Bearer ${env.WRITE_TOKEN}`,
+        Accept: 'application/vnd.github+json',
+        'X-GitHub-Api-Version': '2022-11-28',
+        'User-Agent': 'decap-proxy-worker',
+      },
+      cache: 'no-store',
+    });
+    // 401 = token revoked/expired/bad. Anything else (403, 5xx, network) we
+    // treat as "usable" so a transient issue never blocks saves.
+    ok = res.status !== 401;
+  } catch (e) {
+    ok = true; // can't verify -> don't block
+  }
+  writeTokenCheck = { at: now, ok };
+  return ok;
 }
 
 // ---------------------------------------------------------------------------
@@ -361,12 +419,44 @@ async function handleProducts(request, env, ctx) {
     // Workers KV (survives deploys/cold starts, full product list), then the
     // Cache API copy. Stale data beats an empty grid every time.
     console.error('products error:', err);
+    // Before serving a possibly-weeks-old KV snapshot, make one last-ditch
+    // ANONYMOUS attempt at GitHub. WHY this matters: if the WRITE_TOKEN
+    // secret is expired/revoked, every tree call carried "Bearer <dead PAT>"
+    // and GitHub answered 401 "Bad credentials" — buildProductList threw, and
+    // we served the STALE KV copy instead. The admin saved a new product
+    // successfully (writes use a freshly-probed path), but the public grid /
+    // feed kept showing the old snapshot ("added to the MD but doesn't load
+    // onto the website"). Anonymous reads of a PUBLIC repo always work, so
+    // try them before falling back to stale data.
+    try {
+      const anonBuilt = await buildProductList({}); // no env -> anonymous headers
+      if (anonBuilt && Array.isArray(anonBuilt.items)) {
+        plCache = { at: Date.now(), items: anonBuilt.items };
+        ctx.waitUntil(saveSnapshotKv(env, anonBuilt.items));
+        return json(isAdminFeed && adminTicketOk
+          ? anonBuilt.items.map(function (p) {
+              const sha = anonBuilt.shaBySlug[p.slug];
+              return sha ? Object.assign({}, p, { _sha: sha }) : p;
+            })
+          : anonBuilt.items, 200, {
+            'Cache-Control': 'no-store',
+            'X-Products-Source': 'anonymous-retry',
+            'X-Products-Count': String(anonBuilt.items.length),
+          });
+      }
+    } catch (e3) {
+      console.error('anonymous products retry failed:', e3);
+    }
     const kvSnap = await loadSnapshotKv(env);
     if (kvSnap && kvSnap.length) {
       if (isAdminFeed && adminTicketOk) {
         // Deletes fetch their sha on demand, so serving shas-less KV rows here
         // still lets the admin browse/edit; only delete needs one extra lookup.
       }
+      // Probe the token here so a dead WRITE_TOKEN gets flagged in the
+      // shared health cache — subsequent reads (ghHeaders) then go
+      // anonymous automatically instead of failing and serving stale KV.
+      await writeTokenIsUsable(env);
       return json(kvSnap, 200, { 'X-Products-Source': 'kv-snapshot' });
     }
     try {
@@ -411,46 +501,7 @@ async function handleProducts(request, env, ctx) {
 
 const GH_API = 'https://api.github.com';
 
-const BUILD_ID = '2026-10-27.1';
-
-// ---------------------------------------------------------------------------
-// WRITE_TOKEN health check — cached so we don't ping GitHub on every request.
-// If the secret stored in Cloudflare (WRITE_TOKEN) is an expired/revoked/
-// restricted token, GitHub answers "Bad credentials" (401). Previously that
-// raw GitHub error was forwarded to the admin page verbatim ("cannot connect
-// / bad credentials" in the console) with no hint about what to do. Now we
-// detect it: reads fall back to anonymous (public repo data is still
-// available), and writes return a clear, actionable message instead.
-// ---------------------------------------------------------------------------
-const TOKEN_CHECK_TTL_MS = 5 * 60 * 1000; // re-verify at most every 5 min
-let writeTokenCheck = { at: 0, ok: null }; // { at, ok: true|false }
-
-async function writeTokenIsUsable(env) {
-  if (!env.WRITE_TOKEN) return false;
-  const now = Date.now();
-  if (writeTokenCheck.ok !== null && now - writeTokenCheck.at < TOKEN_CHECK_TTL_MS) {
-    return writeTokenCheck.ok;
-  }
-  let ok = true;
-  try {
-    const res = await fetch(`${GH_API}/rate_limit`, {
-      headers: {
-        Authorization: `Bearer ${env.WRITE_TOKEN}`,
-        Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-        'User-Agent': 'decap-proxy-worker',
-      },
-      cache: 'no-store',
-    });
-    // 401 = token revoked/expired/bad. Anything else (403, 5xx, network) we
-    // treat as "usable" so a transient issue never blocks saves.
-    ok = res.status !== 401;
-  } catch (e) {
-    ok = true; // can't verify -> don't block
-  }
-  writeTokenCheck = { at: now, ok };
-  return ok;
-}
+const BUILD_ID = '2026-10-27.2';
 
 // ---------------------------------------------------------------------------
 // ADMIN GATE — password check endpoint (Decap removed; admin page is custom).
@@ -695,6 +746,9 @@ async function handleGithubProxy(request, env, url) {
     } else if (env.WRITE_TOKEN && !(await writeTokenIsUsable(env))) {
       // WRITE_TOKEN is dead: skip it and go anonymous rather than letting
       // GitHub's 401 "Bad credentials" leak through to the admin page.
+      // Side effect we rely on: this probe updates the shared health cache,
+      // so the /products feed's ghHeaders() also switches to anonymous reads
+      // right after the admin's first proxied request — no stale KV snapshots.
     } else if (env.WRITE_TOKEN) {
       headers.Authorization = `Bearer ${env.WRITE_TOKEN}`;
     }

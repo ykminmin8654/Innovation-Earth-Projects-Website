@@ -12,7 +12,7 @@ The exact Worker code now lives at a raw-GitHub URL, so you can upload it direct
 2. Cloudflare dashboard → **Workers & Pages** → **decap-proxy** → **Code** tab (editor).
 3. Delete everything in the editor, then drag/drop or paste the file contents, click **Deploy**.
    (Or use **Settings → Services bindings / Quick edit** — but plain paste + Deploy is enough; this Worker needs no build step.)
-4. Verify: open https://decap-proxy.ykminmin8654.workers.dev/ — the JSON must show `"build":"2026-10-27.1"` (or newer). If it still shows `2026-10-20.46`, the new code was not deployed.
+4. Verify: open https://decap-proxy.ykminmin8654.workers.dev/ — the JSON must show `"build":"2026-10-27.2"` (or newer). If it still shows `2026-10-20.46`, the new code was not deployed.
 
 Canonical URL of the code file:
 `https://raw.githubusercontent.com/ykminmin8654/Innovation-Earth-Projects-Website/main/worker/products-proxy.js`
@@ -159,3 +159,4 @@ address>` + `RESEND_FROM=<verified sender>`), or paste worker/mail-to.js into a
 second Worker (`iep-mail-to`) and set `MAILTO_WORKER_URL` — it emails you via a
 mail-to-email gateway (less reliable than Resend; no Turnstile needed since the
 main Worker validates before calling it).
+| Product saved in admin (MD file committed) but **does not appear on the site** | Two causes, both fixed from build `2026-10-27.2`: (1) if `WRITE_TOKEN` was dead, the Worker's `/products` feed failed its GitHub read and silently served a STALE KV snapshot — it now retries anonymously before falling back to stale data; (2) the browser could serve an old cached copy of the feed — `products.js?v=20261027a` now detects an unchanged list older than 5 min and re-fetches with a hard cache-buster. After deploying, open the products page once with **Ctrl+Shift+R** (hard refresh). |
